@@ -9,8 +9,9 @@
     "build": "prisma generate && tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "db:push": "prisma db push",
+    "prisma:migrate": "dotenv -e ../.env -- prisma migrate dev",
+    "prisma:deploy": "dotenv -e ../.env -- prisma migrate deploy",
+    "db:push": "dotenv -e ../.env -- prisma db push",
     "seed": "tsx prisma/seed.ts"
   },
   "prisma": {
@@ -40,6 +41,7 @@
     "@types/morgan": "^1.9.9",
     "@types/multer": "^1.4.12",
     "@types/node": "^22.10.5",
+    "dotenv-cli": "^8.0.0",
     "prisma": "^6.2.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3"

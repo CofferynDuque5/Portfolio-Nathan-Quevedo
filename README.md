@@ -95,13 +95,25 @@ DATABASE_URL="mysql://usuario:contraseña@localhost:3306/portfolio_nathan"
 
 ### 4. Migrar y sembrar datos
 
+Opción A — rápida (desarrollo):
+
 ```bash
 npm run prisma:generate   # genera el cliente Prisma
-npm run db:push           # crea las tablas en MySQL
+npm run db:push           # sincroniza el esquema con MySQL
 npm run seed              # crea el admin + contenido de ejemplo
 ```
 
+Opción B — con migraciones versionadas (recomendado en producción):
+
+```bash
+npm run prisma:generate
+npm run prisma:deploy -w server   # aplica prisma/migrations/*
+npm run seed
+```
+
 > Atajo: `npm run setup` ejecuta install + generate + db:push + seed de una vez.
+> Los scripts de Prisma cargan automáticamente el `.env` de la raíz (vía dotenv-cli),
+> por lo que funcionan sin configuración adicional en cualquier hosting.
 
 ### 5. Arrancar
 
