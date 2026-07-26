@@ -51,6 +51,12 @@ export const api = {
       body: JSON.stringify({ email, password }),
     }),
   me: () => request<{ user: any }>('/auth/me'),
+  stats: () =>
+    request<{
+      counts: Record<string, number>;
+      activity: { type: string; name: string; at: string; resource: string }[];
+      recentMessages: { id: number; name: string; subject?: string | null; message: string; read: boolean; createdAt: string }[];
+    }>('/admin/stats'),
   changePassword: (currentPassword: string, newPassword: string) =>
     request<{ success: boolean }>('/auth/change-password', {
       method: 'POST',

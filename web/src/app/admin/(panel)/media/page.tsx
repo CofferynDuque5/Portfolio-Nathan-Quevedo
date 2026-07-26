@@ -6,10 +6,12 @@ import { api } from '@/lib/admin/client';
 import { MediaFile } from '@/lib/types';
 import { formatBytes } from '@/lib/utils';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
+import { useToast } from '@/components/admin/Toast';
 
 const FOLDERS = ['general', 'services', 'platforms', 'licenses', 'logos', 'gallery', 'banners', 'heroSlides', 'seo'];
 
 export default function MediaPage() {
+  const toast = useToast();
   const [files, setFiles] = useState<MediaFile[]>([]);
   const [folder, setFolder] = useState('general');
   const [loading, setLoading] = useState(true);
@@ -35,10 +37,11 @@ export default function MediaPage() {
     if (!list || (list as FileList).length === 0) return;
     setUploading(true);
     try {
-      await api.upload(list, folder);
+      const res = await api.upload(list, folder);
+      toast.success(`${res.data.length} archivo(s) subido(s) y optimizado(s) a WebP.`);
       await load();
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Error al subir.');
+      toast.error(e instanceof Error ? e.message : 'Error al subir.');
     } finally {
       setUploading(false);
     }
@@ -47,6 +50,7 @@ export default function MediaPage() {
   const copy = (file: MediaFile) => {
     navigator.clipboard.writeText(file.url);
     setCopied(file.id);
+    toast.success('URL copiada al portapapeles.');
     setTimeout(() => setCopied(null), 1500);
   };
 
@@ -129,6 +133,7 @@ export default function MediaPage() {
           if (toDelete) {
             await api.deleteMedia(toDelete.id);
             setFiles((prev) => prev.filter((x) => x.id !== toDelete.id));
+            toast.success('Archivo eliminado.');
             setToDelete(null);
           }
         }}

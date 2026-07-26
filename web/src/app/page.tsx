@@ -11,6 +11,7 @@ import BannerCTA from '@/components/public/BannerCTA';
 import Faq from '@/components/public/Faq';
 import Contact from '@/components/public/Contact';
 import Footer from '@/components/public/Footer';
+import FloatingWhatsApp from '@/components/public/FloatingWhatsApp';
 
 export default async function HomePage() {
   const content = await getSiteContent();
@@ -73,6 +74,7 @@ export default async function HomePage() {
         <Contact info={content.contactInfo} />
       </main>
       <Footer siteName={siteName} tagline={s.tagline} social={content.socialLinks} />
+      <FloatingWhatsApp phone={s.whatsapp} />
     </>
   );
 }

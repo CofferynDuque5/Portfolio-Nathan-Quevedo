@@ -9,9 +9,23 @@ import { api } from '@/lib/admin/client';
 import { ColumnDef, ResourceDef } from '@/lib/admin/resources';
 import ResourceForm from './ResourceForm';
 import ConfirmDialog from './ConfirmDialog';
+import { useToast } from './Toast';
+import { TableSkeleton } from './Skeleton';
 import { Icon } from '@/lib/icon';
 
+/** Valores por defecto sensatos al crear un registro nuevo. */
+function buildDefaults(def: ResourceDef): Record<string, any> {
+  const out: Record<string, any> = {};
+  for (const f of def.fields) {
+    if (f.type === 'boolean') out[f.name] = f.name === 'active'; // activo por defecto
+    else if (f.type === 'number') out[f.name] = 0;
+    else if (f.type === 'select') out[f.name] = f.options?.[0]?.value ?? '';
+  }
+  return out;
+}
+
 export default function ResourceManager({ def }: { def: ResourceDef }) {
+  const toast = useToast();
   const [rows, setRows] = useState<any[]>([]);
   const [meta, setMeta] = useState({ total: 0, page: 1, perPage: 10, totalPages: 1 });
   const [search, setSearch] = useState('');
@@ -57,11 +71,14 @@ export default function ResourceManager({ def }: { def: ResourceDef }) {
     try {
       if (editing) await api.update(def.key, editing.id, values);
       else await api.create(def.key, values);
+      toast.success(editing ? 'Cambios guardados correctamente.' : `${def.singular} creado correctamente.`);
       setEditing(null);
       setCreating(false);
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error al guardar.');
+      const msg = e instanceof Error ? e.message : 'Error al guardar.';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -72,18 +89,25 @@ export default function ResourceManager({ def }: { def: ResourceDef }) {
     setDeleting(true);
     try {
       await api.remove(def.key, toDelete.id);
+      toast.success('Registro eliminado.');
       setToDelete(null);
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error al eliminar.');
+      const msg = e instanceof Error ? e.message : 'Error al eliminar.';
+      toast.error(msg);
     } finally {
       setDeleting(false);
     }
   };
 
   const doToggle = async (row: any) => {
-    await api.toggle(def.key, row.id);
-    await load();
+    try {
+      await api.toggle(def.key, row.id);
+      toast.success(row.active ? 'Registro desactivado.' : 'Registro activado.');
+      await load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'No se pudo cambiar el estado.');
+    }
   };
 
   const showForm = creating || editing !== null;
@@ -142,11 +166,22 @@ export default function ResourceManager({ def }: { def: ResourceDef }) {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={def.columns.length + 1} className="px-4 py-12 text-center text-slate-400">Cargando…</td></tr>
+                <TableSkeleton cols={def.columns.length} />
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={def.columns.length + 1} className="px-4 py-12 text-center text-slate-400">
-                    <Inbox className="mx-auto mb-2" size={28} /> Sin registros.
+                  <td colSpan={def.columns.length + 1} className="px-4 py-16 text-center">
+                    <Inbox className="mx-auto mb-3 text-slate-300" size={36} />
+                    <p className="font-medium text-slate-600 dark:text-slate-300">
+                      {search ? 'Sin resultados para tu búsqueda.' : `Aún no hay ${def.label.toLowerCase()}.`}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-400">
+                      {search ? 'Prueba con otro término.' : 'Crea el primer registro para empezar.'}
+                    </p>
+                    {!search && (
+                      <button onClick={() => { setCreating(true); setEditing(null); }} className="btn-primary mx-auto mt-4">
+                        <Plus size={16} /> Crear {def.singular.toLowerCase()}
+                      </button>
+                    )}
                   </td>
                 </tr>
               ) : (
@@ -230,7 +265,7 @@ export default function ResourceManager({ def }: { def: ResourceDef }) {
             </div>
             <ResourceForm
               def={def}
-              initial={editing ?? undefined}
+              initial={editing ?? buildDefaults(def)}
               saving={saving}
               onSubmit={save}
               onCancel={() => { setEditing(null); setCreating(false); }}

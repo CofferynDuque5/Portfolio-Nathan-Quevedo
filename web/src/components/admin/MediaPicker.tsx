@@ -5,6 +5,8 @@ import { UploadCloud, X, Trash2, Check } from 'lucide-react';
 import { api } from '@/lib/admin/client';
 import { MediaFile } from '@/lib/types';
 import { formatBytes } from '@/lib/utils';
+import { useToast } from './Toast';
+import ConfirmDialog from './ConfirmDialog';
 
 /**
  * Selector / biblioteca multimedia reutilizable.
@@ -21,10 +23,12 @@ export default function MediaPicker({
   onClose: () => void;
   onSelect?: (file: MediaFile) => void;
 }) {
+  const toast = useToast();
   const [files, setFiles] = useState<MediaFile[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [toDelete, setToDelete] = useState<MediaFile | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -45,19 +49,27 @@ export default function MediaPicker({
     if (!fileList || (fileList as FileList).length === 0) return;
     setUploading(true);
     try {
-      await api.upload(fileList, folder);
+      const res = await api.upload(fileList, folder);
+      toast.success(`${res.data.length} archivo(s) subido(s) y optimizado(s).`);
       await load();
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Error al subir.');
+      toast.error(e instanceof Error ? e.message : 'Error al subir.');
     } finally {
       setUploading(false);
     }
   };
 
-  const del = async (id: number) => {
-    if (!confirm('¿Eliminar este archivo?')) return;
-    await api.deleteMedia(id);
-    setFiles((prev) => prev.filter((f) => f.id !== id));
+  const del = async () => {
+    if (!toDelete) return;
+    try {
+      await api.deleteMedia(toDelete.id);
+      setFiles((prev) => prev.filter((f) => f.id !== toDelete.id));
+      toast.success('Archivo eliminado.');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'No se pudo eliminar.');
+    } finally {
+      setToDelete(null);
+    }
   };
 
   if (!open) return null;
@@ -125,7 +137,7 @@ export default function MediaPicker({
                       </button>
                     )}
                     <button
-                      onClick={() => del(f.id)}
+                      onClick={() => setToDelete(f)}
                       className="btn bg-red-600 px-4 py-2 text-xs text-white hover:bg-red-700"
                     >
                       <Trash2 size={14} /> Eliminar
@@ -138,6 +150,13 @@ export default function MediaPicker({
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={toDelete !== null}
+        message="El archivo se eliminará del servidor de forma permanente."
+        onConfirm={del}
+        onCancel={() => setToDelete(null)}
+      />
     </div>
   );
 }

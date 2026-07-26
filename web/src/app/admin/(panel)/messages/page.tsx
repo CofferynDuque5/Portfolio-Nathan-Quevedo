@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { Inbox, Mail, Phone, Trash2, Check } from 'lucide-react';
 import { api } from '@/lib/admin/client';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
+import { useToast } from '@/components/admin/Toast';
+import { Skeleton } from '@/components/admin/Skeleton';
 
 interface Message {
   id: number;
@@ -17,6 +19,7 @@ interface Message {
 }
 
 export default function MessagesPage() {
+  const toast = useToast();
   const [rows, setRows] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState<Message | null>(null);
@@ -52,7 +55,7 @@ export default function MessagesPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-2">
           {loading ? (
-            <p className="py-10 text-center text-sm text-slate-500">Cargando…</p>
+            <div className="space-y-2">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-2xl" />)}</div>
           ) : rows.length === 0 ? (
             <p className="py-10 text-center text-sm text-slate-500">No hay mensajes todavía.</p>
           ) : (
@@ -114,6 +117,7 @@ export default function MessagesPage() {
             await api.remove('messages', toDelete.id);
             setRows((prev) => prev.filter((x) => x.id !== toDelete.id));
             if (active?.id === toDelete.id) setActive(null);
+            toast.success('Mensaje eliminado.');
             setToDelete(null);
           }
         }}

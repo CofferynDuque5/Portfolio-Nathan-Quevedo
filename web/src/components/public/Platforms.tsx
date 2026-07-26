@@ -41,7 +41,7 @@ export default function Platforms({ platforms }: { platforms: Platform[] }) {
               <div className="card flex h-40 flex-col items-center justify-center gap-3 text-center">
                 {p.logo ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.logo} alt={p.name} className="h-12 w-auto object-contain" />
+                  <img src={p.logo} alt={p.name} loading="lazy" decoding="async" className="h-12 w-auto object-contain" />
                 ) : (
                   <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-500/10 text-brand-500">
                     <Play size={22} />

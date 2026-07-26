@@ -17,7 +17,7 @@ export default function LogosMarquee({ logos }: { logos: Logo[] }) {
             <div key={`${l.id}-${i}`} className="flex items-center gap-2 text-slate-400">
               {l.image && !l.image.includes('placeholder') ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={l.image} alt={l.name} className="h-8 w-auto object-contain opacity-70 grayscale transition hover:opacity-100 hover:grayscale-0" />
+                <img src={l.image} alt={l.name} loading="lazy" decoding="async" className="h-8 w-auto object-contain opacity-70 grayscale transition hover:opacity-100 hover:grayscale-0" />
               ) : (
                 <span className="text-xl font-bold text-slate-400/80">{l.name}</span>
               )}

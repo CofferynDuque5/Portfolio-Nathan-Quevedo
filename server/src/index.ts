@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
 import path from 'path';
 import fs from 'fs';
 import { env } from './config/env';
@@ -43,6 +44,18 @@ app.use(
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', service: 'portfolio-nathan-api', time: new Date().toISOString() });
 });
+
+// Límite general de peticiones a la API (protección básica anti-abuso).
+app.use(
+  '/api',
+  rateLimit({
+    windowMs: 60 * 1000,
+    max: 300,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Demasiadas peticiones. Espera un momento e intenta de nuevo.' },
+  })
+);
 
 // API
 app.use('/api', routes);
