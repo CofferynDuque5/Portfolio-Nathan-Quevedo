@@ -1,0 +1,307 @@
+// ============================================================
+//  Prisma Schema - Portfolio Nathan Quevedo
+//  Base de datos: MySQL
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ------------------------------------------------------------
+//  Usuarios administradores
+// ------------------------------------------------------------
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(ADMIN)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("users")
+}
+
+enum Role {
+  ADMIN
+  EDITOR
+}
+
+// ------------------------------------------------------------
+//  Hero (portada / slider principal)
+// ------------------------------------------------------------
+model HeroSlide {
+  id        Int      @id @default(autoincrement())
+  title     String
+  subtitle  String?  @db.Text
+  highlight String?
+  ctaText   String?
+  ctaLink   String?
+  image     String?
+  order     Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("hero_slides")
+}
+
+// ------------------------------------------------------------
+//  Categorías (agrupan servicios / licencias / plataformas)
+// ------------------------------------------------------------
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String
+  slug        String    @unique
+  description String?   @db.Text
+  icon        String?
+  order       Int       @default(0)
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  services    Service[]
+
+  @@map("categories")
+}
+
+// ------------------------------------------------------------
+//  Servicios
+// ------------------------------------------------------------
+model Service {
+  id          Int       @id @default(autoincrement())
+  title       String
+  slug        String    @unique
+  shortDesc   String?   @db.Text
+  description String?   @db.Text
+  icon        String?
+  image       String?
+  price       String?
+  ctaText     String?
+  ctaLink     String?
+  featured    Boolean   @default(false)
+  order       Int       @default(0)
+  active      Boolean   @default(true)
+  categoryId  Int?
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([categoryId])
+  @@map("services")
+}
+
+// ------------------------------------------------------------
+//  Plataformas de streaming / servicios premium
+// ------------------------------------------------------------
+model Platform {
+  id          Int      @id @default(autoincrement())
+  name        String
+  slug        String   @unique
+  description String?  @db.Text
+  logo        String?
+  url         String?
+  price       String?
+  order       Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("platforms")
+}
+
+// ------------------------------------------------------------
+//  Licencias de software
+// ------------------------------------------------------------
+model License {
+  id          Int      @id @default(autoincrement())
+  name        String
+  slug        String   @unique
+  type        String?
+  description String?  @db.Text
+  image       String?
+  price       String?
+  features    String?  @db.Text
+  order       Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("licenses")
+}
+
+// ------------------------------------------------------------
+//  Preguntas frecuentes
+// ------------------------------------------------------------
+model Faq {
+  id        Int      @id @default(autoincrement())
+  question  String   @db.Text
+  answer    String   @db.Text
+  category  String?
+  order     Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("faqs")
+}
+
+// ------------------------------------------------------------
+//  Galería
+// ------------------------------------------------------------
+model GalleryItem {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?  @db.Text
+  image       String
+  category    String?
+  order       Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("gallery_items")
+}
+
+// ------------------------------------------------------------
+//  Banners promocionales
+// ------------------------------------------------------------
+model Banner {
+  id        Int      @id @default(autoincrement())
+  title     String
+  subtitle  String?  @db.Text
+  image     String?
+  link      String?
+  position  String?  @default("home")
+  order     Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("banners")
+}
+
+// ------------------------------------------------------------
+//  Logotipos oficiales (marcas / partners)
+// ------------------------------------------------------------
+model Logo {
+  id        Int      @id @default(autoincrement())
+  name      String
+  image     String
+  url       String?
+  order     Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("logos")
+}
+
+// ------------------------------------------------------------
+//  Redes sociales
+// ------------------------------------------------------------
+model SocialLink {
+  id        Int      @id @default(autoincrement())
+  platform  String
+  url       String
+  icon      String?
+  order     Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("social_links")
+}
+
+// ------------------------------------------------------------
+//  Información de contacto (singleton por clave)
+// ------------------------------------------------------------
+model ContactInfo {
+  id        Int      @id @default(autoincrement())
+  label     String
+  value     String
+  icon      String?
+  type      String?  @default("text") // text | email | phone | whatsapp | address | hours
+  order     Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("contact_info")
+}
+
+// ------------------------------------------------------------
+//  SEO por página
+// ------------------------------------------------------------
+model Seo {
+  id          Int      @id @default(autoincrement())
+  page        String   @unique // home, servicios, etc.
+  title       String
+  description String   @db.Text
+  keywords    String?  @db.Text
+  ogImage     String?
+  canonical   String?
+  noindex     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("seo")
+}
+
+// ------------------------------------------------------------
+//  Configuración general (clave/valor)
+// ------------------------------------------------------------
+model Setting {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String   @db.Text
+  group     String?  @default("general")
+  label     String?
+  type      String?  @default("text") // text | textarea | color | image | boolean
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
+// ------------------------------------------------------------
+//  Biblioteca multimedia
+// ------------------------------------------------------------
+model MediaFile {
+  id           Int      @id @default(autoincrement())
+  filename     String
+  originalName String
+  url          String
+  path         String
+  mimeType     String
+  size         Int
+  width        Int?
+  height       Int?
+  folder       String   @default("general")
+  createdAt    DateTime @default(now())
+
+  @@index([folder])
+  @@map("media_files")
+}
+
+// ------------------------------------------------------------
+//  Mensajes del formulario de contacto
+// ------------------------------------------------------------
+model ContactMessage {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  phone     String?
+  subject   String?
+  message   String   @db.Text
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("contact_messages")
+}

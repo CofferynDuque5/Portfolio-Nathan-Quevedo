@@ -1,0 +1,27 @@
+{
+  "name": "portfolio-nathan-quevedo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Portfolio corporativo premium y administrable para Nathan Quevedo. Next.js 15 + Express + Prisma + MySQL.",
+  "workspaces": [
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "install:all": "npm install",
+    "prisma:generate": "npm run prisma:generate -w server",
+    "prisma:migrate": "npm run prisma:migrate -w server",
+    "db:push": "npm run db:push -w server",
+    "seed": "npm run seed -w server",
+    "dev": "concurrently -n server,web -c blue,magenta \"npm run dev -w server\" \"npm run dev -w web\"",
+    "build": "npm run build -w server && npm run build -w web",
+    "start": "concurrently -n server,web -c blue,magenta \"npm run start -w server\" \"npm run start -w web\"",
+    "setup": "npm install && npm run prisma:generate && npm run db:push && npm run seed"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  },
+  "engines": {
+    "node": ">=18.18.0"
+  }
+}
