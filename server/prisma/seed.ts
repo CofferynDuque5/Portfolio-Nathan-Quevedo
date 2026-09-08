@@ -123,12 +123,22 @@ async function main() {
 
   // ---------------- Plataformas de streaming ----------------
   await prisma.platform.deleteMany();
-  const platforms = ['Netflix', 'Disney+', 'HBO Max', 'Prime Video', 'Spotify', 'YouTube Premium', 'Paramount+', 'Crunchyroll'];
+  const platforms = [
+    { name: 'Netflix', key: 'netflix' },
+    { name: 'Disney+', key: 'disney-plus' },
+    { name: 'HBO Max', key: 'hbo-max' },
+    { name: 'Prime Video', key: 'prime-video' },
+    { name: 'Spotify', key: 'spotify' },
+    { name: 'YouTube Premium', key: 'youtube' },
+    { name: 'Paramount+', key: 'paramount-plus' },
+    { name: 'Crunchyroll', key: 'crunchyroll' },
+  ];
   await prisma.platform.createMany({
-    data: platforms.map((name, i) => ({
-      name,
-      slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-      description: `Suscripción premium a ${name}.`,
+    data: platforms.map((p, i) => ({
+      name: p.name,
+      slug: p.key,
+      description: `Suscripción premium a ${p.name}.`,
+      logo: `/brands/${p.key}.svg`, // logo por defecto (editable en el panel)
       order: i,
       active: true,
     })),
@@ -138,25 +148,26 @@ async function main() {
   // ---------------- Licencias ----------------
   await prisma.license.deleteMany();
   const licenses = [
-    { name: 'Windows 11 Pro', type: 'Sistema Operativo' },
-    { name: 'Microsoft Office 2021', type: 'Ofimática' },
-    { name: 'Microsoft 365', type: 'Suscripción' },
-    { name: 'Adobe Creative Cloud', type: 'Diseño' },
-    { name: 'Canva Pro', type: 'Diseño' },
-    { name: 'CapCut Pro', type: 'Edición de video' },
-    { name: 'ChatGPT Plus', type: 'Inteligencia Artificial' },
-    { name: 'Google One', type: 'Almacenamiento' },
-    { name: 'OneDrive', type: 'Almacenamiento' },
-    { name: 'Dropbox', type: 'Almacenamiento' },
-    { name: 'VPN Premium', type: 'Seguridad' },
-    { name: 'Antivirus Premium', type: 'Seguridad' },
+    { name: 'Windows 11 Pro', type: 'Sistema Operativo', key: 'windows-11' },
+    { name: 'Microsoft Office 2021', type: 'Ofimática', key: 'office-2021' },
+    { name: 'Microsoft 365', type: 'Suscripción', key: 'microsoft-365' },
+    { name: 'Adobe Creative Cloud', type: 'Diseño', key: 'adobe-cc' },
+    { name: 'Canva Pro', type: 'Diseño', key: 'canva' },
+    { name: 'CapCut Pro', type: 'Edición de video', key: 'capcut' },
+    { name: 'ChatGPT Plus', type: 'Inteligencia Artificial', key: 'chatgpt' },
+    { name: 'Google One', type: 'Almacenamiento', key: 'google-one' },
+    { name: 'OneDrive', type: 'Almacenamiento', key: 'onedrive' },
+    { name: 'Dropbox', type: 'Almacenamiento', key: 'dropbox' },
+    { name: 'VPN Premium', type: 'Seguridad', key: 'vpn' },
+    { name: 'Antivirus Premium', type: 'Seguridad', key: 'antivirus' },
   ];
   await prisma.license.createMany({
     data: licenses.map((l, i) => ({
       name: l.name,
-      slug: l.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      slug: l.key,
       type: l.type,
       description: `Licencia original de ${l.name}.`,
+      image: `/brands/${l.key}.svg`, // logo por defecto (editable en el panel)
       order: i,
       active: true,
     })),

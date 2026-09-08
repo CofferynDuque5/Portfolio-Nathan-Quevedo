@@ -23,9 +23,20 @@ export default function Licenses({ licenses, whatsapp }: { licenses: License[]; 
               <div className="card flex h-full flex-col">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <span className="grid h-11 w-11 place-items-center rounded-2xl bg-brand-500/10 text-brand-600 dark:text-brand-300">
-                      <KeyRound size={20} />
-                    </span>
+                    {l.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={l.image}
+                        alt={l.name}
+                        loading="lazy"
+                        decoding="async"
+                        className="h-11 w-11 shrink-0 rounded-2xl object-contain"
+                      />
+                    ) : (
+                      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand-500/10 text-brand-600 dark:text-brand-300">
+                        <KeyRound size={20} />
+                      </span>
+                    )}
                     <div>
                       <h3 className="font-semibold leading-tight">{l.name}</h3>
                       {l.type && <span className="text-xs text-slate-500">{l.type}</span>}
