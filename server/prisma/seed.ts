@@ -40,8 +40,7 @@ async function main() {
       type: 'textarea',
     },
     { key: 'primaryColor', value: '#6366f1', group: 'theme', label: 'Color primario', type: 'color' },
-    { key: 'whatsapp', value: '+593000000000', group: 'contact', label: 'WhatsApp', type: 'text' },
-    { key: 'email', value: 'contacto@nathanquevedo.com', group: 'contact', label: 'Email', type: 'text' },
+    { key: 'whatsapp', value: '+58 4225200631', group: 'contact', label: 'WhatsApp', type: 'text' },
     { key: 'processTitle', value: 'Proceso de trabajo', group: 'process', label: 'Título proceso', type: 'text' },
   ];
   for (const s of settings) {
@@ -187,7 +186,7 @@ async function main() {
   await prisma.socialLink.deleteMany();
   await prisma.socialLink.createMany({
     data: [
-      { platform: 'WhatsApp', url: 'https://wa.me/593000000000', icon: 'MessageCircle', order: 0, active: true },
+      { platform: 'WhatsApp', url: 'https://wa.me/584225200631', icon: 'MessageCircle', order: 0, active: true },
       { platform: 'Instagram', url: 'https://instagram.com/', icon: 'Instagram', order: 1, active: true },
       { platform: 'Facebook', url: 'https://facebook.com/', icon: 'Facebook', order: 2, active: true },
       { platform: 'TikTok', url: 'https://tiktok.com/', icon: 'Music2', order: 3, active: true },
@@ -199,9 +198,8 @@ async function main() {
   await prisma.contactInfo.deleteMany();
   await prisma.contactInfo.createMany({
     data: [
-      { label: 'WhatsApp', value: '+593 00 000 0000', icon: 'Phone', type: 'whatsapp', order: 0, active: true },
-      { label: 'Email', value: 'contacto@nathanquevedo.com', icon: 'Mail', type: 'email', order: 1, active: true },
-      { label: 'Horario', value: 'Lun a Sáb, 9:00 - 20:00', icon: 'Clock', type: 'hours', order: 2, active: true },
+      { label: 'WhatsApp', value: '+58 4225200631', icon: 'Phone', type: 'whatsapp', order: 0, active: true },
+      { label: 'Horario', value: 'Lun a Sáb, 9:00 - 20:00', icon: 'Clock', type: 'hours', order: 1, active: true },
     ],
   });
   console.log('   ✓ Información de contacto');

@@ -65,7 +65,7 @@ export default async function HomePage() {
         <Hero slides={content.heroSlides} tagline={s.tagline} />
         <LogosMarquee logos={content.logos} />
         <About title={s.aboutTitle || 'Sobre Nathan Quevedo'} text={s.aboutText || ''} />
-        <Services services={content.services} />
+        <Services services={content.services} whatsapp={s.whatsapp} />
         <Platforms platforms={content.platforms} />
         <Licenses licenses={content.licenses} whatsapp={s.whatsapp} />
         <Process title={s.processTitle || 'Proceso de trabajo'} />

@@ -40,7 +40,8 @@ export const fallbackContent: SiteContent = {
   logos: [],
   socialLinks: [],
   contactInfo: [
-    { id: 1, label: 'Email', value: 'contacto@nathanquevedo.com', icon: 'Mail', type: 'email', order: 0, active: true },
+    { id: 1, label: 'WhatsApp', value: '+58 4225200631', icon: 'Phone', type: 'whatsapp', order: 0, active: true },
+    { id: 2, label: 'Horario', value: 'Lun a Sáb, 9:00 - 20:00', icon: 'Clock', type: 'hours', order: 1, active: true },
   ],
   settings: {
     siteName: 'Nathan Quevedo',
@@ -48,5 +49,6 @@ export const fallbackContent: SiteContent = {
     aboutTitle: 'Sobre Nathan Quevedo',
     aboutText:
       'Especialista en soluciones digitales, licencias de software original y suscripciones premium. Ofrezco instalación remota, soporte técnico y asesoría personalizada.',
+    whatsapp: '+58 4225200631',
   },
 };
