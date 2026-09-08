@@ -110,9 +110,10 @@ async function main() {
       icon: s.icon,
       shortDesc: s.shortDesc,
       description: s.description,
+      image: `/services/${s.slug}.svg`, // ilustración por defecto (editable en el panel)
       featured: s.featured ?? false,
       categoryId: catId(s.category),
-      ctaText: 'Solicitar',
+      ctaText: 'Solicitar por WhatsApp',
       ctaLink: '#contacto',
       order: i,
       active: true,
