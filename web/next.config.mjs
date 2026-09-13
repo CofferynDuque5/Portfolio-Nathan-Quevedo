@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+const isExternalApi = /^https?:\/\//.test(apiUrl);
 
 const nextConfig = {
   reactStrictMode: true,
@@ -12,9 +13,11 @@ const nextConfig = {
       { protocol: 'https', hostname: '**' },
     ],
   },
-  // Redirige /uploads al backend Express que sirve los archivos subidos,
-  // de modo que las imágenes funcionen aunque el frontend y la API estén separados.
+  // Solo en modo "dos procesos" (API en otro dominio/puerto) redirigimos
+  // /uploads a la API. En modo "un solo proceso" Express ya sirve /uploads
+  // en el mismo dominio, así que no hace falta reescritura.
   async rewrites() {
+    if (!isExternalApi) return [];
     return [
       {
         source: '/uploads/:path*',

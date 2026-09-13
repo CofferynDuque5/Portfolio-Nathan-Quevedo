@@ -117,22 +117,29 @@ npm run seed
 
 ### 5. Arrancar
 
-**Desarrollo** (frontend + backend con recarga en caliente):
+**Producción (un solo proceso — recomendado)**
+
+Un único proceso sirve la web y la API en el mismo dominio (`app.js`):
+
+```bash
+npm run build
+npm start          # ejecuta node app.js
+```
+
+- Sitio público → `http://localhost:3000` (o el `PORT` que definas)
+- Panel admin → `http://localhost:3000/admin`
+- API → `http://localhost:3000/api`
+
+> 🏷️ **¿Vas a subirlo a cPanel / hosting con Node.js?** Sigue la guía paso a
+> paso en **[`DEPLOY-CPANEL.md`](./DEPLOY-CPANEL.md)**.
+
+**Desarrollo** (frontend + backend por separado, con recarga en caliente):
 
 ```bash
 npm run dev
 ```
-
-**Producción**:
-
-```bash
-npm run build
-npm start
-```
-
-- Sitio público → `http://localhost:3000`
-- Panel admin → `http://localhost:3000/admin`
-- API → `http://localhost:4000`
+> Para `npm run dev` ajusta el `.env` a la sección de desarrollo (ver comentarios
+> en `.env.example`: `API_URL`/`NEXT_PUBLIC_API_URL` = `http://localhost:4000`).
 
 ### 🔑 Credenciales por defecto
 

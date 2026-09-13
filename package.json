@@ -11,12 +11,19 @@
     "install:all": "npm install",
     "prisma:generate": "npm run prisma:generate -w server",
     "prisma:migrate": "npm run prisma:migrate -w server",
+    "prisma:deploy": "npm run prisma:deploy -w server",
     "db:push": "npm run db:push -w server",
     "seed": "npm run seed -w server",
     "dev": "concurrently -n server,web -c blue,magenta \"npm run dev -w server\" \"npm run dev -w web\"",
     "build": "npm run build -w server && npm run build -w web",
-    "start": "concurrently -n server,web -c blue,magenta \"npm run start -w server\" \"npm run start -w web\"",
-    "setup": "npm install && npm run prisma:generate && npm run db:push && npm run seed"
+    "start": "node app.js",
+    "start:multi": "concurrently -n server,web -c blue,magenta \"npm run start -w server\" \"npm run start -w web\"",
+    "setup": "npm install && npm run build && npm run db:push && npm run seed"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "next": "^15.5.4"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"

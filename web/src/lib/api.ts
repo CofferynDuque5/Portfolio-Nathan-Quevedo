@@ -1,11 +1,19 @@
 import { SiteContent } from './types';
 import { fallbackContent } from './fallback';
 
-/** URL base de la API. En SSR usa API_URL; en el cliente NEXT_PUBLIC_API_URL. */
+/**
+ * URL base de la API.
+ * - En el cliente: usa NEXT_PUBLIC_API_URL; si está vacío, usa rutas
+ *   relativas ("/api/..."), ideal para el despliegue de un solo proceso
+ *   (web y API en el mismo dominio).
+ * - En el servidor (SSR): usa API_URL o NEXT_PUBLIC_API_URL; si están vacíos,
+ *   apunta al propio proceso local (127.0.0.1:PORT).
+ */
+const LOCAL_API = `http://127.0.0.1:${process.env.PORT || '3000'}`;
 export const API_URL =
-  (typeof window === 'undefined'
-    ? process.env.API_URL || process.env.NEXT_PUBLIC_API_URL
-    : process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000';
+  typeof window === 'undefined'
+    ? process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || LOCAL_API
+    : process.env.NEXT_PUBLIC_API_URL || '';
 
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 

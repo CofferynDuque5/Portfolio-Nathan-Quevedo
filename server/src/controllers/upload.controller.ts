@@ -8,8 +8,16 @@ import { prisma } from '../lib/prisma';
 import { env } from '../config/env';
 import { HttpError } from '../middleware/error';
 
-/** Raíz absoluta donde se guardan los archivos subidos (/public/uploads). */
-export const UPLOAD_ROOT = path.resolve(process.cwd(), env.uploadDir);
+/**
+ * Raíz absoluta donde se guardan los archivos subidos (web/public/uploads).
+ * Se resuelve a partir de la ubicación del propio archivo (__dirname), de modo
+ * que funciona igual ejecutando desde /server (dos procesos) o desde la raíz
+ * del proyecto (un solo proceso). Un UPLOAD_DIR absoluto en el .env tiene
+ * prioridad si se define.
+ */
+const DEFAULT_UPLOAD_ROOT = path.resolve(__dirname, '../../../web/public/uploads');
+export const UPLOAD_ROOT =
+  env.uploadDir && path.isAbsolute(env.uploadDir) ? env.uploadDir : DEFAULT_UPLOAD_ROOT;
 
 const IMAGE_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.avif', '.gif']);
 
