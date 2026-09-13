@@ -1,14 +1,16 @@
 /**
  * ============================================================
- *  Preparación de la base de datos — SIN escribir comandos
+ *  Preparación de la base de datos
  * ============================================================
- *  1) Crea las tablas (si no existen) a partir de la migración inicial.
- *  2) Siembra el contenido inicial (admin, servicios, plataformas,
- *     licencias, FAQ, redes, contacto, SEO, etc.).
+ *  - Crea las tablas (si no existen) desde la migración inicial.
+ *  - Siembra el contenido inicial (admin, servicios, plataformas,
+ *    licencias, FAQ, redes, contacto, SEO, etc.).
  *
- *  Se ejecuta con Node puro (no necesita tsx ni herramientas de compilación):
- *      node scripts/setup-db.cjs
- *  o desde cPanel > Setup Node.js App > "Run JS script" eligiendo "db:setup".
+ *  Se usa de dos formas:
+ *   1) Automático: app.js llama a autoBootstrap() al arrancar. Si la BD
+ *      está vacía, la prepara sola (no toca nada si ya tiene datos).
+ *   2) Manual: `node scripts/setup-db.cjs`  (o cPanel > Run JS script > db:setup)
+ *      Recarga el contenido base.
  * ============================================================
  */
 const path = require('path');
@@ -19,8 +21,6 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 
-const prisma = new PrismaClient();
-
 const admin = {
   name: process.env.ADMIN_NAME || 'Nathan Quevedo',
   email: process.env.ADMIN_EMAIL || 'admin@nathanquevedo.com',
@@ -28,13 +28,13 @@ const admin = {
 };
 
 /** Crea las tablas ejecutando el SQL de las migraciones si aún no existen. */
-async function ensureSchema() {
+async function ensureSchema(prisma, log = console.log) {
   try {
     await prisma.$queryRawUnsafe('SELECT 1 FROM `users` LIMIT 1');
-    console.log('   ✓ Tablas ya existen (se omite creación).');
+    log('   ✓ Tablas ya existen (se omite creación).');
     return;
   } catch {
-    console.log('   • Creando tablas...');
+    log('   • Creando tablas...');
   }
 
   const migrationsDir = path.join(__dirname, '..', 'server', 'prisma', 'migrations');
@@ -60,10 +60,11 @@ async function ensureSchema() {
       await prisma.$executeRawUnsafe(stmt);
     }
   }
-  console.log('   ✓ Tablas creadas.');
+  log('   ✓ Tablas creadas.');
 }
 
-async function seed() {
+/** Inserta / actualiza todo el contenido inicial. */
+async function seedContent(prisma, log = console.log) {
   // ---------------- Usuario administrador ----------------
   const passwordHash = await bcrypt.hash(admin.password, 10);
   await prisma.user.upsert({
@@ -71,7 +72,7 @@ async function seed() {
     update: { name: admin.name, passwordHash, active: true },
     create: { name: admin.name, email: admin.email, passwordHash, role: 'ADMIN' },
   });
-  console.log(`   ✓ Admin: ${admin.email}`);
+  log(`   ✓ Admin: ${admin.email}`);
 
   // ---------------- Configuración general ----------------
   const settings = [
@@ -97,7 +98,7 @@ async function seed() {
       create: s,
     });
   }
-  console.log(`   ✓ ${settings.length} ajustes generales`);
+  log(`   ✓ ${settings.length} ajustes generales`);
 
   // ---------------- Hero ----------------
   await prisma.heroSlide.deleteMany();
@@ -124,7 +125,7 @@ async function seed() {
       },
     ],
   });
-  console.log('   ✓ Hero');
+  log('   ✓ Hero');
 
   // ---------------- Categorías ----------------
   await prisma.category.deleteMany();
@@ -138,7 +139,7 @@ async function seed() {
   for (const c of categoryData) await prisma.category.create({ data: c });
   const categories = await prisma.category.findMany();
   const catId = (slug) => (categories.find((c) => c.slug === slug) || {}).id ?? null;
-  console.log('   ✓ Categorías');
+  log('   ✓ Categorías');
 
   // ---------------- Servicios ----------------
   await prisma.service.deleteMany();
@@ -170,7 +171,7 @@ async function seed() {
       active: true,
     })),
   });
-  console.log(`   ✓ ${services.length} servicios`);
+  log(`   ✓ ${services.length} servicios`);
 
   // ---------------- Plataformas de streaming ----------------
   await prisma.platform.deleteMany();
@@ -194,7 +195,7 @@ async function seed() {
       active: true,
     })),
   });
-  console.log(`   ✓ ${platforms.length} plataformas`);
+  log(`   ✓ ${platforms.length} plataformas`);
 
   // ---------------- Licencias ----------------
   await prisma.license.deleteMany();
@@ -223,7 +224,7 @@ async function seed() {
       active: true,
     })),
   });
-  console.log(`   ✓ ${licenses.length} licencias`);
+  log(`   ✓ ${licenses.length} licencias`);
 
   // ---------------- FAQ ----------------
   await prisma.faq.deleteMany();
@@ -235,7 +236,7 @@ async function seed() {
     { question: '¿Cuánto tarda la activación?', answer: 'La mayoría de servicios se activan el mismo día de la compra.' },
   ];
   await prisma.faq.createMany({ data: faqs.map((f, i) => ({ ...f, order: i, active: true })) });
-  console.log(`   ✓ ${faqs.length} preguntas frecuentes`);
+  log(`   ✓ ${faqs.length} preguntas frecuentes`);
 
   // ---------------- Logos (marcas / partners) ----------------
   await prisma.logo.deleteMany();
@@ -250,7 +251,7 @@ async function seed() {
   await prisma.logo.createMany({
     data: logos.map((l, i) => ({ name: l.name, image: l.image, order: i, active: true })),
   });
-  console.log(`   ✓ ${logos.length} logos`);
+  log(`   ✓ ${logos.length} logos`);
 
   // ---------------- Redes sociales ----------------
   await prisma.socialLink.deleteMany();
@@ -262,7 +263,7 @@ async function seed() {
       { platform: 'TikTok', url: 'https://tiktok.com/', icon: 'Music2', order: 3, active: true },
     ],
   });
-  console.log('   ✓ Redes sociales');
+  log('   ✓ Redes sociales');
 
   // ---------------- Información de contacto ----------------
   await prisma.contactInfo.deleteMany();
@@ -272,7 +273,7 @@ async function seed() {
       { label: 'Horario', value: 'Lun a Sáb, 9:00 - 20:00', icon: 'Clock', type: 'hours', order: 1, active: true },
     ],
   });
-  console.log('   ✓ Información de contacto');
+  log('   ✓ Información de contacto');
 
   // ---------------- Banners ----------------
   await prisma.banner.deleteMany();
@@ -286,7 +287,7 @@ async function seed() {
       active: true,
     },
   });
-  console.log('   ✓ Banners');
+  log('   ✓ Banners');
 
   // ---------------- SEO ----------------
   await prisma.seo.deleteMany();
@@ -302,22 +303,61 @@ async function seed() {
         'licencias, software original, windows, office, adobe, streaming, netflix, vpn, antivirus, instalación remota, soporte técnico, Nathan Quevedo',
     },
   });
-  console.log('   ✓ SEO');
+  log('   ✓ SEO');
 }
 
-async function main() {
-  console.log('🗄️  Preparando base de datos...');
-  await ensureSchema();
-  console.log('🌱 Sembrando contenido...');
-  await seed();
-  console.log('✅ Base de datos lista.');
+/** ¿La base de datos necesita preparación (no hay tablas o no hay admin)? */
+async function needsSetup(prisma) {
+  try {
+    const n = await prisma.user.count();
+    return n === 0;
+  } catch {
+    return true; // la tabla no existe todavía
+  }
 }
 
-main()
-  .catch((e) => {
+/**
+ * Auto-arranque para app.js: si la BD está vacía, la prepara sola.
+ * No hace NADA si ya tiene contenido (seguro ante reinicios).
+ */
+async function autoBootstrap(log = console.log) {
+  const prisma = new PrismaClient();
+  try {
+    if (!(await needsSetup(prisma))) {
+      return { ok: true, action: 'skip' };
+    }
+    log('🗄️  Base de datos vacía: preparándola automáticamente...');
+    await ensureSchema(prisma, log);
+    await seedContent(prisma, log);
+    log('✅ Base de datos lista.');
+    return { ok: true, action: 'created' };
+  } catch (e) {
+    return { ok: false, error: e };
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+/** Ejecución manual completa (crea tablas + recarga contenido). */
+async function runCli() {
+  const prisma = new PrismaClient();
+  try {
+    console.log('🗄️  Preparando base de datos...');
+    await ensureSchema(prisma);
+    console.log('🌱 Sembrando contenido...');
+    await seedContent(prisma);
+    console.log('✅ Base de datos lista.');
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+module.exports = { ensureSchema, seedContent, needsSetup, autoBootstrap };
+
+// Si se ejecuta directamente (node scripts/setup-db.cjs o npm run db:setup)
+if (require.main === module) {
+  runCli().catch((e) => {
     console.error('❌ Error preparando la base de datos:', e);
     process.exitCode = 1;
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
   });
+}

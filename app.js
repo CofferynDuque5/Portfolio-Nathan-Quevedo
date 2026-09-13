@@ -38,13 +38,39 @@ try {
   throw e;
 }
 
+// Auto-preparación de la base de datos (crea tablas + contenido si está vacía).
+let autoBootstrap;
+try {
+  ({ autoBootstrap } = require('./scripts/setup-db.cjs'));
+} catch {
+  autoBootstrap = null;
+}
+
 // App de Next.js (frontend + panel /admin) ubicada en /web.
 const nextApp = next({ dev: false, dir: path.join(__dirname, 'web') });
 const handle = nextApp.getRequestHandler();
 
+async function prepareDatabase() {
+  if (!autoBootstrap) return;
+  try {
+    const result = await autoBootstrap();
+    if (result.action === 'created') {
+      console.log('✅ Base de datos inicializada automáticamente.');
+    } else if (!result.ok) {
+      console.error('⚠️  No se pudo preparar la base de datos automáticamente:', result.error?.message);
+      console.error('   Revisa DATABASE_URL en el .env. La app arrancará igualmente.');
+    }
+  } catch (e) {
+    console.error('⚠️  Error en la preparación automática de la base de datos:', e?.message);
+  }
+}
+
 nextApp
   .prepare()
-  .then(() => {
+  .then(async () => {
+    // Prepara la BD antes de aceptar peticiones (solo actúa si está vacía).
+    await prepareDatabase();
+
     const server = express();
 
     // 1) API + archivos subidos (/api/*, /uploads/*)

@@ -80,21 +80,16 @@ automáticamente.
 
 ---
 
-## Paso 6 · Preparar la base de datos (un clic, sin escribir)
-
-En la misma pantalla, sección **Run JS script**:
-
-1. En el desplegable elige **`db:setup`**.
-2. Pulsa **Run**.
-
-Esto **crea todas las tablas y carga el contenido** (servicios, plataformas,
-licencias, logos, FAQ, admin…). Verás un log terminando en `Base de datos lista`.
-
----
-
-## Paso 7 · Reiniciar y abrir
+## Paso 6 · Reiniciar y abrir  (la base de datos se prepara SOLA)
 
 Pulsa **Restart** (arriba en Setup Node.js App).
+
+La primera vez que arranca, la app **detecta que la base de datos está vacía y
+crea todas las tablas y el contenido automáticamente** (servicios, plataformas,
+licencias, logos, FAQ, admin…). No tienes que ejecutar nada más.
+
+> Si prefieres hacerlo manualmente o **recargar** el contenido de ejemplo:
+> en **Run JS script** elige **`db:setup`** y pulsa **Run**.
 
 - Sitio: `https://nathanquevedo.nvcorx.com`
 - Panel: `https://nathanquevedo.nvcorx.com/admin`
