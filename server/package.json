@@ -12,10 +12,10 @@
     "prisma:migrate": "dotenv -e ../.env -- prisma migrate dev",
     "prisma:deploy": "dotenv -e ../.env -- prisma migrate deploy",
     "db:push": "dotenv -e ../.env -- prisma db push",
-    "seed": "tsx prisma/seed.ts"
+    "seed": "node ../scripts/setup-db.cjs"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "node ../scripts/setup-db.cjs"
   },
   "dependencies": {
     "@prisma/client": "^6.2.1",
@@ -29,6 +29,7 @@
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "multer": "^2.0.2",
+    "prisma": "^6.2.1",
     "sharp": "^0.33.5",
     "zod": "^3.24.1"
   },
@@ -42,7 +43,6 @@
     "@types/multer": "^1.4.12",
     "@types/node": "^22.10.5",
     "dotenv-cli": "^8.0.0",
-    "prisma": "^6.2.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3"
   }

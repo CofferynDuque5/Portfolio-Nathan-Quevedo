@@ -24,8 +24,8 @@ export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:30
 export async function getSiteContent(): Promise<SiteContent> {
   try {
     const res = await fetch(`${API_URL}/api/public/content`, {
-      // Revalida cada 60s: buen equilibrio entre frescura y rendimiento.
-      next: { revalidate: 60 },
+      // Siempre datos frescos: los cambios del panel se ven al instante.
+      cache: 'no-store',
     });
     if (!res.ok) throw new Error(`API respondió ${res.status}`);
     const data = (await res.json()) as SiteContent;
@@ -48,7 +48,7 @@ export interface SeoData {
 /** Obtiene los metadatos SEO de una página concreta. */
 export async function getSeo(page: string): Promise<SeoData | null> {
   try {
-    const res = await fetch(`${API_URL}/api/public/seo/${page}`, { next: { revalidate: 300 } });
+    const res = await fetch(`${API_URL}/api/public/seo/${page}`, { cache: 'no-store' });
     if (!res.ok) return null;
     const json = await res.json();
     return json.data ?? null;

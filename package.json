@@ -8,17 +8,18 @@
     "web"
   ],
   "scripts": {
-    "install:all": "npm install",
-    "prisma:generate": "npm run prisma:generate -w server",
+    "postinstall": "prisma generate --schema server/prisma/schema.prisma",
+    "prisma:generate": "prisma generate --schema server/prisma/schema.prisma",
     "prisma:migrate": "npm run prisma:migrate -w server",
     "prisma:deploy": "npm run prisma:deploy -w server",
     "db:push": "npm run db:push -w server",
-    "seed": "npm run seed -w server",
+    "db:setup": "node scripts/setup-db.cjs",
+    "seed": "node scripts/setup-db.cjs",
     "dev": "concurrently -n server,web -c blue,magenta \"npm run dev -w server\" \"npm run dev -w web\"",
     "build": "npm run build -w server && npm run build -w web",
     "start": "node app.js",
     "start:multi": "concurrently -n server,web -c blue,magenta \"npm run start -w server\" \"npm run start -w web\"",
-    "setup": "npm install && npm run build && npm run db:push && npm run seed"
+    "setup": "npm install && npm run build && npm run db:setup"
   },
   "dependencies": {
     "dotenv": "^16.4.7",

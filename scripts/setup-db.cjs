@@ -1,22 +1,69 @@
-import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
-import dotenv from 'dotenv';
-import path from 'path';
+/**
+ * ============================================================
+ *  Preparación de la base de datos — SIN escribir comandos
+ * ============================================================
+ *  1) Crea las tablas (si no existen) a partir de la migración inicial.
+ *  2) Siembra el contenido inicial (admin, servicios, plataformas,
+ *     licencias, FAQ, redes, contacto, SEO, etc.).
+ *
+ *  Se ejecuta con Node puro (no necesita tsx ni herramientas de compilación):
+ *      node scripts/setup-db.cjs
+ *  o desde cPanel > Setup Node.js App > "Run JS script" eligiendo "db:setup".
+ * ============================================================
+ */
+const path = require('path');
+const fs = require('fs');
 
-dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
-dotenv.config();
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+
+const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
 const admin = {
-  name: process.env.ADMIN_NAME ?? 'Nathan Quevedo',
-  email: process.env.ADMIN_EMAIL ?? 'admin@nathanquevedo.com',
-  password: process.env.ADMIN_PASSWORD ?? 'Admin1234!',
+  name: process.env.ADMIN_NAME || 'Nathan Quevedo',
+  email: process.env.ADMIN_EMAIL || 'admin@nathanquevedo.com',
+  password: process.env.ADMIN_PASSWORD || 'Admin1234!',
 };
 
-async function main() {
-  console.log('🌱 Sembrando base de datos...');
+/** Crea las tablas ejecutando el SQL de las migraciones si aún no existen. */
+async function ensureSchema() {
+  try {
+    await prisma.$queryRawUnsafe('SELECT 1 FROM `users` LIMIT 1');
+    console.log('   ✓ Tablas ya existen (se omite creación).');
+    return;
+  } catch {
+    console.log('   • Creando tablas...');
+  }
 
+  const migrationsDir = path.join(__dirname, '..', 'server', 'prisma', 'migrations');
+  const dirs = fs
+    .readdirSync(migrationsDir)
+    .filter((d) => fs.existsSync(path.join(migrationsDir, d, 'migration.sql')))
+    .sort();
+
+  for (const dir of dirs) {
+    const sql = fs.readFileSync(path.join(migrationsDir, dir, 'migration.sql'), 'utf8');
+    const statements = sql
+      .split(';')
+      .map((s) =>
+        s
+          .split('\n')
+          .filter((line) => !line.trim().startsWith('--'))
+          .join('\n')
+          .trim()
+      )
+      .filter((s) => s.length > 0);
+
+    for (const stmt of statements) {
+      await prisma.$executeRawUnsafe(stmt);
+    }
+  }
+  console.log('   ✓ Tablas creadas.');
+}
+
+async function seed() {
   // ---------------- Usuario administrador ----------------
   const passwordHash = await bcrypt.hash(admin.password, 10);
   await prisma.user.upsert({
@@ -27,7 +74,7 @@ async function main() {
   console.log(`   ✓ Admin: ${admin.email}`);
 
   // ---------------- Configuración general ----------------
-  const settings: { key: string; value: string; group: string; label: string; type: string }[] = [
+  const settings = [
     { key: 'siteName', value: 'Nathan Quevedo', group: 'general', label: 'Nombre del sitio', type: 'text' },
     { key: 'tagline', value: 'Servicios y Licencias Digitales Premium', group: 'general', label: 'Eslogan', type: 'text' },
     { key: 'aboutTitle', value: 'Sobre Nathan Quevedo', group: 'about', label: 'Título Sobre mí', type: 'text' },
@@ -44,7 +91,11 @@ async function main() {
     { key: 'processTitle', value: 'Proceso de trabajo', group: 'process', label: 'Título proceso', type: 'text' },
   ];
   for (const s of settings) {
-    await prisma.setting.upsert({ where: { key: s.key }, update: { value: s.value, label: s.label, group: s.group, type: s.type }, create: s });
+    await prisma.setting.upsert({
+      where: { key: s.key },
+      update: { value: s.value, label: s.label, group: s.group, type: s.type },
+      create: s,
+    });
   }
   console.log(`   ✓ ${settings.length} ajustes generales`);
 
@@ -86,7 +137,7 @@ async function main() {
   ];
   for (const c of categoryData) await prisma.category.create({ data: c });
   const categories = await prisma.category.findMany();
-  const catId = (slug: string) => categories.find((c) => c.slug === slug)?.id ?? null;
+  const catId = (slug) => (categories.find((c) => c.slug === slug) || {}).id ?? null;
   console.log('   ✓ Categorías');
 
   // ---------------- Servicios ----------------
@@ -110,8 +161,8 @@ async function main() {
       icon: s.icon,
       shortDesc: s.shortDesc,
       description: s.description,
-      image: `/services/${s.slug}.svg`, // ilustración por defecto (editable en el panel)
-      featured: s.featured ?? false,
+      image: `/services/${s.slug}.svg`,
+      featured: s.featured || false,
       categoryId: catId(s.category),
       ctaText: 'Solicitar por WhatsApp',
       ctaLink: '#contacto',
@@ -138,7 +189,7 @@ async function main() {
       name: p.name,
       slug: p.key,
       description: `Suscripción premium a ${p.name}.`,
-      logo: `/brands/${p.key}.svg`, // logo por defecto (editable en el panel)
+      logo: `/brands/${p.key}.svg`,
       order: i,
       active: true,
     })),
@@ -167,7 +218,7 @@ async function main() {
       slug: l.key,
       type: l.type,
       description: `Licencia original de ${l.name}.`,
-      image: `/brands/${l.key}.svg`, // logo por defecto (editable en el panel)
+      image: `/brands/${l.key}.svg`,
       order: i,
       active: true,
     })),
@@ -186,11 +237,18 @@ async function main() {
   await prisma.faq.createMany({ data: faqs.map((f, i) => ({ ...f, order: i, active: true })) });
   console.log(`   ✓ ${faqs.length} preguntas frecuentes`);
 
-  // ---------------- Logos ----------------
+  // ---------------- Logos (marcas / partners) ----------------
   await prisma.logo.deleteMany();
-  const logos = ['Microsoft', 'Adobe', 'Netflix', 'Google', 'Spotify', 'Canva'];
+  const logos = [
+    { name: 'Microsoft', image: '/brands/windows-11.svg' },
+    { name: 'Adobe', image: '/brands/adobe-cc.svg' },
+    { name: 'Netflix', image: '/brands/netflix.svg' },
+    { name: 'Canva', image: '/brands/canva.svg' },
+    { name: 'Spotify', image: '/brands/spotify.svg' },
+    { name: 'Dropbox', image: '/brands/dropbox.svg' },
+  ];
   await prisma.logo.createMany({
-    data: logos.map((name, i) => ({ name, image: `/uploads/general/placeholder-logo.svg`, order: i, active: true })),
+    data: logos.map((l, i) => ({ name: l.name, image: l.image, order: i, active: true })),
   });
   console.log(`   ✓ ${logos.length} logos`);
 
@@ -245,14 +303,20 @@ async function main() {
     },
   });
   console.log('   ✓ SEO');
+}
 
-  console.log('✅ Seed completado.');
+async function main() {
+  console.log('🗄️  Preparando base de datos...');
+  await ensureSchema();
+  console.log('🌱 Sembrando contenido...');
+  await seed();
+  console.log('✅ Base de datos lista.');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Error en el seed:', e);
-    process.exit(1);
+    console.error('❌ Error preparando la base de datos:', e);
+    process.exitCode = 1;
   })
   .finally(async () => {
     await prisma.$disconnect();

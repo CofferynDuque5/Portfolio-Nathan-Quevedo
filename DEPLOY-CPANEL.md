@@ -1,133 +1,130 @@
-# 🚀 Desplegar en cPanel (LiteSpeed + Node.js)
+# 🚀 Desplegar en cPanel — SIN escribir comandos
 
-> **Importante:** este proyecto es una **aplicación Node.js**, no un sitio de
-> archivos estáticos. Si solo subes los archivos verás un *"Index of /"* (listado
-> de carpetas), porque nadie está ejecutando la app. Sigue estos pasos para que
-> el sitio aparezca al entrar al dominio.
+> Este ZIP **ya viene compilado** (la web y la API están construidas dentro).
+> No necesitas ejecutar `npm run build` ni escribir comandos en la terminal.
+> Todo se hace con **botones** del panel y editando el `.env` desde el
+> **Administrador de Archivos** (ahí sí puedes pegar texto).
 
 La app corre en **un solo proceso** (`app.js`): sirve la web y la API en el
-mismo dominio. No necesitas abrir puertos ni configurar dos servicios.
+mismo dominio.
 
 ---
 
-## 1) Crear la base de datos MySQL
+## Paso 1 · Crear la base de datos MySQL
 
-En cPanel → **MySQL® Databases**:
+cPanel → **MySQL® Databases**:
 
-1. Crea una base de datos (ej. `nathan_portfolio`).
-2. Crea un usuario con una contraseña fuerte.
-3. Añade el usuario a la base de datos con **ALL PRIVILEGES**.
-4. Anota: **nombre de la BD**, **usuario** y **contraseña** (cPanel les añade un prefijo, ej. `cuenta_nathan_portfolio`).
+1. **Create New Database** → nombre, ej. `portfolio` (quedará `usuario_portfolio`).
+2. **Add New User** → usuario + contraseña (anótalos).
+3. **Add User To Database** → selecciona el usuario y la BD → **ALL PRIVILEGES**.
 
----
-
-## 2) Subir el proyecto
-
-Sube y descomprime el ZIP en una carpeta de tu cuenta. Puede ser la raíz del
-dominio (donde apunta `nathanquevedo.nvcorx.com`) o una carpeta aparte
-(ej. `/home/usuario/nathanquevedo`). Lo importante es que dentro de esa carpeta
-esté el archivo **`app.js`** junto a `package.json`, `web/` y `server/`.
-
-> No subas `node_modules` ni `.env`: se generan/crean en el servidor.
+Anota los 3 datos: **nombre de la BD**, **usuario**, **contraseña**.
 
 ---
 
-## 3) Crear el archivo `.env`
+## Paso 2 · Subir y descomprimir el proyecto
 
-En la misma carpeta, copia `.env.example` a `.env` y edítalo:
+cPanel → **Administrador de Archivos**:
+
+1. Entra a la carpeta del dominio (o crea una carpeta, ej. `nathanquevedo`).
+2. **Cargar** el ZIP y luego **Extraer** (Extract) ahí mismo.
+3. Debe quedar visible el archivo **`app.js`** junto a `package.json`, `web/` y `server/`.
+
+---
+
+## Paso 3 · Crear el archivo `.env`
+
+En el Administrador de Archivos, dentro de esa carpeta:
+
+1. Si existe `.env.example`, selecciónalo → **Copy** → renómbralo a `.env`
+   (o crea un archivo nuevo llamado `.env`).
+2. Selecciona `.env` → **Edit** y pega esto (aquí SÍ funciona pegar), cambiando
+   los datos de tu base de datos:
 
 ```env
 DATABASE_URL="mysql://USUARIO:CONTRASENA@localhost:3306/NOMBRE_BD"
-JWT_SECRET="una-clave-larga-y-aleatoria"
+JWT_SECRET="pon-aqui-cualquier-clave-larga-1234567890"
 NEXT_PUBLIC_SITE_URL="https://nathanquevedo.nvcorx.com"
-
-# Un solo proceso: dejar estas dos VACÍAS
 NEXT_PUBLIC_API_URL=""
 API_URL=""
 CORS_ORIGIN="https://nathanquevedo.nvcorx.com"
-
 ADMIN_EMAIL="admin@nathanquevedo.com"
-ADMIN_PASSWORD="TuPasswordSegura"
+ADMIN_PASSWORD="CambiaEstaClave123"
 ```
+
+Guarda (**Save Changes**).
 
 ---
 
-## 4) Registrar la app en cPanel
+## Paso 4 · Registrar la app (Setup Node.js App)
 
 cPanel → **Setup Node.js App** → **Create Application**:
 
 | Campo | Valor |
 |-------|-------|
-| Node.js version | **20.x** (o la más alta disponible; mínimo 18.18) |
+| Node.js version | **20.x** (o la más alta; mínimo 18.18) |
 | Application mode | **Production** |
-| Application root | la carpeta donde subiste el proyecto (la que contiene `app.js`) |
-| Application URL | tu dominio: `nathanquevedo.nvcorx.com` |
+| Application root | la carpeta donde está `app.js` |
+| Application URL | tu dominio (`nathanquevedo.nvcorx.com`) |
 | Application startup file | **`app.js`** |
 
 Pulsa **Create**.
 
 ---
 
-## 5) Instalar, compilar y preparar la base de datos
+## Paso 5 · Instalar dependencias (un botón)
 
-En la pantalla de la app, cPanel muestra un comando para entrar al entorno
-(algo como `source /home/USUARIO/nodevenv/.../bin/activate && cd ~/carpeta`).
-Ábrelo en **Terminal** (cPanel → Terminal) y ejecuta, en orden:
-
-```bash
-npm install
-npm run build
-npm run db:push       # crea las tablas (o: npm run prisma:deploy)
-npm run seed          # crea el admin y el contenido inicial
-```
-
-> `npm run build` compila la API y el sitio. Puede tardar 1–3 minutos.
+En la misma pantalla de la app, pulsa **Run NPM Install**.
+Espera a que termine (1–3 min). Esto también genera el cliente de la base de datos
+automáticamente.
 
 ---
 
-## 6) Reiniciar y abrir
+## Paso 6 · Preparar la base de datos (un clic, sin escribir)
 
-Vuelve a **Setup Node.js App** y pulsa **Restart**.
+En la misma pantalla, sección **Run JS script**:
 
-Abre `https://nathanquevedo.nvcorx.com` → **el sitio ya aparece**.
-Panel de administración: `https://nathanquevedo.nvcorx.com/admin`
-(usuario y contraseña del `.env`).
+1. En el desplegable elige **`db:setup`**.
+2. Pulsa **Run**.
 
----
-
-## Actualizaciones futuras
-
-Cuando cambies algo del código:
-
-```bash
-npm install        # solo si cambiaron dependencias
-npm run build
-```
-Luego **Restart** en Setup Node.js App.
+Esto **crea todas las tablas y carga el contenido** (servicios, plataformas,
+licencias, logos, FAQ, admin…). Verás un log terminando en `Base de datos lista`.
 
 ---
 
-## Alternativa: compilar en tu PC (si el hosting es limitado)
+## Paso 7 · Reiniciar y abrir
 
-Si `npm run build` falla en el servidor por poca memoria, compílalo en tu
-computadora (`npm install && npm run build`) y sube también las carpetas
-`web/.next` y `server/dist` ya generadas. En el servidor entonces solo necesitas:
+Pulsa **Restart** (arriba en Setup Node.js App).
 
-```bash
-npm install
-npm run db:push && npm run seed   # solo la primera vez
-```
-y **Restart**.
+- Sitio: `https://nathanquevedo.nvcorx.com`
+- Panel: `https://nathanquevedo.nvcorx.com/admin`
+  (usuario y contraseña que pusiste en `ADMIN_EMAIL` / `ADMIN_PASSWORD`).
+
+✅ Listo. Al entrar al dominio aparece el sitio.
 
 ---
 
-## Problemas frecuentes
+## Notas
 
-- **Sigo viendo "Index of /"** → no está registrada la Node.js App para ese
-  dominio, o el *Application root* no apunta a la carpeta con `app.js`. Revisa el paso 4.
-- **502 / la app no levanta** → revisa que `.env` tenga bien `DATABASE_URL`;
-  mira los *logs* en Setup Node.js App.
-- **Las imágenes que suba no aparecen** → asegúrate de que la carpeta
-  `web/public/uploads` tenga permisos de escritura (755).
-- **El panel no guarda / error de conexión** → normalmente `DATABASE_URL`
-  incorrecta o el usuario MySQL sin privilegios sobre la BD.
+- **Login del panel:** entra con el correo/clave del `.env`. Puedes cambiar la
+  contraseña o el WhatsApp desde el propio panel (Configuración / Usuarios).
+- **Cambiar el número, textos o imágenes:** todo se edita desde `/admin`. Las
+  imágenes se suben desde el gestor multimedia (se optimizan solas).
+- **Volver a cargar el contenido de ejemplo:** ejecuta otra vez `db:setup`
+  (no borra tus tablas si ya existen; regenera el contenido base).
+- **Si cambias de dominio:** el dominio va "horneado" en la compilación para el
+  SEO. Si cambias de dominio, avísame y te regenero el ZIP, o recompila con
+  `npm run build` tras editar `NEXT_PUBLIC_SITE_URL`.
+
+---
+
+## Si algo falla
+
+- **Sigue saliendo "Index of /"** → falta el Paso 4 (registrar la Node.js App)
+  o el *Application root* no apunta a la carpeta con `app.js`.
+- **Error 502 / no abre** → revisa el `.env` (sobre todo `DATABASE_URL`) y mira
+  los *logs* en Setup Node.js App.
+- **El panel no guarda** → el usuario MySQL no tiene privilegios sobre la BD
+  (repite el Paso 1.3) o `DATABASE_URL` está mal.
+- **Las imágenes que subo no aparecen** → da permisos de escritura (755) a la
+  carpeta `web/public/uploads`.
