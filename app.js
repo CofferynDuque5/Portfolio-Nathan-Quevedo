@@ -27,6 +27,27 @@ const next = require('next');
 
 const port = parseInt(process.env.PORT || '3000', 10);
 
+// Red de seguridad: si el cliente de Prisma no está generado (p. ej. el
+// postinstall no pudo en el hosting), lo generamos ahora antes de usarlo.
+function ensurePrismaClient() {
+  try {
+    require('@prisma/client').PrismaClient;
+    return; // ya está generado
+  } catch {
+    console.log('⚙️  Generando el cliente de Prisma...');
+  }
+  try {
+    const { execFileSync } = require('child_process');
+    const prismaBin = require.resolve('prisma/build/index.js');
+    const schema = path.join(__dirname, 'server', 'prisma', 'schema.prisma');
+    execFileSync(process.execPath, [prismaBin, 'generate', `--schema=${schema}`], { stdio: 'inherit' });
+    console.log('✅ Cliente de Prisma generado.');
+  } catch (e) {
+    console.error('❌ No se pudo generar el cliente de Prisma:', e.message);
+  }
+}
+ensurePrismaClient();
+
 // La API compilada (server/dist). Si no existe, avisa cómo compilar.
 let createApiServer, errorHandler;
 try {
