@@ -21,6 +21,123 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 
+/** Parsea la DATABASE_URL en sus partes. */
+function parseDbUrl(dbUrl) {
+  const url = new URL(dbUrl);
+  return {
+    host: url.hostname || 'localhost',
+    port: url.port ? parseInt(url.port, 10) : 3306,
+    user: decodeURIComponent(url.username),
+    password: decodeURIComponent(url.password),
+    database: decodeURIComponent(url.pathname.replace(/^\//, '')),
+  };
+}
+
+async function canConnect(cfg) {
+  let mysql;
+  try {
+    mysql = require('mysql2/promise');
+  } catch {
+    return false; // sin driver no podemos comprobar; se asume que existe
+  }
+  try {
+    const conn = await mysql.createConnection({
+      host: cfg.host,
+      port: cfg.port,
+      user: cfg.user,
+      password: cfg.password,
+      database: cfg.database,
+      connectTimeout: 8000,
+    });
+    await conn.end();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Intenta crear la BD por la API de cPanel (uapi). */
+function tryCpanelCreate(cfg, log) {
+  const { execFileSync } = require('child_process');
+  const bins = ['uapi', '/usr/local/cpanel/bin/uapi'];
+  for (const bin of bins) {
+    try {
+      execFileSync(bin, ['--output=json', 'Mysql', 'create_database', `name=${cfg.database}`], { stdio: 'pipe' });
+      // Asegura que el usuario exista y tenga privilegios (ignora errores si ya existen).
+      try {
+        execFileSync(bin, ['--output=json', 'Mysql', 'create_user', `name=${cfg.user}`, `password=${cfg.password}`], { stdio: 'pipe' });
+      } catch {}
+      try {
+        execFileSync(bin, ['--output=json', 'Mysql', 'set_privileges_on_database', `user=${cfg.user}`, `database=${cfg.database}`, 'privileges=ALL PRIVILEGES'], { stdio: 'pipe' });
+      } catch {}
+      log('   • API de cPanel ejecutada (' + bin + ').');
+      return true;
+    } catch {
+      // probar el siguiente binario
+    }
+  }
+  return false;
+}
+
+/**
+ * Garantiza que la BASE DE DATOS (esquema MySQL) exista.
+ *  1) Si ya conecta, no hace nada.
+ *  2) Intenta CREATE DATABASE por SQL (funciona si el usuario tiene permiso).
+ *  3) Intenta crearla con la API de cPanel (uapi).
+ * Devuelve { ok, action|message }.
+ */
+async function ensureDatabaseExists(log = console.log) {
+  const dbUrl = process.env.DATABASE_URL;
+  if (!dbUrl) return { ok: false, message: 'Falta DATABASE_URL en el .env' };
+
+  let cfg;
+  try {
+    cfg = parseDbUrl(dbUrl);
+  } catch {
+    return { ok: false, message: 'DATABASE_URL con formato inválido' };
+  }
+  if (!cfg.database) return { ok: false, message: 'DATABASE_URL sin nombre de base de datos' };
+
+  // 1) ¿Ya existe?
+  if (await canConnect(cfg)) return { ok: true, action: 'exists' };
+
+  log('   • La base de datos "' + cfg.database + '" no existe. Intentando crearla...');
+
+  // 2) CREATE DATABASE por SQL.
+  try {
+    const mysql = require('mysql2/promise');
+    const conn = await mysql.createConnection({
+      host: cfg.host,
+      port: cfg.port,
+      user: cfg.user,
+      password: cfg.password,
+      connectTimeout: 8000,
+    });
+    const safe = cfg.database.replace(/`/g, '');
+    await conn.query('CREATE DATABASE IF NOT EXISTS `' + safe + '` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
+    await conn.end();
+    if (await canConnect(cfg)) {
+      log('   ✓ Base de datos creada por SQL.');
+      return { ok: true, action: 'created-sql' };
+    }
+  } catch (e) {
+    log('   • No se pudo crear por SQL (' + (e.code || e.message) + '). Probando API de cPanel...');
+  }
+
+  // 3) API de cPanel.
+  if (tryCpanelCreate(cfg, log) && (await canConnect(cfg))) {
+    log('   ✓ Base de datos creada por la API de cPanel.');
+    return { ok: true, action: 'created-cpanel' };
+  }
+
+  return {
+    ok: false,
+    message:
+      'No se pudo crear la base de datos automáticamente. Créala en cPanel > MySQL Databases ' +
+      '(nombre: ' + cfg.database + ', usuario: ' + cfg.user + ' con ALL PRIVILEGES) y reinicia la app.',
+  };
+}
+
 const admin = {
   name: process.env.ADMIN_NAME || 'Nathan Quevedo',
   email: process.env.ADMIN_EMAIL || 'admin@nathanquevedo.com',
@@ -321,6 +438,12 @@ async function needsSetup(prisma) {
  * No hace NADA si ya tiene contenido (seguro ante reinicios).
  */
 async function autoBootstrap(log = console.log) {
+  // 0) Asegura que la BASE DE DATOS (esquema MySQL) exista.
+  const dbRes = await ensureDatabaseExists(log);
+  if (!dbRes.ok) {
+    return { ok: false, error: new Error(dbRes.message) };
+  }
+
   const prisma = new PrismaClient();
   try {
     if (!(await needsSetup(prisma))) {
@@ -340,9 +463,16 @@ async function autoBootstrap(log = console.log) {
 
 /** Ejecución manual completa (crea tablas + recarga contenido). */
 async function runCli() {
+  console.log('🗄️  Verificando la base de datos...');
+  const dbRes = await ensureDatabaseExists();
+  if (!dbRes.ok) {
+    console.error('❌ ' + dbRes.message);
+    process.exitCode = 1;
+    return;
+  }
   const prisma = new PrismaClient();
   try {
-    console.log('🗄️  Preparando base de datos...');
+    console.log('🗄️  Preparando tablas...');
     await ensureSchema(prisma);
     console.log('🌱 Sembrando contenido...');
     await seedContent(prisma);
@@ -352,7 +482,7 @@ async function runCli() {
   }
 }
 
-module.exports = { ensureSchema, seedContent, needsSetup, autoBootstrap };
+module.exports = { ensureDatabaseExists, ensureSchema, seedContent, needsSetup, autoBootstrap };
 
 // Si se ejecuta directamente (node scripts/setup-db.cjs o npm run db:setup)
 if (require.main === module) {

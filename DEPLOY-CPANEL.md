@@ -10,13 +10,20 @@ mismo dominio.
 
 ---
 
-## Paso 1 · Crear la base de datos MySQL
+## Paso 1 · Base de datos MySQL
 
-cPanel → **MySQL® Databases**:
+**La app intenta crear la base de datos SOLA** al arrancar (por SQL y, si el
+hosting no lo permite, por la API de cPanel). Solo necesitas elegir un nombre,
+usuario y contraseña y ponerlos en el `.env` (Paso 3).
 
-1. **Create New Database** → nombre, ej. `portfolio` (quedará `usuario_portfolio`).
-2. **Add New User** → usuario + contraseña (anótalos).
-3. **Add User To Database** → selecciona el usuario y la BD → **ALL PRIVILEGES**.
+> ✅ **Recomendado (más fiable):** créala tú una vez en cPanel →
+> **MySQL® Databases**:
+> 1. **Create New Database** → ej. `portfolio` (quedará `usuario_portfolio`).
+> 2. **Add New User** → usuario + contraseña (solo letras y números).
+> 3. **Add User To Database** → el usuario y la BD → **ALL PRIVILEGES**.
+>
+> Si la creas tú, el arranque solo cargará las tablas y el contenido.
+> Si NO la creas, la app intentará crearla automáticamente al hacer Restart.
 
 Anota los 3 datos: **nombre de la BD**, **usuario**, **contraseña**.
 
