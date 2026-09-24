@@ -1,4 +1,4 @@
-import { SiteContent } from './types';
+import { Project, ProjectLink, ProjectSummary, SiteContent } from './types';
 import { fallbackContent } from './fallback';
 
 /**
@@ -52,6 +52,37 @@ export async function getSeo(page: string): Promise<SeoData | null> {
     if (!res.ok) return null;
     const json = await res.json();
     return json.data ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Proyectos publicados (portfolio). Lista vacía si la API no responde. */
+export async function getProjects(): Promise<ProjectSummary[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/public/projects`, { cache: 'no-store' });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json.data ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export interface ProjectPage {
+  data: Project;
+  prev: ProjectLink | null;
+  next: ProjectLink | null;
+}
+
+/** Caso de estudio publicado por slug; null si no existe o es un borrador. */
+export async function getProject(slug: string): Promise<ProjectPage | null> {
+  try {
+    const res = await fetch(`${API_URL}/api/public/projects/${encodeURIComponent(slug)}`, {
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as ProjectPage;
   } catch {
     return null;
   }

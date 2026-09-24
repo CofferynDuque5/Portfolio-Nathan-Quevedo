@@ -19,6 +19,8 @@ interface ListParams {
   search?: string;
   sortBy?: string;
   sortDir?: 'asc' | 'desc';
+  /** Filtros exactos admitidos por el recurso (ej: status=DRAFT). */
+  [filter: string]: string | number | undefined;
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -78,6 +80,11 @@ export const api = {
     request<{ data: T }>(`/admin/${resource}/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   toggle: (resource: string, id: number) =>
     request(`/admin/${resource}/${id}/toggle`, { method: 'PATCH' }),
+  publish: <T = any>(resource: string, id: number, published: boolean) =>
+    request<{ data: T }>(`/admin/${resource}/${id}/publish`, {
+      method: 'PATCH',
+      body: JSON.stringify({ published }),
+    }),
   remove: (resource: string, id: number) =>
     request<{ success: boolean }>(`/admin/${resource}/${id}`, { method: 'DELETE' }),
 

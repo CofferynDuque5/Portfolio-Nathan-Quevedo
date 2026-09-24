@@ -4,6 +4,7 @@ import { prisma } from '../lib/prisma';
 import { asyncHandler } from '../utils/asyncHandler';
 import { getResource } from '../lib/resources';
 import { HttpError } from '../middleware/error';
+import { PROJECT_ORDER, projectCardSelect } from './projects.controller';
 
 /**
  * GET /api/public/content
@@ -24,6 +25,7 @@ export const getSiteContent = asyncHandler(async (_req: Request, res: Response) 
     socialLinks,
     contactInfo,
     settingsRows,
+    projects,
   ] = await Promise.all([
     prisma.heroSlide.findMany({ where: { active: true }, orderBy: { order: 'asc' } }),
     prisma.category.findMany({ where: { active: true }, orderBy: { order: 'asc' } }),
@@ -41,6 +43,13 @@ export const getSiteContent = asyncHandler(async (_req: Request, res: Response) 
     prisma.socialLink.findMany({ where: { active: true }, orderBy: { order: 'asc' } }),
     prisma.contactInfo.findMany({ where: { active: true }, orderBy: { order: 'asc' } }),
     prisma.setting.findMany(),
+    // Selección de proyectos publicados para la home (destacados primero).
+    prisma.project.findMany({
+      where: { status: 'PUBLISHED' },
+      orderBy: PROJECT_ORDER,
+      select: projectCardSelect,
+      take: 6,
+    }),
   ]);
 
   const settings: Record<string, string> = {};
@@ -58,6 +67,7 @@ export const getSiteContent = asyncHandler(async (_req: Request, res: Response) 
     logos,
     socialLinks,
     contactInfo,
+    projects,
     settings,
   });
 });

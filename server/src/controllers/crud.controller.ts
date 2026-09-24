@@ -38,6 +38,10 @@ export const list = asyncHandler(async (req: AuthRequest, res: Response) => {
       [field]: { contains: search },
     }));
   }
+  for (const [field, allowed] of Object.entries(config.filterable ?? {})) {
+    const value = req.query[field];
+    if (typeof value === 'string' && allowed.includes(value)) where[field] = value;
+  }
 
   const orderBy = sortBy ? { [sortBy]: sortDir } : config.defaultOrderBy;
 

@@ -8,6 +8,7 @@ import * as crud from '../controllers/crud.controller';
 import * as upload from '../controllers/upload.controller';
 import * as pub from '../controllers/public.controller';
 import { getStats } from '../controllers/stats.controller';
+import * as projects from '../controllers/projects.controller';
 
 const router = Router();
 
@@ -28,6 +29,8 @@ router.post('/auth/change-password', requireAuth, auth.changePassword);
 router.get('/public/content', pub.getSiteContent);
 router.get('/public/seo/:page', pub.getSeo);
 router.post('/public/contact', pub.submitContact);
+router.get('/public/projects', projects.listPublished);
+router.get('/public/projects/:slug', projects.getPublishedBySlug);
 router.get('/public/:resource', pub.getPublicResource);
 
 // -------------------- Subida de archivos --------------------
@@ -53,6 +56,7 @@ router.use('/admin', requireAuth);
 
 // Estadísticas del dashboard (antes del CRUD genérico para no chocar con :resource).
 router.get('/admin/stats', getStats);
+router.patch('/admin/projects/:id/publish', projects.setPublished);
 
 // El refuerzo de permisos para usuarios debe registrarse ANTES del CRUD genérico.
 router.use('/admin/users', requireRole('ADMIN'));

@@ -154,9 +154,28 @@ Password: Admin1234!
 
 ## 🗂️ Módulos del panel administrativo
 
-Dashboard · Hero · Servicios · Categorías · Plataformas · Licencias · FAQ · Galería · Banners · Logos · Redes sociales · Información de contacto · SEO · Configuración general · Usuarios · Multimedia · Mensajes.
+Dashboard · **Proyectos** · Hero · Servicios · Categorías · Plataformas · Licencias · FAQ · Galería · Banners · Logos · Redes sociales · Información de contacto · SEO · Configuración general · Usuarios · Multimedia · Mensajes.
 
 Cada módulo de contenido incluye: **búsqueda, ordenamiento, paginación, crear, editar, eliminar, activar/desactivar, vista previa de imágenes y confirmación antes de borrar.**
+
+### 📁 Proyectos / casos de estudio
+
+- Cada proyecto se crea como **borrador** y solo aparece en el sitio al **publicarlo**
+  (botón 🌐 de la tabla o desde la vista previa). Despublicar lo devuelve a borrador.
+- Pestañas **Todos / Borradores / Publicados**, fecha de publicación (se fija sola al
+  publicar si está vacía) y opción **Destacado** para mostrarlo primero.
+- **Vista previa** (icono de escáner o botón *Guardar y previsualizar*): muestra el caso
+  exactamente como se verá publicado, incluidos los borradores.
+- Textos del caso (reto, solución, resultados): una línea en blanco separa párrafos y las
+  líneas que empiezan por `- ` forman listas. La galería es una URL de imagen por línea.
+- Sitio público: `/proyectos` (filtros por categoría, compartibles con `?categoria=slug`),
+  `/proyectos/<slug>` (SEO, Open Graph y Schema.org por proyecto) y una sección en la home.
+- La primera instalación crea dos proyectos **[Ejemplo]** como borradores; reemplázalos o
+  elimínalos. Nunca se publican solos.
+
+> **Actualizaciones de la base de datos:** al reiniciar la app se aplican solas las
+> migraciones nuevas de `server/prisma/migrations` (registro en la tabla
+> `_app_migrations`), sin tocar el contenido existente.
 
 > La arquitectura es **declarativa**: para añadir una sección nueva basta con
 > registrar el modelo en `server/src/lib/resources.ts` y su configuración de

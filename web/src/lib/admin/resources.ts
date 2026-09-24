@@ -12,7 +12,9 @@ export type FieldType =
   | 'boolean'
   | 'image'
   | 'select'
-  | 'password';
+  | 'password'
+  | 'date'
+  | 'relation';
 
 export interface FieldDef {
   name: string;
@@ -23,12 +25,21 @@ export interface FieldDef {
   help?: string;
   options?: { value: string; label: string }[];
   full?: boolean; // ocupa todo el ancho del formulario
+  rows?: number; // alto de los textarea
+  /** type 'relation': recurso de la API que da las opciones y campo a mostrar. */
+  relation?: { resource: string; labelKey: string };
 }
 
 export interface ColumnDef {
-  key: string;
+  key: string; // admite rutas con punto, ej: category.name
   label: string;
-  type?: 'text' | 'image' | 'boolean' | 'badge';
+  type?: 'text' | 'image' | 'boolean' | 'badge' | 'status' | 'date';
+  sortable?: boolean; // por defecto true
+}
+
+export interface FilterDef {
+  param: string;
+  options: { value: string; label: string }[];
 }
 
 export interface ResourceDef {
@@ -41,12 +52,73 @@ export interface ResourceDef {
   fields: FieldDef[];
   hasActive?: boolean;
   searchable?: boolean;
+  /** Flujo borrador/publicado: botón publicar/despublicar en cada fila. */
+  publishable?: boolean;
+  /** Ruta de la vista previa en el panel; se le añade el id del registro. */
+  previewPath?: string;
+  /** Pestañas de filtro sobre el listado (ej: estado de publicación). */
+  filter?: FilterDef;
 }
 
 const orderField: FieldDef = { name: 'order', label: 'Orden', type: 'number', placeholder: '0' };
 const activeField: FieldDef = { name: 'active', label: 'Activo', type: 'boolean' };
 
 export const RESOURCES: Record<string, ResourceDef> = {
+  projects: {
+    key: 'projects',
+    label: 'Proyectos',
+    singular: 'Proyecto',
+    icon: 'FolderKanban',
+    group: 'Portfolio',
+    searchable: true,
+    publishable: true,
+    previewPath: '/admin/preview/projects',
+    filter: {
+      param: 'status',
+      options: [
+        { value: '', label: 'Todos' },
+        { value: 'DRAFT', label: 'Borradores' },
+        { value: 'PUBLISHED', label: 'Publicados' },
+      ],
+    },
+    columns: [
+      { key: 'coverImage', label: 'Portada', type: 'image', sortable: false },
+      { key: 'title', label: 'Título' },
+      { key: 'category.name', label: 'Categoría', type: 'badge', sortable: false },
+      { key: 'status', label: 'Estado', type: 'status' },
+      { key: 'publishedAt', label: 'Publicado', type: 'date' },
+      { key: 'updatedAt', label: 'Modificado', type: 'date' },
+    ],
+    fields: [
+      { name: 'title', label: 'Título', type: 'text', required: true, full: true },
+      { name: 'slug', label: 'Slug', type: 'text', help: 'URL del proyecto. Si lo dejas vacío se genera desde el título.' },
+      { name: 'categoryId', label: 'Categoría', type: 'relation', relation: { resource: 'categories', labelKey: 'name' } },
+      { name: 'client', label: 'Cliente', type: 'text' },
+      { name: 'year', label: 'Año', type: 'text', placeholder: '2026' },
+      { name: 'summary', label: 'Resumen', type: 'textarea', full: true, help: 'Aparece en las tarjetas y como introducción del caso.' },
+      { name: 'coverImage', label: 'Imagen de portada', type: 'image', full: true },
+      { name: 'challenge', label: 'El reto', type: 'textarea', full: true, rows: 5, help: 'Separa párrafos con una línea en blanco. Empieza una línea con "- " para hacer listas.' },
+      { name: 'solution', label: 'La solución', type: 'textarea', full: true, rows: 5 },
+      { name: 'results', label: 'Resultados', type: 'textarea', full: true, rows: 5 },
+      { name: 'gallery', label: 'Galería', type: 'textarea', full: true, placeholder: '/uploads/projects/imagen-1.webp', help: 'Una URL de imagen por línea (cópialas desde Multimedia).' },
+      { name: 'tags', label: 'Etiquetas', type: 'text', full: true, placeholder: 'Streaming, Soporte, Configuración', help: 'Separadas por comas.' },
+      { name: 'url', label: 'Enlace al proyecto', type: 'text', full: true, placeholder: 'https://…' },
+      { name: 'seoTitle', label: 'Título SEO', type: 'text', full: true, help: 'Opcional. Por defecto se usa el título.' },
+      { name: 'seoDescription', label: 'Descripción SEO', type: 'textarea', full: true, help: 'Opcional. Por defecto se usa el resumen.' },
+      {
+        name: 'status',
+        label: 'Estado',
+        type: 'select',
+        options: [
+          { value: 'DRAFT', label: 'Borrador' },
+          { value: 'PUBLISHED', label: 'Publicado' },
+        ],
+      },
+      { name: 'publishedAt', label: 'Fecha de publicación', type: 'date', help: 'Se fija sola al publicar si la dejas vacía.' },
+      { name: 'featured', label: 'Destacado (aparece primero)', type: 'boolean' },
+      orderField,
+    ],
+  },
   heroSlides: {
     key: 'heroSlides',
     label: 'Hero',
@@ -405,7 +477,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
   },
 };
 
-export const RESOURCE_GROUPS = ['Contenido', 'Catálogo', 'Configuración', 'Sistema'];
+export const RESOURCE_GROUPS = ['Portfolio', 'Contenido', 'Catálogo', 'Configuración', 'Sistema'];
 
 export function getResourceDef(key: string): ResourceDef | null {
   return RESOURCES[key] ?? null;

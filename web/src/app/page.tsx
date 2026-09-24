@@ -3,6 +3,7 @@ import Navbar from '@/components/public/Navbar';
 import Hero from '@/components/public/Hero';
 import About from '@/components/public/About';
 import Services from '@/components/public/Services';
+import FeaturedProjects from '@/components/public/FeaturedProjects';
 import Platforms from '@/components/public/Platforms';
 import Licenses from '@/components/public/Licenses';
 import Process from '@/components/public/Process';
@@ -66,6 +67,7 @@ export default async function HomePage() {
         <LogosMarquee logos={content.logos} />
         <About title={s.aboutTitle || 'Sobre Nathan Quevedo'} text={s.aboutText || ''} />
         <Services services={content.services} whatsapp={s.whatsapp} />
+        <FeaturedProjects projects={content.projects} />
         <Platforms platforms={content.platforms} />
         <Licenses licenses={content.licenses} whatsapp={s.whatsapp} />
         <Process title={s.processTitle || 'Proceso de trabajo'} />

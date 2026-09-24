@@ -2,13 +2,15 @@
  * ============================================================
  *  Preparación de la base de datos
  * ============================================================
- *  - Crea las tablas (si no existen) desde la migración inicial.
+ *  - Crea las tablas y aplica las migraciones pendientes (registro en
+ *    la tabla `_app_migrations`).
  *  - Siembra el contenido inicial (admin, servicios, plataformas,
  *    licencias, FAQ, redes, contacto, SEO, etc.).
  *
  *  Se usa de dos formas:
- *   1) Automático: app.js llama a autoBootstrap() al arrancar. Si la BD
- *      está vacía, la prepara sola (no toca nada si ya tiene datos).
+ *   1) Automático: app.js llama a autoBootstrap() al arrancar. Aplica las
+ *      migraciones pendientes y, si la BD está vacía, siembra el contenido
+ *      (no toca los datos existentes).
  *   2) Manual: `node scripts/setup-db.cjs`  (o cPanel > Run JS script > db:setup)
  *      Recarga el contenido base.
  * ============================================================
@@ -144,15 +146,44 @@ const admin = {
   password: process.env.ADMIN_PASSWORD || 'Admin1234!',
 };
 
-/** Crea las tablas ejecutando el SQL de las migraciones si aún no existen. */
-async function ensureSchema(prisma, log = console.log) {
+/** Divide un archivo de migración en sentencias SQL ejecutables. */
+function readMigrationStatements(file) {
+  return fs
+    .readFileSync(file, 'utf8')
+    .split(';')
+    .map((s) =>
+      s
+        .split('\n')
+        .filter((line) => !line.trim().startsWith('--'))
+        .join('\n')
+        .trim()
+    )
+    .filter((s) => s.length > 0);
+}
+
+async function tableExists(prisma, table) {
   try {
-    await prisma.$queryRawUnsafe('SELECT 1 FROM `users` LIMIT 1');
-    log('   ✓ Tablas ya existen (se omite creación).');
-    return;
+    await prisma.$queryRawUnsafe('SELECT 1 FROM `' + table + '` LIMIT 1');
+    return true;
   } catch {
-    log('   • Creando tablas...');
+    return false;
   }
+}
+
+/**
+ * Aplica las migraciones pendientes de prisma/migrations en orden.
+ * Lleva un registro propio en `_app_migrations`, de modo que al actualizar
+ * la app (p. ej. al añadir el módulo de proyectos) las tablas nuevas se crean
+ * solas al reiniciar, sin tocar los datos existentes.
+ */
+async function ensureSchema(prisma, log = console.log) {
+  await prisma.$executeRawUnsafe(
+    'CREATE TABLE IF NOT EXISTS `_app_migrations` (' +
+      '`name` VARCHAR(191) NOT NULL, ' +
+      '`appliedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3), ' +
+      'PRIMARY KEY (`name`)' +
+      ') DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci'
+  );
 
   const migrationsDir = path.join(__dirname, '..', 'server', 'prisma', 'migrations');
   const dirs = fs
@@ -160,24 +191,30 @@ async function ensureSchema(prisma, log = console.log) {
     .filter((d) => fs.existsSync(path.join(migrationsDir, d, 'migration.sql')))
     .sort();
 
-  for (const dir of dirs) {
-    const sql = fs.readFileSync(path.join(migrationsDir, dir, 'migration.sql'), 'utf8');
-    const statements = sql
-      .split(';')
-      .map((s) =>
-        s
-          .split('\n')
-          .filter((line) => !line.trim().startsWith('--'))
-          .join('\n')
-          .trim()
-      )
-      .filter((s) => s.length > 0);
+  const rows = await prisma.$queryRawUnsafe('SELECT `name` FROM `_app_migrations`');
+  const applied = new Set(rows.map((r) => r.name));
 
-    for (const stmt of statements) {
+  // Instalaciones anteriores a este registro: si ya existen las tablas base,
+  // la migración inicial se aplicó en su momento; se marca sin re-ejecutarla.
+  if (applied.size === 0 && dirs.length && (await tableExists(prisma, 'users'))) {
+    await prisma.$executeRawUnsafe('INSERT INTO `_app_migrations` (`name`) VALUES (?)', dirs[0]);
+    applied.add(dirs[0]);
+  }
+
+  const pending = dirs.filter((d) => !applied.has(d));
+  if (!pending.length) {
+    log('   ✓ Tablas al día (sin migraciones pendientes).');
+    return;
+  }
+
+  for (const dir of pending) {
+    log('   • Aplicando migración ' + dir + '...');
+    for (const stmt of readMigrationStatements(path.join(migrationsDir, dir, 'migration.sql'))) {
       await prisma.$executeRawUnsafe(stmt);
     }
+    await prisma.$executeRawUnsafe('INSERT INTO `_app_migrations` (`name`) VALUES (?)', dir);
   }
-  log('   ✓ Tablas creadas.');
+  log('   ✓ ' + pending.length + ' migración(es) aplicada(s).');
 }
 
 /** Inserta / actualiza todo el contenido inicial. */
@@ -245,7 +282,8 @@ async function seedContent(prisma, log = console.log) {
   log('   ✓ Hero');
 
   // ---------------- Categorías ----------------
-  await prisma.category.deleteMany();
+  // Upsert por slug (no deleteMany): así los proyectos reales conservan su categoría
+  // aunque se vuelva a ejecutar la carga del contenido base.
   const categoryData = [
     { name: 'Streaming', slug: 'streaming', icon: 'Play', description: 'Plataformas de entretenimiento premium', order: 0 },
     { name: 'Licencias', slug: 'licencias', icon: 'KeyRound', description: 'Software original con licencia', order: 1 },
@@ -253,7 +291,9 @@ async function seedContent(prisma, log = console.log) {
     { name: 'Seguridad', slug: 'seguridad', icon: 'ShieldCheck', description: 'Protección digital y privacidad', order: 3 },
     { name: 'Soporte', slug: 'soporte', icon: 'Headset', description: 'Instalación remota y soporte técnico', order: 4 },
   ];
-  for (const c of categoryData) await prisma.category.create({ data: c });
+  for (const c of categoryData) {
+    await prisma.category.upsert({ where: { slug: c.slug }, update: c, create: c });
+  }
   const categories = await prisma.category.findMany();
   const catId = (slug) => (categories.find((c) => c.slug === slug) || {}).id ?? null;
   log('   ✓ Categorías');
@@ -289,6 +329,45 @@ async function seedContent(prisma, log = console.log) {
     })),
   });
   log(`   ✓ ${services.length} servicios`);
+
+  // ---------------- Proyectos (casos de estudio) ----------------
+  // Nunca se borran: son contenido real del portfolio. Solo si no hay ninguno
+  // se crean dos BORRADORES de ejemplo, claramente marcados, para mostrar la
+  // estructura en el panel. No se publican ni aparecen en el sitio.
+  if ((await prisma.project.count()) === 0) {
+    const sample = 'Contenido de ejemplo: reemplázalo por la información real del proyecto antes de publicarlo.';
+    await prisma.project.createMany({
+      data: [
+        {
+          title: '[Ejemplo] Puesta en marcha de un servicio de streaming',
+          slug: 'ejemplo-servicio-streaming',
+          client: 'Cliente de ejemplo',
+          summary: sample,
+          challenge: 'Describe aquí el problema o la necesidad del cliente. ' + sample,
+          solution: 'Explica qué hiciste, con qué herramientas y cómo lo organizaste. ' + sample,
+          results: 'Resume los resultados reales y medibles. ' + sample,
+          tags: 'Streaming, Ejemplo',
+          categoryId: catId('streaming'),
+          status: 'DRAFT',
+          order: 0,
+        },
+        {
+          title: '[Ejemplo] Instalación y soporte remoto para una oficina',
+          slug: 'ejemplo-soporte-remoto',
+          client: 'Cliente de ejemplo',
+          summary: sample,
+          challenge: 'Describe aquí el problema o la necesidad del cliente. ' + sample,
+          solution: 'Explica qué hiciste, con qué herramientas y cómo lo organizaste. ' + sample,
+          results: 'Resume los resultados reales y medibles. ' + sample,
+          tags: 'Soporte, Ejemplo',
+          categoryId: catId('soporte'),
+          status: 'DRAFT',
+          order: 1,
+        },
+      ],
+    });
+    log('   ✓ 2 proyectos de ejemplo (borradores)');
+  }
 
   // ---------------- Plataformas de streaming ----------------
   await prisma.platform.deleteMany();
@@ -446,11 +525,13 @@ async function autoBootstrap(log = console.log) {
 
   const prisma = new PrismaClient();
   try {
+    // Siempre aplica migraciones pendientes (instalaciones existentes que se
+    // actualizan). No toca datos.
+    await ensureSchema(prisma, log);
     if (!(await needsSetup(prisma))) {
       return { ok: true, action: 'skip' };
     }
     log('🗄️  Base de datos vacía: preparándola automáticamente...');
-    await ensureSchema(prisma, log);
     await seedContent(prisma, log);
     log('✅ Base de datos lista.');
     return { ok: true, action: 'created' };

@@ -68,6 +68,7 @@ model Category {
   updatedAt   DateTime  @updatedAt
 
   services    Service[]
+  projects    Project[]
 
   @@index([active, order])
   @@map("categories")
@@ -99,6 +100,47 @@ model Service {
   @@index([active, order])
   @@index([featured])
   @@map("services")
+}
+
+// ------------------------------------------------------------
+//  Proyectos / casos de estudio (portfolio)
+//  Flujo editorial: se crean como borrador y se publican cuando
+//  están listos. Solo los PUBLISHED son visibles en el sitio.
+// ------------------------------------------------------------
+enum ProjectStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model Project {
+  id             Int           @id @default(autoincrement())
+  title          String
+  slug           String        @unique
+  client         String?
+  year           String?
+  summary        String?       @db.Text
+  challenge      String?       @db.Text
+  solution       String?       @db.Text
+  results        String?       @db.Text
+  coverImage     String?
+  gallery        String?       @db.Text // una URL de imagen por línea
+  tags           String?       // separadas por comas
+  url            String?
+  status         ProjectStatus @default(DRAFT)
+  publishedAt    DateTime?
+  featured       Boolean       @default(false)
+  order          Int           @default(0)
+  seoTitle       String?
+  seoDescription String?       @db.Text
+  categoryId     Int?
+  category       Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([categoryId])
+  @@index([status, order])
+  @@index([featured])
+  @@map("projects")
 }
 
 // ------------------------------------------------------------
@@ -318,4 +360,16 @@ model ContactMessage {
   @@index([read])
   @@index([createdAt])
   @@map("contact_messages")
+}
+
+// ------------------------------------------------------------
+//  Registro de migraciones aplicadas por scripts/setup-db.cjs
+//  (auto-arranque en cPanel). Declarado aquí para que
+//  `prisma db push` no lo considere una tabla ajena.
+// ------------------------------------------------------------
+model AppMigration {
+  name      String   @id
+  appliedAt DateTime @default(now())
+
+  @@map("_app_migrations")
 }

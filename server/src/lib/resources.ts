@@ -1,4 +1,5 @@
 import { prisma } from './prisma';
+import { prepareProject, PROJECT_STATUSES } from './projects';
 
 /**
  * Registro central de recursos administrables.
@@ -25,6 +26,10 @@ export interface ResourceConfig {
   include?: Record<string, boolean>;
   /** ¿Tiene columna `active` para activar/desactivar? */
   hasActive?: boolean;
+  /** Filtros exactos admitidos en el listado (?campo=valor) y sus valores válidos. */
+  filterable?: Record<string, readonly string[]>;
+  /** Validación / normalización propia del recurso antes de guardar. */
+  prepare?: (data: Record<string, any>) => Record<string, any>;
 }
 
 export const resources: Record<string, ResourceConfig> = {
@@ -55,6 +60,19 @@ export const resources: Record<string, ResourceConfig> = {
     public: true,
     include: { category: true },
     hasActive: true,
+  },
+  projects: {
+    model: prisma.project,
+    searchable: ['title', 'slug', 'client', 'summary', 'tags'],
+    defaultOrderBy: { updatedAt: 'desc' },
+    intFields: ['order', 'categoryId'],
+    boolFields: ['featured'],
+    // Sin endpoint público genérico: el sitio usa /public/projects, que solo
+    // devuelve proyectos PUBLICADOS.
+    public: false,
+    include: { category: true },
+    filterable: { status: PROJECT_STATUSES },
+    prepare: prepareProject,
   },
   platforms: {
     model: prisma.platform,
@@ -191,5 +209,8 @@ export function normalizePayload(config: ResourceConfig, data: Record<string, an
   delete out.id;
   delete out.createdAt;
   delete out.updatedAt;
-  return out;
+  // Las relaciones incluidas en las respuestas (ej: `category`) vuelven en el
+  // payload al editar; se guardan por su clave foránea, no como objeto.
+  for (const rel of Object.keys(config.include ?? {})) delete out[rel];
+  return config.prepare ? config.prepare(out) : out;
 }

@@ -5,13 +5,15 @@ import { Menu, X } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
 import { cn } from '@/lib/utils';
 
+// Rutas absolutas ("/#seccion") para que el menú funcione también desde
+// /proyectos y las páginas de cada caso de estudio.
 const links = [
-  { href: '#sobre', label: 'Sobre mí' },
-  { href: '#servicios', label: 'Servicios' },
-  { href: '#plataformas', label: 'Plataformas' },
-  { href: '#licencias', label: 'Licencias' },
-  { href: '#proceso', label: 'Proceso' },
-  { href: '#faq', label: 'FAQ' },
+  { href: '/#sobre', label: 'Sobre mí' },
+  { href: '/#servicios', label: 'Servicios' },
+  { href: '/proyectos', label: 'Proyectos' },
+  { href: '/#plataformas', label: 'Plataformas' },
+  { href: '/#licencias', label: 'Licencias' },
+  { href: '/#faq', label: 'FAQ' },
 ];
 
 export default function Navbar({ siteName }: { siteName: string }) {
@@ -33,7 +35,7 @@ export default function Navbar({ siteName }: { siteName: string }) {
       )}
     >
       <nav className="container-x flex h-16 items-center justify-between">
-        <a href="#top" className="flex items-center gap-2 text-lg font-bold">
+        <a href="/" className="flex items-center gap-2 text-lg font-bold">
           <span className="grid h-8 w-8 place-items-center rounded-xl bg-brand-600 text-sm text-white">
             {siteName.charAt(0)}
           </span>
@@ -54,7 +56,7 @@ export default function Navbar({ siteName }: { siteName: string }) {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <a href="#contacto" className="btn-primary hidden sm:inline-flex">
+          <a href="/#contacto" className="btn-primary hidden sm:inline-flex">
             Contactar
           </a>
           <button
@@ -80,7 +82,7 @@ export default function Navbar({ siteName }: { siteName: string }) {
                 {l.label}
               </a>
             ))}
-            <a href="#contacto" onClick={() => setOpen(false)} className="btn-primary mt-2">
+            <a href="/#contacto" onClick={() => setOpen(false)} className="btn-primary mt-2">
               Contactar
             </a>
           </div>

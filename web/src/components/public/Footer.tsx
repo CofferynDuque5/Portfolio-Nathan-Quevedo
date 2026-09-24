@@ -45,17 +45,18 @@ export default function Footer({
           <div>
             <h4 className="text-sm font-semibold">Enlaces</h4>
             <ul className="mt-4 space-y-2 text-sm text-slate-500 dark:text-slate-400">
-              <li><a href="#servicios" className="hover:text-brand-600">Servicios</a></li>
-              <li><a href="#licencias" className="hover:text-brand-600">Licencias</a></li>
-              <li><a href="#proceso" className="hover:text-brand-600">Proceso</a></li>
-              <li><a href="#faq" className="hover:text-brand-600">Preguntas frecuentes</a></li>
+              <li><a href="/#servicios" className="hover:text-brand-600">Servicios</a></li>
+              <li><a href="/proyectos" className="hover:text-brand-600">Proyectos</a></li>
+              <li><a href="/#licencias" className="hover:text-brand-600">Licencias</a></li>
+              <li><a href="/#proceso" className="hover:text-brand-600">Proceso</a></li>
+              <li><a href="/#faq" className="hover:text-brand-600">Preguntas frecuentes</a></li>
             </ul>
           </div>
 
           <div>
             <h4 className="text-sm font-semibold">Contacto</h4>
             <ul className="mt-4 space-y-2 text-sm text-slate-500 dark:text-slate-400">
-              <li><a href="#contacto" className="hover:text-brand-600">Formulario de contacto</a></li>
+              <li><a href="/#contacto" className="hover:text-brand-600">Formulario de contacto</a></li>
               <li><a href="/admin" className="hover:text-brand-600">Panel administrativo</a></li>
             </ul>
           </div>

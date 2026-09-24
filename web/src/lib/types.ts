@@ -135,6 +135,46 @@ export interface MediaFile {
   createdAt: string;
 }
 
+export type ProjectStatus = 'DRAFT' | 'PUBLISHED';
+
+/** Categoría resumida que acompaña a cada proyecto. */
+export type ProjectCategory = Pick<Category, 'id' | 'name' | 'slug' | 'icon'>;
+
+/** Proyecto tal como aparece en listados y tarjetas. */
+export interface ProjectSummary {
+  id: number;
+  title: string;
+  slug: string;
+  client?: string | null;
+  year?: string | null;
+  summary?: string | null;
+  coverImage?: string | null;
+  tags?: string | null;
+  featured: boolean;
+  publishedAt?: string | null;
+  updatedAt: string;
+  category?: ProjectCategory | null;
+}
+
+/** Caso de estudio completo. */
+export interface Project extends ProjectSummary {
+  challenge?: string | null;
+  solution?: string | null;
+  results?: string | null;
+  gallery?: string | null;
+  url?: string | null;
+  status: ProjectStatus;
+  order: number;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  categoryId?: number | null;
+}
+
+export interface ProjectLink {
+  slug: string;
+  title: string;
+}
+
 export interface SiteContent {
   heroSlides: HeroSlide[];
   categories: Category[];
@@ -147,5 +187,6 @@ export interface SiteContent {
   logos: Logo[];
   socialLinks: SocialLink[];
   contactInfo: ContactInfo[];
+  projects: ProjectSummary[];
   settings: Record<string, string>;
 }
