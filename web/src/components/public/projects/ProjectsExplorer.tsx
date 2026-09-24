@@ -54,7 +54,7 @@ export default function ProjectsExplorer({
         <p className="mx-auto mt-2 max-w-md text-sm text-slate-500 dark:text-slate-400">
           Estamos documentando los proyectos más recientes. Mientras tanto, cuéntanos qué necesitas.
         </p>
-        <a href="/#contacto" className="btn-primary mt-6">
+        <a href="/contacto" className="btn-primary mt-6">
           Solicitar cotización
         </a>
       </div>

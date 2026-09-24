@@ -158,6 +158,18 @@ Dashboard · **Métricas** · **Proyectos** · Hero · Servicios · Categorías 
 
 Cada módulo de contenido incluye: **búsqueda, ordenamiento, paginación, crear, editar, eliminar, activar/desactivar, vista previa de imágenes y confirmación antes de borrar.**
 
+### 🧭 Páginas del sitio
+
+| Ruta | Contenido | Clave SEO (panel) |
+|------|-----------|-------------------|
+| `/` | Home con todas las secciones | `home` |
+| `/servicios` | Streaming primero, servicios por categoría, licencias y proceso | `servicios` |
+| `/proyectos` y `/proyectos/<slug>` | Portfolio y casos de estudio | `proyectos` (el detalle usa el SEO de cada proyecto) |
+| `/sobre-mi` | Texto *Sobre mí* (Configuración general), áreas, proceso y proyectos | `sobre-mi` |
+| `/contacto` | Formulario, WhatsApp, redes y FAQ | `contacto` |
+
+Si una página no tiene registro en el módulo SEO se usan un título y una descripción por defecto.
+
 ### 📁 Proyectos / casos de estudio
 
 - Cada proyecto se crea como **borrador** y solo aparece en el sitio al **publicarlo**

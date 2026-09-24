@@ -1,10 +1,10 @@
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, ArrowUpRight, MessageCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUpRight } from 'lucide-react';
 import { Project, ProjectLink } from '@/lib/types';
 import { formatMonthYear, parseGallery, parseTags } from '@/lib/projects';
-import { waLink } from '@/lib/utils';
 import Reveal from '@/components/Reveal';
 import RichText from './RichText';
+import QuoteCTA from '../QuoteCTA';
 
 /**
  * Caso de estudio completo. Se usa en la página pública (/proyectos/[slug])
@@ -157,30 +157,11 @@ export default function ProjectDetail({
       )}
 
       {/* Llamado a la acción */}
-      <section className="container-x mt-20 sm:mt-28">
-        <div className="relative overflow-hidden rounded-3xl bg-slate-900 px-6 py-14 text-white sm:px-14 sm:py-20 dark:bg-white/[0.04]">
-          <div className="bg-grid absolute inset-0 opacity-30" aria-hidden />
-          <div className="relative max-w-2xl">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">¿Buscas un resultado similar?</h2>
-            <p className="mt-4 text-lg text-slate-300">
-              Cuéntame qué necesitas y te preparo una propuesta a medida.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <a
-                href={waLink(whatsapp, `Hola, vi el proyecto "${project.title}" y me gustaría cotizar algo similar.`)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-primary"
-              >
-                <MessageCircle size={16} /> Cotizar por WhatsApp
-              </a>
-              <a href="/#contacto" className="btn border border-white/20 text-white hover:bg-white/10">
-                Escribir un mensaje
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
+      <QuoteCTA
+        title="¿Buscas un resultado similar?"
+        whatsapp={whatsapp}
+        message={`Hola, vi el proyecto "${project.title}" y me gustaría cotizar algo similar.`}
+      />
 
       {/* Navegación entre proyectos */}
       {(prev || next) && (

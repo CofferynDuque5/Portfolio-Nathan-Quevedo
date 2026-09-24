@@ -1,24 +1,26 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
 import { cn } from '@/lib/utils';
 
-// Rutas absolutas ("/#seccion") para que el menú funcione también desde
-// /proyectos y las páginas de cada caso de estudio.
 const links = [
-  { href: '/#sobre', label: 'Sobre mí' },
-  { href: '/#servicios', label: 'Servicios' },
+  { href: '/servicios', label: 'Servicios' },
+  { href: '/servicios#plataformas', label: 'Streaming' },
   { href: '/proyectos', label: 'Proyectos' },
-  { href: '/#plataformas', label: 'Plataformas' },
-  { href: '/#licencias', label: 'Licencias' },
-  { href: '/#faq', label: 'FAQ' },
+  { href: '/sobre-mi', label: 'Sobre mí' },
+  { href: '/contacto#faq', label: 'FAQ' },
 ];
 
 export default function Navbar({ siteName }: { siteName: string }) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  // Enlace de la página actual (los que llevan #ancla no se marcan).
+  const isCurrent = (href: string) =>
+    !href.includes('#') && (pathname === href || pathname?.startsWith(`${href}/`));
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -47,7 +49,8 @@ export default function Navbar({ siteName }: { siteName: string }) {
             <a
               key={l.href}
               href={l.href}
-              className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
+              aria-current={isCurrent(l.href) ? 'page' : undefined}
+              className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 aria-[current=page]:text-slate-900 aria-[current=page]:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white dark:aria-[current=page]:bg-white/10 dark:aria-[current=page]:text-white"
             >
               {l.label}
             </a>
@@ -56,7 +59,7 @@ export default function Navbar({ siteName }: { siteName: string }) {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <a href="/#contacto" className="btn-primary hidden sm:inline-flex">
+          <a href="/contacto" className="btn-primary hidden sm:inline-flex">
             Contactar
           </a>
           <button
@@ -76,13 +79,14 @@ export default function Navbar({ siteName }: { siteName: string }) {
               <a
                 key={l.href}
                 href={l.href}
+                aria-current={isCurrent(l.href) ? 'page' : undefined}
                 onClick={() => setOpen(false)}
                 className="rounded-xl px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
               >
                 {l.label}
               </a>
             ))}
-            <a href="/#contacto" onClick={() => setOpen(false)} className="btn-primary mt-2">
+            <a href="/contacto" onClick={() => setOpen(false)} className="btn-primary mt-2">
               Contactar
             </a>
           </div>

@@ -404,7 +404,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
       { key: 'noindex', label: 'Noindex', type: 'boolean' },
     ],
     fields: [
-      { name: 'page', label: 'Página (clave)', type: 'text', required: true, help: 'ej: home' },
+      { name: 'page', label: 'Página (clave)', type: 'text', required: true, help: 'Claves: home, servicios, proyectos, sobre-mi, contacto' },
       { name: 'title', label: 'Título SEO', type: 'text', required: true, full: true },
       { name: 'description', label: 'Meta descripción', type: 'textarea', required: true, full: true },
       { name: 'keywords', label: 'Palabras clave', type: 'textarea', full: true },

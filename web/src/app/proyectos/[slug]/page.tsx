@@ -2,9 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getProject, getSiteContent, SITE_URL } from '@/lib/api';
 import { parseTags } from '@/lib/projects';
-import Navbar from '@/components/public/Navbar';
-import Footer from '@/components/public/Footer';
-import FloatingWhatsApp from '@/components/public/FloatingWhatsApp';
+import PageShell from '@/components/public/PageShell';
 import ProjectDetail from '@/components/public/projects/ProjectDetail';
 
 type Params = { params: Promise<{ slug: string }> };
@@ -48,7 +46,6 @@ export default async function ProjectPage({ params }: Params) {
 
   const p = page.data;
   const s = content.settings;
-  const siteName = s.siteName || 'Nathan Quevedo';
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -62,18 +59,12 @@ export default async function ProjectPage({ params }: Params) {
     dateModified: p.updatedAt,
     keywords: parseTags(p.tags).join(', ') || undefined,
     genre: p.category?.name,
-    author: { '@type': 'Person', name: siteName },
+    author: { '@type': 'Person', name: s.siteName || 'Nathan Quevedo' },
   };
 
   return (
-    <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <Navbar siteName={siteName} />
-      <main className="pb-24 sm:pb-32">
-        <ProjectDetail project={p} prev={page.prev} next={page.next} whatsapp={s.whatsapp} />
-      </main>
-      <Footer siteName={siteName} tagline={s.tagline} social={content.socialLinks} />
-      <FloatingWhatsApp phone={s.whatsapp} />
-    </>
+    <PageShell content={content} jsonLd={jsonLd}>
+      <ProjectDetail project={p} prev={page.prev} next={page.next} whatsapp={s.whatsapp} />
+    </PageShell>
   );
 }

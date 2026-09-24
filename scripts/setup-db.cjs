@@ -499,6 +499,32 @@ async function seedContent(prisma, log = console.log) {
         'licencias, software original, windows, office, adobe, streaming, netflix, vpn, antivirus, instalación remota, soporte técnico, Nathan Quevedo',
     },
   });
+  const pageSeo = [
+    {
+      page: 'servicios',
+      title: 'Servicios: streaming, licencias y soporte',
+      description:
+        'Plataformas de streaming premium, licencias de software original, nube, seguridad y soporte técnico remoto con garantía.',
+    },
+    {
+      page: 'proyectos',
+      title: 'Proyectos y casos de estudio',
+      description: 'Casos de estudio de Nathan Quevedo: el reto de cada cliente, la solución y los resultados.',
+    },
+    {
+      page: 'sobre-mi',
+      title: 'Sobre Nathan Quevedo',
+      description: 'Quién es Nathan Quevedo y cómo trabaja: servicios digitales, streaming, licencias y soporte remoto.',
+    },
+    {
+      page: 'contacto',
+      title: 'Contacto y cotizaciones',
+      description: 'Escríbeme por WhatsApp o con el formulario y te preparo una cotización a medida.',
+    },
+  ];
+  for (const p of pageSeo) {
+    await prisma.seo.upsert({ where: { page: p.page }, update: {}, create: p });
+  }
   log('   ✓ SEO');
 }
 

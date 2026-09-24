@@ -4,9 +4,10 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import { Send, CheckCircle2, Mail, Phone, Clock, MessageCircle } from 'lucide-react';
-import { ContactInfo } from '@/lib/types';
+import { ContactInfo, SocialLink } from '@/lib/types';
 import { Icon } from '@/lib/icon';
 import { API_URL } from '@/lib/api';
+import { waLink } from '@/lib/utils';
 import { track } from '@/lib/analytics';
 
 interface FormValues {
@@ -24,7 +25,19 @@ const iconByType: Record<string, React.ComponentType<{ size?: number; className?
   hours: Clock,
 };
 
-export default function Contact({ info }: { info: ContactInfo[] }) {
+export default function Contact({
+  info,
+  whatsapp,
+  social = [],
+  asPage = false,
+}: {
+  info: ContactInfo[];
+  whatsapp?: string;
+  social?: SocialLink[];
+  /** En /contacto el título es el h1 de la página. */
+  asPage?: boolean;
+}) {
+  const Heading = asPage ? 'h1' : 'h2';
   const { register, handleSubmit, reset, formState } = useForm<FormValues>();
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,12 +63,14 @@ export default function Contact({ info }: { info: ContactInfo[] }) {
   };
 
   return (
-    <section id="contacto" className="py-20 sm:py-28">
+    <section id="contacto" className={asPage ? 'pb-20 pt-32 sm:pb-28 sm:pt-40' : 'py-20 sm:py-28'}>
       <div className="container-x grid gap-10 lg:grid-cols-2">
         {/* Info */}
         <div>
           <span className="eyebrow">Contacto</span>
-          <h2 className="section-title mt-4">Hablemos de tu proyecto</h2>
+          <Heading className={asPage ? 'mt-6 text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl' : 'section-title mt-4'}>
+            Hablemos de tu proyecto
+          </Heading>
           <p className="mt-4 text-slate-600 dark:text-slate-300">
             Cuéntanos qué necesitas y te responderemos lo antes posible. Estamos aquí para ayudarte.
           </p>
@@ -76,6 +91,33 @@ export default function Contact({ info }: { info: ContactInfo[] }) {
               );
             })}
           </div>
+
+          {(whatsapp || social.length > 0) && (
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              {whatsapp && (
+                <a
+                  href={waLink(whatsapp, 'Hola, me gustaría solicitar una cotización.')}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn bg-[#25D366] text-white hover:bg-[#1ebe5b]"
+                >
+                  <MessageCircle size={18} /> Escribir por WhatsApp
+                </a>
+              )}
+              {social.map((l) => (
+                <a
+                  key={l.id}
+                  href={l.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={l.platform}
+                  className="grid h-11 w-11 place-items-center rounded-full border border-slate-200 text-slate-600 transition hover:border-brand-500 hover:text-brand-600 dark:border-white/10 dark:text-slate-300"
+                >
+                  <Icon name={l.icon} size={18} />
+                </a>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Formulario */}
@@ -99,13 +141,15 @@ export default function Contact({ info }: { info: ContactInfo[] }) {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="label">Nombre *</label>
-                  <input className="field" placeholder="Tu nombre" {...register('name', { required: true })} />
+                  <label htmlFor="contact-name" className="label">Nombre *</label>
+                  <input id="contact-name" autoComplete="name" className="field" placeholder="Tu nombre" {...register('name', { required: true })} />
                   {formState.errors.name && <p className="mt-1 text-xs text-red-500">El nombre es requerido.</p>}
                 </div>
                 <div>
-                  <label className="label">Correo *</label>
+                  <label htmlFor="contact-email" className="label">Correo *</label>
                   <input
+                    id="contact-email"
+                    autoComplete="email"
                     className="field"
                     type="email"
                     placeholder="tu@correo.com"
@@ -116,17 +160,18 @@ export default function Contact({ info }: { info: ContactInfo[] }) {
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="label">Teléfono</label>
-                  <input className="field" placeholder="Opcional" {...register('phone')} />
+                  <label htmlFor="contact-phone" className="label">Teléfono</label>
+                  <input id="contact-phone" type="tel" autoComplete="tel" className="field" placeholder="Opcional" {...register('phone')} />
                 </div>
                 <div>
-                  <label className="label">Asunto</label>
-                  <input className="field" placeholder="Opcional" {...register('subject')} />
+                  <label htmlFor="contact-subject" className="label">Asunto</label>
+                  <input id="contact-subject" className="field" placeholder="Opcional" {...register('subject')} />
                 </div>
               </div>
               <div>
-                <label className="label">Mensaje *</label>
+                <label htmlFor="contact-message" className="label">Mensaje *</label>
                 <textarea
+                  id="contact-message"
                   className="field min-h-[120px] resize-y"
                   placeholder="¿En qué podemos ayudarte?"
                   {...register('message', { required: true })}
