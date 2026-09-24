@@ -7,9 +7,11 @@ import { spawn, ChildProcess } from 'node:child_process';
 import { createServer } from 'node:net';
 import path from 'node:path';
 import mysql from 'mysql2/promise';
+import { startSmtpSink, SmtpSink } from './smtp';
 
 export const TEST_DB_URL = process.env.TEST_DATABASE_URL;
 export const ADMIN = { email: 'admin@test.local', password: 'Test-Admin-1234' };
+export const NOTIFY_EMAIL = 'avisos@test.local';
 
 const ROOT = path.resolve(__dirname, '../..');
 
@@ -42,6 +44,8 @@ async function resetDatabase(url: string) {
 
 export interface TestServer {
   base: string;
+  /** Correos enviados por la app (servidor SMTP de prueba). */
+  mail: SmtpSink;
   logs: () => string;
   stop: () => Promise<void>;
 }
@@ -49,6 +53,7 @@ export interface TestServer {
 export async function startServer(): Promise<TestServer> {
   if (!TEST_DB_URL) throw new Error('Falta TEST_DATABASE_URL.');
   await resetDatabase(TEST_DB_URL);
+  const mail = await startSmtpSink();
   const port = await freePort();
   let output = '';
   const child: ChildProcess = spawn(process.execPath, ['app.js'], {
@@ -64,6 +69,13 @@ export async function startServer(): Promise<TestServer> {
       ADMIN_PASSWORD: ADMIN.password,
       NEXT_PUBLIC_SITE_URL: 'https://example.test',
       CORS_ORIGIN: `http://127.0.0.1:${port}`,
+      SMTP_HOST: '127.0.0.1',
+      SMTP_PORT: String(mail.port),
+      SMTP_SECURE: 'false',
+      SMTP_USER: '',
+      SMTP_PASS: '',
+      MAIL_FROM: 'web@test.local',
+      NOTIFY_EMAIL,
     },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
@@ -86,13 +98,16 @@ export async function startServer(): Promise<TestServer> {
 
   return {
     base,
+    mail,
     logs: () => output,
-    stop: () =>
-      new Promise((resolve) => {
+    stop: async () => {
+      await new Promise<void>((resolve) => {
         if (child.exitCode !== null) return resolve();
         child.once('exit', () => resolve());
         child.kill('SIGTERM');
         setTimeout(() => child.kill('SIGKILL'), 5000).unref();
-      }),
+      });
+      await mail.close();
+    },
   };
 }

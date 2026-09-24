@@ -88,6 +88,11 @@ export const api = {
       recentMessages: { id: number; name: string; subject?: string | null; message: string; read: boolean; createdAt: string }[];
     }>('/admin/stats'),
   analytics: (days: number) => request<AnalyticsSummary>(`/admin/analytics?days=${days}`),
+  notifications: {
+    status: () =>
+      request<{ enabled: true; to: string; host: string; port: number } | { enabled: false }>('/admin/notifications'),
+    test: () => request<{ ok: true; to: string }>('/admin/notifications/test', { method: 'POST' }),
+  },
   changePassword: (currentPassword: string, newPassword: string) =>
     request<{ success: boolean }>('/auth/change-password', {
       method: 'POST',

@@ -109,6 +109,35 @@ licencias, logos, FAQ, admin…). No tienes que ejecutar nada más.
 
 ---
 
+## Opcional · Recibir los mensajes de contacto por correo
+
+Cada mensaje del formulario se guarda en el panel (**Mensajes**). Si además
+quieres recibirlo en tu correo al momento:
+
+1. cPanel → **Email Accounts** → **Create**: crea una cuenta, por ejemplo
+   `web@nathanquevedo.nvcorx.com`, con una contraseña.
+2. En esa cuenta pulsa **Connect Devices** y apunta el **servidor de salida
+   (SMTP)** y el **puerto SSL** (normalmente `mail.tudominio.com` y `465`).
+3. Añade al `.env`:
+
+```env
+SMTP_HOST="mail.nathanquevedo.nvcorx.com"
+SMTP_PORT=465
+SMTP_USER="web@nathanquevedo.nvcorx.com"
+SMTP_PASS="la-contraseña-de-esa-cuenta"
+NOTIFY_EMAIL="tu-correo-personal@gmail.com"
+```
+
+   `NOTIFY_EMAIL` es donde quieres recibir los avisos (si la dejas vacía,
+   llegan a la propia cuenta `SMTP_USER`).
+4. **Restart** en Setup Node.js App. En el panel → **Mensajes** verás
+   "Cada mensaje nuevo te llega a …" y el botón **Enviar correo de prueba**.
+
+Para contestar a un cliente, basta con **Responder** al aviso: va dirigido a
+su correo.
+
+---
+
 ## Notas
 
 - **Login del panel:** entra con el correo/clave del `.env`. Puedes cambiar la

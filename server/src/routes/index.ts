@@ -11,6 +11,7 @@ import { getStats } from '../controllers/stats.controller';
 import * as projects from '../controllers/projects.controller';
 import * as analytics from '../controllers/analytics.controller';
 import * as translations from '../controllers/translations.controller';
+import { mailStatus, sendTestEmail } from '../lib/mailer';
 
 const router = Router();
 
@@ -79,6 +80,26 @@ router.get('/admin/analytics', analytics.summary);
 router.patch('/admin/projects/:id/publish', projects.setPublished);
 router.get('/admin/translations/:resource/:id', translations.get);
 router.put('/admin/translations/:resource/:id', translations.save);
+
+// Avisos por correo de mensajes nuevos: estado y correo de prueba.
+router.get('/admin/notifications', (_req, res) => {
+  res.json(mailStatus());
+});
+const testMailLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Has enviado varias pruebas seguidas. Espera unos minutos.' },
+});
+router.post('/admin/notifications/test', requireRole('ADMIN'), testMailLimiter, async (_req, res, next) => {
+  try {
+    const result = await sendTestEmail();
+    res.status(result.ok ? 200 : 502).json(result);
+  } catch (err) {
+    next(err);
+  }
+});
 
 // El refuerzo de permisos para usuarios debe registrarse ANTES del CRUD genérico.
 router.use('/admin/users', requireRole('ADMIN'));

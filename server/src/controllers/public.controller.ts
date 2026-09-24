@@ -6,6 +6,7 @@ import { getResource } from '../lib/resources';
 import { HttpError } from '../middleware/error';
 import { PROJECT_ORDER, projectCardSelect } from './projects.controller';
 import { parseLocale, translateRecord, translateRecords } from '../lib/translations';
+import { notifyContactMessage } from '../lib/mailer';
 
 const CATEGORY = [{ key: 'category', resource: 'categories' }];
 
@@ -131,5 +132,7 @@ export const submitContact = asyncHandler(async (req: Request, res: Response) =>
     throw new HttpError(400, parsed.error.errors[0]?.message ?? 'Datos inválidos.');
   }
   const message = await prisma.contactMessage.create({ data: parsed.data });
+  // El aviso por correo va en segundo plano: el visitante no espera al SMTP.
+  void notifyContactMessage(parsed.data);
   res.status(201).json({ success: true, id: message.id });
 });

@@ -159,6 +159,8 @@ Password: Admin1234!
 
 Dashboard · **Métricas** · **Proyectos** · Hero · Servicios · Categorías · Plataformas · Licencias · FAQ · Galería · Banners · Logos · Redes sociales · Información de contacto · SEO · Configuración general · Usuarios · Multimedia · Mensajes.
 
+Los mensajes del formulario pueden llegarte también por correo (opcional, con una cuenta SMTP de tu dominio): ver `DEPLOY-CPANEL.md`.
+
 Cada módulo de contenido incluye: **búsqueda, ordenamiento, paginación, crear, editar, eliminar, activar/desactivar, vista previa de imágenes y confirmación antes de borrar.**
 
 ### 🧭 Páginas del sitio

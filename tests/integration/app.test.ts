@@ -5,7 +5,16 @@
  */
 import { after, before, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ADMIN, startServer, TestServer, TEST_DB_URL } from './server';
+import { ADMIN, NOTIFY_EMAIL, startServer, TestServer, TEST_DB_URL } from './server';
+
+/** Deshace el "quoted-printable" de un correo para poder buscar texto en él. */
+function decodeMail(data: string): string {
+  const joined = data.replace(/=\r\n/g, '');
+  return Buffer.from(
+    joined.replace(/=([0-9A-F]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16))),
+    'latin1'
+  ).toString('utf8');
+}
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36';
 
@@ -88,9 +97,23 @@ describe('app completa', { skip: TEST_DB_URL ? false : 'define TEST_DATABASE_URL
       assert.equal(bad.status, 400);
       const ok = await api('/public/contact', {
         method: 'POST',
-        body: json({ name: 'Ana Prueba', email: 'ana@example.com', message: 'Quiero una cotización.' }),
+        body: json({ name: 'Ana Prueba', email: 'ana@example.com', subject: '<b>Precio</b>', message: 'Quiero una cotización.' }),
       });
       assert.equal(ok.status, 201);
+    });
+
+    test('cada mensaje nuevo llega por correo, listo para responder', async () => {
+      const [mail] = await app.mail.waitFor(1);
+      assert.ok(mail, 'no llegó ningún correo');
+      assert.deepEqual(mail.to, [`<${NOTIFY_EMAIL}>`]);
+      const raw = decodeMail(mail.data);
+      assert.match(raw, /^Reply-To: Ana Prueba <ana@example\.com>/m);
+      assert.match(raw, /^Subject: Nuevo mensaje de Ana Prueba: <b>Precio<\/b>/m);
+      assert.match(raw, /Quiero una cotización\./);
+      // En la versión HTML el texto del visitante va escapado.
+      assert.ok(raw.includes('&lt;b&gt;Precio&lt;/b&gt;'));
+      assert.ok(!raw.includes('<td style="padding:6px 0"><b>'));
+      assert.match(raw, /https:\/\/example\.test\/admin\/messages/);
     });
 
     test('el formulario limita el tamaño de cada campo', async () => {
@@ -166,6 +189,20 @@ describe('app completa', { skip: TEST_DB_URL ? false : 'define TEST_DATABASE_URL
       const bad = await api('/admin/services', { method: 'POST', auth: true, body: json({ campoInventado: 1 }) });
       assert.equal(bad.status, 400);
       assert.equal(bad.body.error, 'Datos inválidos: revisa los campos enviados.');
+    });
+
+    test('el panel muestra los avisos por correo y envía un correo de prueba', async () => {
+      const status = await api('/admin/notifications', { auth: true });
+      assert.equal(status.status, 200);
+      assert.deepEqual({ enabled: status.body.enabled, to: status.body.to }, { enabled: true, to: NOTIFY_EMAIL });
+      assert.equal(status.body.pass, undefined);
+
+      const before = app.mail.mails.length;
+      const sent = await api('/admin/notifications/test', { method: 'POST', auth: true });
+      assert.equal(sent.status, 200);
+      const mails = await app.mail.waitFor(before + 1);
+      assert.match(decodeMail(mails[before].data), /^Subject: Prueba de avisos por correo/m);
+      assert.equal((await api('/admin/notifications/test', { method: 'POST' })).status, 401);
     });
 
     test('las métricas guardan solo visitas válidas y sin parámetros', async () => {
