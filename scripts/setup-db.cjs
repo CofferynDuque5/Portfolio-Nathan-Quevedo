@@ -244,6 +244,11 @@ async function seedContent(prisma, log = console.log) {
     { key: 'primaryColor', value: '#6366f1', group: 'theme', label: 'Color primario', type: 'color' },
     { key: 'whatsapp', value: '+58 4225200631', group: 'contact', label: 'WhatsApp', type: 'text' },
     { key: 'processTitle', value: 'Proceso de trabajo', group: 'process', label: 'Título proceso', type: 'text' },
+    // Cifras de la sección "Sobre mí" (vacías = ocultas).
+    { key: 'statClients', value: '+2000', group: 'about', label: 'Cifra: clientes satisfechos', type: 'text' },
+    { key: 'statOriginal', value: '100%', group: 'about', label: 'Cifra: software original', type: 'text' },
+    { key: 'statSupport', value: '24/7', group: 'about', label: 'Cifra: soporte disponible', type: 'text' },
+    { key: 'statProducts', value: '+50', group: 'about', label: 'Cifra: productos y licencias', type: 'text' },
   ];
   for (const s of settings) {
     await prisma.setting.upsert({

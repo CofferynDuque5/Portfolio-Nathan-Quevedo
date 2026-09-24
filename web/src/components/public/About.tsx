@@ -1,14 +1,28 @@
 import { ShieldCheck, Clock, Sparkles, Users } from 'lucide-react';
 import Reveal from '@/components/Reveal';
 
-const stats = [
-  { icon: Users, value: '+500', label: 'Clientes satisfechos' },
-  { icon: ShieldCheck, value: '100%', label: 'Software original' },
-  { icon: Clock, value: '24/7', label: 'Soporte disponible' },
-  { icon: Sparkles, value: '+50', label: 'Productos y licencias' },
+/**
+ * Cifras destacadas. El valor se edita en el panel (Configuración general,
+ * claves stat*); si se deja vacío, esa cifra no se muestra.
+ */
+const STATS = [
+  { key: 'statClients', icon: Users, fallback: '+2000', label: 'Clientes satisfechos' },
+  { key: 'statOriginal', icon: ShieldCheck, fallback: '100%', label: 'Software original' },
+  { key: 'statSupport', icon: Clock, fallback: '24/7', label: 'Soporte disponible' },
+  { key: 'statProducts', icon: Sparkles, fallback: '+50', label: 'Productos y licencias' },
 ];
 
-export default function About({ title, text }: { title: string; text: string }) {
+export default function About({
+  title,
+  text,
+  settings = {},
+}: {
+  title: string;
+  text: string;
+  settings?: Record<string, string>;
+}) {
+  const stats = STATS.map((st) => ({ ...st, value: settings[st.key] ?? st.fallback })).filter((st) => st.value.trim());
+
   return (
     <section id="sobre" className="py-20 sm:py-28">
       <div className="container-x grid items-center gap-12 lg:grid-cols-2">
