@@ -58,7 +58,7 @@ export async function startServer(): Promise<TestServer> {
       NODE_ENV: 'production',
       PORT: String(port),
       DATABASE_URL: TEST_DB_URL,
-      JWT_SECRET: 'test-secret',
+      JWT_SECRET: 'test-secret-for-integration-tests-0123456789',
       ADMIN_NAME: 'Test Admin',
       ADMIN_EMAIL: ADMIN.email,
       ADMIN_PASSWORD: ADMIN.password,

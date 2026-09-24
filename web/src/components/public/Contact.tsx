@@ -102,7 +102,7 @@ export default function Contact({
                   href={waLink(whatsapp, dict.whatsapp.quote)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="btn bg-[#25D366] text-white hover:bg-[#1ebe5b]"
+                  className="btn bg-[#25D366] text-[#0b141a] hover:bg-[#1ebe5b]"
                 >
                   <MessageCircle size={18} /> {t.whatsappButton}
                 </a>

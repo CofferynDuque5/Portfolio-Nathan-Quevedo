@@ -47,7 +47,7 @@ export default async function Footer({
           </div>
 
           <div>
-            <h4 className="text-sm font-semibold">{t.links}</h4>
+            <h2 className="text-sm font-semibold">{t.links}</h2>
             <ul className="mt-4 space-y-2 text-sm text-slate-500 dark:text-slate-400">
               <li><a href={href("/servicios")} className="hover:text-brand-600">{t.services}</a></li>
               <li><a href={href("/proyectos")} className="hover:text-brand-600">{t.projects}</a></li>
@@ -59,7 +59,7 @@ export default async function Footer({
           </div>
 
           <div>
-            <h4 className="text-sm font-semibold">{t.contact}</h4>
+            <h2 className="text-sm font-semibold">{t.contact}</h2>
             <ul className="mt-4 space-y-2 text-sm text-slate-500 dark:text-slate-400">
               <li><a href={href("/contacto")} className="hover:text-brand-600">{t.contactForm}</a></li>
               <li><a href="/admin" className="hover:text-brand-600">{t.admin}</a></li>
@@ -68,7 +68,7 @@ export default async function Footer({
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-slate-200/60 pt-6 text-sm text-slate-400 dark:border-white/10 sm:flex-row">
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-slate-200/60 pt-6 text-sm text-slate-500 dark:border-white/10 dark:text-slate-400 sm:flex-row">
           <p>© {year} {siteName}. {t.rights}</p>
           <p>{t.builtWith}</p>
         </div>

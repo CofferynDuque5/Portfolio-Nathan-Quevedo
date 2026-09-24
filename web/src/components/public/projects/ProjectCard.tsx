@@ -12,10 +12,14 @@ import { useI18n } from '@/i18n/client';
 export default function ProjectCard({
   project,
   large = false,
+  headingLevel = 'h3',
 }: {
   project: ProjectSummary;
   large?: boolean;
+  /** h2 cuando la lista va justo bajo el h1 de la página (/proyectos). */
+  headingLevel?: 'h2' | 'h3';
 }) {
+  const Heading = headingLevel;
   const { t: dict, href } = useI18n();
   const tags = parseTags(project.tags).slice(0, 3);
   const meta = [project.client, project.year].filter(Boolean).join(' · ');
@@ -63,14 +67,14 @@ export default function ProjectCard({
           {project.category && meta && <span aria-hidden className="h-px w-6 bg-slate-300 dark:bg-white/20" />}
           {meta && <span className="truncate">{meta}</span>}
         </div>
-        <h3
+        <Heading
           className={cn(
             'mt-2 font-semibold leading-tight tracking-tight transition group-hover:text-brand-600 dark:group-hover:text-brand-300',
             large ? 'text-2xl sm:text-3xl' : 'text-xl'
           )}
         >
           {project.title}
-        </h3>
+        </Heading>
         {project.summary && (
           <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
             {project.summary}

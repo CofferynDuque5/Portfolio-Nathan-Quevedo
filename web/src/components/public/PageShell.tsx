@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { SiteContent } from '@/lib/types';
+import { jsonLdHtml } from '@/lib/jsonld';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import FloatingWhatsApp from './FloatingWhatsApp';
@@ -18,7 +19,7 @@ export default function PageShell({
   const siteName = s.siteName || 'Nathan Quevedo';
   return (
     <>
-      {jsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />}
+      {jsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }} />}
       <Navbar siteName={siteName} />
       <main className="pb-24 sm:pb-32">{children}</main>
       <Footer siteName={siteName} tagline={s.tagline} social={content.socialLinks} />

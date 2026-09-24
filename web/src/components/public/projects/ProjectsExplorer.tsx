@@ -78,7 +78,7 @@ export default function ProjectsExplorer({
       )}
     >
       {label}
-      <span className={cn('text-xs tabular-nums', active === slug ? 'opacity-70' : 'text-slate-400')}>{count}</span>
+      <span className={cn('text-xs tabular-nums', active === slug ? 'opacity-70' : 'text-slate-500 dark:text-slate-400')}>{count}</span>
     </button>
   );
 
@@ -111,7 +111,7 @@ export default function ProjectsExplorer({
               transition={{ duration: 0.4, delay: Math.min(i, 4) * 0.05, ease: 'easeOut' }}
               className={cn(wide && 'md:col-span-2')}
             >
-              <ProjectCard project={p} large={wide} />
+              <ProjectCard project={p} large={wide} headingLevel="h2" />
             </motion.li>
             );
           })}

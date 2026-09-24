@@ -71,7 +71,7 @@ export default function ProjectDetail({
             <dl className="mt-12 grid grid-cols-2 gap-x-6 gap-y-6 border-t border-slate-200 pt-6 sm:grid-cols-4 dark:border-white/10">
               {facts.map((f) => (
                 <div key={f.label}>
-                  <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">{f.label}</dt>
+                  <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">{f.label}</dt>
                   <dd className="mt-1.5 font-medium first-letter:uppercase">{f.value}</dd>
                 </div>
               ))}
@@ -173,7 +173,7 @@ export default function ProjectDetail({
         <nav aria-label={t.otherProjects} className="container-x mt-16 grid gap-4 sm:grid-cols-2">
           {prev ? (
             <Link href={href(`/proyectos/${prev.slug}`)} className="card group">
-              <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+              <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
                 <ArrowLeft size={14} className="transition group-hover:-translate-x-1" /> {t.prev}
               </span>
               <span className="mt-2 block text-lg font-semibold">{prev.title}</span>
@@ -181,7 +181,7 @@ export default function ProjectDetail({
           ) : <span className="hidden sm:block" />}
           {next && (
             <Link href={href(`/proyectos/${next.slug}`)} className="card group sm:text-right">
-              <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400 sm:justify-end">
+              <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400 sm:justify-end">
                 {t.next} <ArrowRight size={14} className="transition group-hover:translate-x-1" />
               </span>
               <span className="mt-2 block text-lg font-semibold">{next.title}</span>

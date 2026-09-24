@@ -30,7 +30,15 @@ router.post('/auth/change-password', requireAuth, auth.changePassword);
 // -------------------- Público (sitio) --------------------
 router.get('/public/content', pub.getSiteContent);
 router.get('/public/seo/:page', pub.getSeo);
-router.post('/public/contact', pub.submitContact);
+// Formulario de contacto: pocos envíos por visitante para frenar el spam.
+const contactLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Has enviado varios mensajes seguidos. Espera unos minutos o escríbenos por WhatsApp.' },
+});
+router.post('/public/contact', contactLimiter, pub.submitContact);
 // Métricas: límite propio para que un abuso no llene la base de datos.
 const trackLimiter = rateLimit({
   windowMs: 60 * 1000,

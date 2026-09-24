@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { LOCALE_HEADER, localizedPath, parseLocalizedPath } from '@/i18n/config';
+import { DEFAULT_LOCALE, LOCALE_HEADER, localizedPath, parseLocalizedPath } from '@/i18n/config';
 
 /**
  * Rutas de idioma: /en/services -> página /servicios en inglés.
@@ -7,6 +7,15 @@ import { LOCALE_HEADER, localizedPath, parseLocalizedPath } from '@/i18n/config'
  */
 export function middleware(req: NextRequest) {
   const { locale, basePath, canonical } = parseLocalizedPath(req.nextUrl.pathname);
+
+  // Fuera de /en el idioma es siempre el español: se descarta la cabecera
+  // interna si la trae el visitante (solo la puede poner este middleware).
+  if (locale === DEFAULT_LOCALE) {
+    if (!req.headers.has(LOCALE_HEADER)) return NextResponse.next();
+    const headers = new Headers(req.headers);
+    headers.delete(LOCALE_HEADER);
+    return NextResponse.next({ request: { headers } });
+  }
 
   // El panel y la API no tienen versión por idioma.
   if (basePath.startsWith('/admin') || basePath.startsWith('/api')) {
@@ -24,4 +33,7 @@ export function middleware(req: NextRequest) {
   return NextResponse.rewrite(url, { request: { headers } });
 }
 
-export const config = { matcher: ['/en', '/en/:path*'] };
+// Todas las páginas salvo la API, los archivos subidos y los estáticos de Next.
+export const config = {
+  matcher: ['/((?!api/|uploads/|_next/static|_next/image|favicon\\.ico).*)'],
+};

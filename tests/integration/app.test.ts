@@ -93,6 +93,26 @@ describe('app completa', { skip: TEST_DB_URL ? false : 'define TEST_DATABASE_URL
       assert.equal(ok.status, 201);
     });
 
+    test('el formulario limita el tamaño de cada campo', async () => {
+      const long = await api('/public/contact', {
+        method: 'POST',
+        body: json({ name: 'Ana', email: 'ana@example.com', message: 'x'.repeat(5001) }),
+      });
+      assert.equal(long.status, 400);
+      assert.match(long.body.error, /demasiado largo/);
+    });
+
+    test('el formulario frena los envíos repetidos', async () => {
+      const send = () =>
+        api('/public/contact', {
+          method: 'POST',
+          body: json({ name: 'Ana', email: 'ana@example.com', message: 'Mensaje repetido.' }),
+        });
+      const statuses: number[] = [];
+      for (let i = 0; i < 5; i++) statuses.push((await send()).status);
+      assert.ok(statuses.includes(429), `se esperaba un 429, llegó ${statuses.join(',')}`);
+    });
+
     test('las métricas descartan bots y el panel, y exigen login para leerlas', async () => {
       const event = (path: string, ua = UA) =>
         api('/public/track', {
@@ -120,6 +140,32 @@ describe('app completa', { skip: TEST_DB_URL ? false : 'define TEST_DATABASE_URL
       assert.equal(status, 200);
       token = body.token;
       assert.ok(token);
+    });
+
+    test('el rol y el acceso se comprueban en la base de datos, no en la sesión', async () => {
+      const editor = { email: 'editor@test.local', password: 'Editor-Test-1234' };
+      const created = await api('/admin/users', {
+        method: 'POST',
+        auth: true,
+        body: json({ name: 'Editor', ...editor, role: 'EDITOR' }),
+      });
+      assert.equal(created.status, 201);
+      const userId = created.body.data.id;
+      const login = await api('/auth/login', { method: 'POST', body: json(editor) });
+      const asEditor = { Authorization: `Bearer ${login.body.token}` };
+
+      assert.equal((await api('/admin/users', { headers: asEditor })).status, 403);
+      await api(`/admin/users/${userId}`, { method: 'PUT', auth: true, body: json({ role: 'ADMIN' }) });
+      assert.equal((await api('/admin/users', { headers: asEditor })).status, 200);
+      await api(`/admin/users/${userId}`, { method: 'PUT', auth: true, body: json({ active: false }) });
+      assert.equal((await api('/auth/me', { headers: asEditor })).status, 401);
+      assert.equal((await api(`/admin/users/${userId}`, { method: 'DELETE', auth: true })).status, 200);
+    });
+
+    test('los datos inválidos no muestran detalles internos', async () => {
+      const bad = await api('/admin/services', { method: 'POST', auth: true, body: json({ campoInventado: 1 }) });
+      assert.equal(bad.status, 400);
+      assert.equal(bad.body.error, 'Datos inválidos: revisa los campos enviados.');
     });
 
     test('las métricas guardan solo visitas válidas y sin parámetros', async () => {
@@ -158,6 +204,15 @@ describe('app completa', { skip: TEST_DB_URL ? false : 'define TEST_DATABASE_URL
       assert.ok(pub.body.data.publishedAt);
       const list = await api('/public/projects');
       assert.ok(list.body.data.some((p: any) => p.slug === 'caso-de-prueba'));
+    });
+
+    test('un texto con </script> no rompe los datos estructurados de la página', async () => {
+      const evil = '</script><script>window.__hacked=1</script>';
+      const upd = await api(`/admin/projects/${id}`, { method: 'PUT', auth: true, body: json({ seoDescription: evil }) });
+      assert.equal(upd.status, 200);
+      const { html } = await page('/proyectos/caso-de-prueba');
+      assert.ok(!html.includes('<script>window.__hacked'));
+      assert.ok(html.includes('\\u003c/script\\u003e\\u003cscript\\u003ewindow.__hacked'));
     });
 
     test('la traducción se guarda y el sitio en inglés la usa', async () => {
@@ -251,6 +306,11 @@ describe('app completa', { skip: TEST_DB_URL ? false : 'define TEST_DATABASE_URL
         assert.ok(res.html.includes(text), `${path}: falta "${text}"`);
         assert.match(res.html, /<html lang="en"/, path);
       }
+    });
+
+    test('fuera de /en no se puede forzar el inglés con la cabecera interna', async () => {
+      const res = await fetch(`${app.base}/servicios`, { headers: { 'User-Agent': UA, 'x-locale': 'en' } });
+      assert.match(await res.text(), /<html lang="es"/);
     });
 
     test('redirecciones y 404 por idioma', async () => {

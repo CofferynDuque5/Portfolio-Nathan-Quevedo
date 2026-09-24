@@ -95,7 +95,7 @@ export default async function ServicesPage() {
                 {g.category?.description && (
                   <p className="mt-3 max-w-sm text-slate-500 dark:text-slate-400">{g.category.description}</p>
                 )}
-                <p className="mt-3 text-sm text-slate-400">
+                <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
                   {t.count(g.items.length)}
                 </p>
               </div>

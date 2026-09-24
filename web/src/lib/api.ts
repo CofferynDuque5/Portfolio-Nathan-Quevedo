@@ -21,6 +21,15 @@ export const API_URL =
     ? process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || LOCAL_API
     : process.env.NEXT_PUBLIC_API_URL || '';
 
+/**
+ * En el servidor, las peticiones a la API propia llevan la clave interna para
+ * no gastar el límite de peticiones de los visitantes (ver server/src/app.ts).
+ */
+function internalHeaders(): Record<string, string> | undefined {
+  const key = typeof window === 'undefined' ? process.env.INTERNAL_API_KEY : undefined;
+  return key ? { 'x-internal-key': key } : undefined;
+}
+
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
 /**
@@ -32,6 +41,7 @@ export async function getSiteContent(locale?: Locale): Promise<SiteContent> {
     const res = await fetch(`${API_URL}/api/public/content${lang(locale)}`, {
       // Siempre datos frescos: los cambios del panel se ven al instante.
       cache: 'no-store',
+      headers: internalHeaders(),
     });
     if (!res.ok) throw new Error(`API respondió ${res.status}`);
     const data = (await res.json()) as SiteContent;
@@ -54,7 +64,10 @@ export interface SeoData {
 /** Obtiene los metadatos SEO de una página concreta. */
 export async function getSeo(page: string, locale?: Locale): Promise<SeoData | null> {
   try {
-    const res = await fetch(`${API_URL}/api/public/seo/${page}${lang(locale)}`, { cache: 'no-store' });
+    const res = await fetch(`${API_URL}/api/public/seo/${page}${lang(locale)}`, {
+      cache: 'no-store',
+      headers: internalHeaders(),
+    });
     if (!res.ok) return null;
     const json = await res.json();
     return json.data ?? null;
@@ -66,7 +79,10 @@ export async function getSeo(page: string, locale?: Locale): Promise<SeoData | n
 /** Proyectos publicados (portfolio). Lista vacía si la API no responde. */
 export async function getProjects(locale?: Locale): Promise<ProjectSummary[]> {
   try {
-    const res = await fetch(`${API_URL}/api/public/projects${lang(locale)}`, { cache: 'no-store' });
+    const res = await fetch(`${API_URL}/api/public/projects${lang(locale)}`, {
+      cache: 'no-store',
+      headers: internalHeaders(),
+    });
     if (!res.ok) return [];
     const json = await res.json();
     return json.data ?? [];
@@ -86,6 +102,7 @@ export async function getProject(slug: string, locale?: Locale): Promise<Project
   try {
     const res = await fetch(`${API_URL}/api/public/projects/${encodeURIComponent(slug)}${lang(locale)}`, {
       cache: 'no-store',
+      headers: internalHeaders(),
     });
     if (!res.ok) return null;
     return (await res.json()) as ProjectPage;

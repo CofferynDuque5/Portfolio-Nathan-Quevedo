@@ -117,11 +117,11 @@ export const getSeo = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const contactSchema = z.object({
-  name: z.string().min(2, 'El nombre es requerido.'),
-  email: z.string().email('Correo inválido.'),
-  phone: z.string().optional(),
-  subject: z.string().optional(),
-  message: z.string().min(5, 'El mensaje es demasiado corto.'),
+  name: z.string().trim().min(2, 'El nombre es requerido.').max(191, 'El nombre es demasiado largo.'),
+  email: z.string().trim().email('Correo inválido.').max(191, 'El correo es demasiado largo.'),
+  phone: z.string().trim().max(50, 'El teléfono es demasiado largo.').optional(),
+  subject: z.string().trim().max(191, 'El asunto es demasiado largo.').optional(),
+  message: z.string().trim().min(5, 'El mensaje es demasiado corto.').max(5000, 'El mensaje es demasiado largo (máximo 5000 caracteres).'),
 });
 
 /** POST /api/public/contact — recibe el formulario de contacto. */

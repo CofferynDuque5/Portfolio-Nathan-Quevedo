@@ -17,6 +17,7 @@
  */
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
@@ -147,8 +148,64 @@ async function ensureDatabaseExists(log = console.log) {
 const admin = {
   name: process.env.ADMIN_NAME || 'Nathan Quevedo',
   email: process.env.ADMIN_EMAIL || 'admin@nathanquevedo.com',
-  password: process.env.ADMIN_PASSWORD || 'Admin1234!',
+  password: process.env.ADMIN_PASSWORD || '',
 };
+
+const IS_PROD = process.env.NODE_ENV === 'production';
+/** Contraseñas de ejemplo o publicadas (en claro o su SHA-256): nunca en producción. */
+const UNSAFE_PASSWORDS = new Set(['Admin1234!', 'CambiaEstaClave123', 'escribe-aqui-una-contraseña-propia']);
+const UNSAFE_PASSWORD_HASHES = new Set([
+  '61925e2f86389e852a4c2fc7daadb4ff96ec72a0af64aaf5cb9c831fd67e6523', // la que traía .env.cpanel
+]);
+const ADMIN_PASSWORD_FILE = path.join(__dirname, '..', 'ADMIN-PASSWORD.txt');
+
+function isUnsafePassword(pw) {
+  if (!pw || pw.length < 10 || UNSAFE_PASSWORDS.has(pw)) return true;
+  return UNSAFE_PASSWORD_HASHES.has(crypto.createHash('sha256').update(pw).digest('hex'));
+}
+
+/**
+ * Crea el administrador o actualiza sus datos.
+ * - Con una ADMIN_PASSWORD segura, esa es la contraseña (como antes).
+ * - En producción, si falta o es una de ejemplo/publicada: al crearlo se
+ *   genera una aleatoria y se guarda en ADMIN-PASSWORD.txt; si ya existe,
+ *   su contraseña no se toca.
+ * - En desarrollo se mantiene Admin1234! por comodidad.
+ */
+async function upsertAdmin(prisma, log) {
+  const configured = admin.password;
+  const usable = IS_PROD ? !isUnsafePassword(configured) : true;
+  const password = usable ? configured || 'Admin1234!' : null;
+  const existing = await prisma.user.findUnique({ where: { email: admin.email } });
+
+  if (existing) {
+    const data = { name: admin.name, active: true };
+    if (password) data.passwordHash = await bcrypt.hash(password, 10);
+    await prisma.user.update({ where: { id: existing.id }, data });
+    if (!password) log('   • ADMIN_PASSWORD vacía o insegura: la contraseña actual del admin no se cambia.');
+    log(`   ✓ Admin: ${admin.email}`);
+    return;
+  }
+
+  let initial = password;
+  if (!initial) {
+    initial = crypto.randomBytes(12).toString('base64url');
+    try {
+      fs.writeFileSync(
+        ADMIN_PASSWORD_FILE,
+        `Usuario: ${admin.email}\nContraseña: ${initial}\n\nCámbiala en el panel (/admin) y borra este archivo.\n`,
+        { mode: 0o600 }
+      );
+      log(`   ⚠ ADMIN_PASSWORD vacía o insegura: contraseña aleatoria guardada en ${ADMIN_PASSWORD_FILE}`);
+    } catch {
+      log(`   ⚠ ADMIN_PASSWORD vacía o insegura. Contraseña aleatoria del admin: ${initial}`);
+    }
+  }
+  await prisma.user.create({
+    data: { name: admin.name, email: admin.email, passwordHash: await bcrypt.hash(initial, 10), role: 'ADMIN' },
+  });
+  log(`   ✓ Admin: ${admin.email}`);
+}
 
 /** Divide un archivo de migración en sentencias SQL ejecutables. */
 function readMigrationStatements(file) {
@@ -224,13 +281,7 @@ async function ensureSchema(prisma, log = console.log) {
 /** Inserta / actualiza todo el contenido inicial. */
 async function seedContent(prisma, log = console.log) {
   // ---------------- Usuario administrador ----------------
-  const passwordHash = await bcrypt.hash(admin.password, 10);
-  await prisma.user.upsert({
-    where: { email: admin.email },
-    update: { name: admin.name, passwordHash, active: true },
-    create: { name: admin.name, email: admin.email, passwordHash, role: 'ADMIN' },
-  });
-  log(`   ✓ Admin: ${admin.email}`);
+  await upsertAdmin(prisma, log);
 
   // ---------------- Configuración general ----------------
   const settings = [

@@ -50,13 +50,13 @@ En el Administrador de Archivos, dentro de esa carpeta:
 
 ```env
 DATABASE_URL="mysql://USUARIO:CONTRASENA@localhost:3306/NOMBRE_BD"
-JWT_SECRET="pon-aqui-cualquier-clave-larga-1234567890"
+JWT_SECRET=""
 NEXT_PUBLIC_SITE_URL="https://nathanquevedo.nvcorx.com"
 NEXT_PUBLIC_API_URL=""
 API_URL=""
 CORS_ORIGIN="https://nathanquevedo.nvcorx.com"
 ADMIN_EMAIL="admin@nathanquevedo.com"
-ADMIN_PASSWORD="CambiaEstaClave123"
+ADMIN_PASSWORD="escribe-aqui-una-contraseña-propia"
 ```
 
 Guarda (**Save Changes**).
@@ -100,7 +100,10 @@ licencias, logos, FAQ, admin…). No tienes que ejecutar nada más.
 
 - Sitio: `https://nathanquevedo.nvcorx.com`
 - Panel: `https://nathanquevedo.nvcorx.com/admin`
-  (usuario y contraseña que pusiste en `ADMIN_EMAIL` / `ADMIN_PASSWORD`).
+  (usuario y contraseña que pusiste en `ADMIN_EMAIL` / `ADMIN_PASSWORD`; si la
+  dejaste vacía, la contraseña inicial está en el archivo `ADMIN-PASSWORD.txt`:
+  entra, cámbiala en el panel y borra ese archivo).
+- `JWT_SECRET` puede quedar vacío: la app crea sola una clave segura en `.jwt-secret`.
 
 ✅ Listo. Al entrar al dominio aparece el sitio.
 
