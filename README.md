@@ -35,6 +35,7 @@ Construido con una arquitectura escalable y **sin depender de servicios externos
 ```
 Portfolio-Nathan-Quevedo/
 ├── package.json            # Monorepo (workspaces + scripts orquestadores)
+├── tests/                  # Pruebas unitarias y de integración (npm test)
 ├── .env.example            # Variables de entorno (copiar a .env)
 ├── server/                 # API REST (Express + Prisma + MySQL)
 │   ├── prisma/
@@ -238,6 +239,26 @@ El panel `/admin` sigue en español.
 > La arquitectura es **declarativa**: para añadir una sección nueva basta con
 > registrar el modelo en `server/src/lib/resources.ts` y su configuración de
 > campos en `web/src/lib/admin/resources.ts`. El resto (API + UI) es genérico.
+
+---
+
+## 🧪 Pruebas
+
+```bash
+npm run build                 # las pruebas de integración usan la app compilada
+npm run test:unit             # rutas de idioma, diccionarios, reglas de proyectos y métricas
+TEST_DATABASE_URL="mysql://usuario:clave@127.0.0.1:3306/portfolio_test" npm run test:integration
+npm test                      # tipos + unitarias + integración
+```
+
+- **Unitarias** (`tests/unit`): no necesitan base de datos.
+- **Integración** (`tests/integration`): arrancan la app completa (`app.js`) contra una
+  base **de prueba vacía**, igual que en producción, y comprueban la API, el panel
+  (proyectos, publicación, traducciones, métricas) y las páginas en español e inglés.
+  La base indicada en `TEST_DATABASE_URL` **se borra y se vuelve a crear** en cada
+  ejecución; por seguridad su nombre debe contener `test`. Sin esa variable se omiten.
+- **CI**: `.github/workflows/ci.yml` compila y ejecuta todas las pruebas con MySQL 8 en
+  cada pull request.
 
 ---
 
