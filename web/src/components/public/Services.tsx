@@ -2,19 +2,21 @@ import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { Service } from '@/lib/types';
 import ServiceCard from './ServiceCard';
+import { getT } from '@/i18n';
 
 /** Sección de servicios de la home (con enlace a la página completa). */
 export default function Services({ services, whatsapp }: { services: Service[]; whatsapp?: string }) {
   if (!services.length) return null;
+  const t = getT().services;
 
   return (
     <section id="servicios" className="py-20 sm:py-28">
       <div className="container-x">
         <div className="mx-auto max-w-2xl text-center">
-          <span className="eyebrow">Servicios</span>
-          <h2 className="section-title mt-4">Todo lo que necesitas, en un solo lugar</h2>
+          <span className="eyebrow">{t.eyebrow}</span>
+          <h2 className="section-title mt-4">{t.title}</h2>
           <p className="mt-4 text-slate-600 dark:text-slate-300">
-            Soluciones digitales premium con instalación remota y soporte incluido.
+            {t.lead}
           </p>
         </div>
 
@@ -26,7 +28,7 @@ export default function Services({ services, whatsapp }: { services: Service[]; 
 
         <div className="mt-10 text-center">
           <Link href="/servicios" className="btn-ghost">
-            Ver todos los servicios <ArrowRight size={16} />
+            {t.seeAll} <ArrowRight size={16} />
           </Link>
         </div>
       </div>

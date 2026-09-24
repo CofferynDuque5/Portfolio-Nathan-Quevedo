@@ -1,12 +1,14 @@
 import { ImageResponse } from 'next/og';
+import { getT } from '@/i18n';
 
 export const runtime = 'edge';
-export const alt = 'Nathan Quevedo — Software y Licencias Premium';
+export const alt = getT().pages.home.ogAlt;
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
 /** Imagen Open Graph generada dinámicamente (compartir en redes / WhatsApp). */
 export default function OpengraphImage() {
+  const t = getT().pages.home;
   return new ImageResponse(
     (
       <div
@@ -41,10 +43,10 @@ export default function OpengraphImage() {
           <div style={{ fontSize: 34, fontWeight: 600, opacity: 0.9 }}>Nathan Quevedo</div>
         </div>
         <div style={{ fontSize: 68, fontWeight: 800, lineHeight: 1.1, maxWidth: 900 }}>
-          Software original y suscripciones premium
+          {t.ogTitle}
         </div>
         <div style={{ fontSize: 34, marginTop: 30, opacity: 0.8, maxWidth: 900 }}>
-          Licencias, streaming, seguridad y nube · Instalación remota y soporte garantizado
+          {t.ogSubtitle}
         </div>
       </div>
     ),

@@ -5,9 +5,11 @@ import { MessageCircle } from 'lucide-react';
 import { Service } from '@/lib/types';
 import { Icon } from '@/lib/icon';
 import { waLink } from '@/lib/utils';
+import { useI18n } from '@/i18n/client';
 
 /** Tarjeta de servicio con imagen, precio y botón de WhatsApp. */
 export default function ServiceCard({ s, i, whatsapp }: { s: Service; i: number; whatsapp?: string }) {
+  const { t } = useI18n();
   return (
     <motion.article
       initial={{ opacity: 0, y: 24 }}
@@ -42,7 +44,7 @@ export default function ServiceCard({ s, i, whatsapp }: { s: Service; i: number;
 
         {s.featured && (
           <span className="absolute right-4 top-4 rounded-full bg-brand-600 px-3 py-1 text-xs font-semibold text-white shadow-glow">
-            Destacado
+            {t.common.featured}
           </span>
         )}
       </div>
@@ -63,12 +65,12 @@ export default function ServiceCard({ s, i, whatsapp }: { s: Service; i: number;
         </p>
 
         <a
-          href={waLink(whatsapp, `Hola, me interesa el servicio: ${s.title}`)}
+          href={waLink(whatsapp, t.whatsapp.service(s.title))}
           target="_blank"
           rel="noopener noreferrer"
           className="btn-primary mt-6 w-full"
         >
-          <MessageCircle size={16} /> {s.ctaText || 'Solicitar por WhatsApp'}
+          <MessageCircle size={16} /> {s.ctaText || t.common.requestWhatsapp}
         </a>
       </div>
     </motion.article>

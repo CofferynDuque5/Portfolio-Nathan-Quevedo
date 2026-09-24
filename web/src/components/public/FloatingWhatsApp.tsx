@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react';
 import { MessageCircle } from 'lucide-react';
 import { waLink } from '@/lib/utils';
+import { useI18n } from '@/i18n/client';
 
 /** Botón flotante de WhatsApp: aparece al hacer scroll y facilita el contacto. */
 export default function FloatingWhatsApp({ phone }: { phone?: string }) {
   const [visible, setVisible] = useState(false);
+  const { t } = useI18n();
 
   useEffect(() => {
     const onScroll = () => setVisible(window.scrollY > 500);
@@ -18,10 +20,10 @@ export default function FloatingWhatsApp({ phone }: { phone?: string }) {
 
   return (
     <a
-      href={waLink(phone)}
+      href={waLink(phone, t.whatsapp.default)}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="Contactar por WhatsApp"
+      aria-label={t.common.whatsappAria}
       className={`fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl ${
         visible ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'
       }`}

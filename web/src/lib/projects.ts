@@ -1,4 +1,5 @@
 /** Helpers de presentación para los proyectos / casos de estudio. */
+import { DEFAULT_LOCALE, LOCALE_META } from '@/i18n/config';
 
 /** "Streaming, Soporte , " -> ["Streaming", "Soporte"] */
 export function parseTags(tags?: string | null): string[] {
@@ -17,11 +18,11 @@ export function parseGallery(gallery?: string | null): string[] {
 }
 
 /** "2026-09-24T..." -> "septiembre de 2026" */
-export function formatMonthYear(iso?: string | null): string | null {
+export function formatMonthYear(iso?: string | null, locale: string = LOCALE_META[DEFAULT_LOCALE].intl): string | null {
   if (!iso) return null;
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleDateString('es-ES', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  return d.toLocaleDateString(locale, { month: 'long', year: 'numeric', timeZone: 'UTC' });
 }
 
 /** Parámetro de URL para el filtro por categoría del listado. */

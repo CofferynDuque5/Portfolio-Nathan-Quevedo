@@ -6,18 +6,20 @@ import 'swiper/css';
 import 'swiper/css/free-mode';
 import { Play } from 'lucide-react';
 import { Platform } from '@/lib/types';
+import { useI18n } from '@/i18n/client';
 
 export default function Platforms({ platforms }: { platforms: Platform[] }) {
+  const { t } = useI18n();
   if (!platforms.length) return null;
 
   return (
     <section id="plataformas" className="py-20 sm:py-28">
       <div className="container-x">
         <div className="mx-auto max-w-2xl text-center">
-          <span className="eyebrow">Streaming premium</span>
-          <h2 className="section-title mt-4">Las mejores plataformas de entretenimiento</h2>
+          <span className="eyebrow">{t.platforms.eyebrow}</span>
+          <h2 className="section-title mt-4">{t.platforms.title}</h2>
           <p className="mt-4 text-slate-600 dark:text-slate-300">
-            Suscripciones premium con activación inmediata y garantía.
+            {t.platforms.lead}
           </p>
         </div>
       </div>

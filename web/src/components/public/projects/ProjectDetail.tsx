@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, ArrowUpRight } from 'lucide-react';
 import { Project, ProjectLink } from '@/lib/types';
@@ -5,6 +7,7 @@ import { formatMonthYear, parseGallery, parseTags } from '@/lib/projects';
 import Reveal from '@/components/Reveal';
 import RichText from './RichText';
 import QuoteCTA from '../QuoteCTA';
+import { useI18n } from '@/i18n/client';
 
 /**
  * Caso de estudio completo. Se usa en la página pública (/proyectos/[slug])
@@ -22,21 +25,23 @@ export default function ProjectDetail({
   next?: ProjectLink | null;
   whatsapp?: string;
 }) {
+  const { t: dict, intl } = useI18n();
+  const t = dict.caseStudy;
   const tags = parseTags(project.tags);
   const gallery = parseGallery(project.gallery);
-  const published = formatMonthYear(project.publishedAt);
+  const published = formatMonthYear(project.publishedAt, intl);
 
   const facts = [
-    { label: 'Cliente', value: project.client },
-    { label: 'Año', value: project.year },
-    { label: 'Categoría', value: project.category?.name },
-    { label: 'Publicado', value: published },
+    { label: t.client, value: project.client },
+    { label: t.year, value: project.year },
+    { label: t.category, value: project.category?.name },
+    { label: t.published, value: published },
   ].filter((f): f is { label: string; value: string } => Boolean(f.value));
 
   const sections = [
-    { key: 'reto', title: 'El reto', text: project.challenge },
-    { key: 'solucion', title: 'La solución', text: project.solution },
-    { key: 'resultados', title: 'Resultados', text: project.results },
+    { key: 'reto', title: t.challenge, text: project.challenge },
+    { key: 'solucion', title: t.solution, text: project.solution },
+    { key: 'resultados', title: t.results, text: project.results },
   ].filter((s) => s.text?.trim());
 
   return (
@@ -47,7 +52,7 @@ export default function ProjectDetail({
           href="/proyectos"
           className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
         >
-          <ArrowLeft size={16} /> Todos los proyectos
+          <ArrowLeft size={16} /> {t.back}
         </Link>
 
         <Reveal>
@@ -113,7 +118,7 @@ export default function ProjectDetail({
 
       {/* Galería */}
       {gallery.length > 0 && (
-        <section aria-label="Galería del proyecto" className="container-x mt-20 sm:mt-28">
+        <section aria-label={t.gallery} className="container-x mt-20 sm:mt-28">
           <div className="grid gap-6 sm:grid-cols-2">
             {gallery.map((src, i) => (
               <Reveal
@@ -136,20 +141,20 @@ export default function ProjectDetail({
         <div className="container-x mt-16">
           <div className="flex flex-col gap-6 border-t border-slate-200 pt-8 sm:flex-row sm:items-center sm:justify-between dark:border-white/10">
           {tags.length > 0 ? (
-            <ul className="flex flex-wrap gap-2" aria-label="Etiquetas">
-              {tags.map((t) => (
+            <ul className="flex flex-wrap gap-2" aria-label={dict.common.tags}>
+              {tags.map((tag) => (
                 <li
-                  key={t}
+                  key={tag}
                   className="rounded-full border border-slate-200 px-3 py-1 text-sm text-slate-600 dark:border-white/10 dark:text-slate-300"
                 >
-                  {t}
+                  {tag}
                 </li>
               ))}
             </ul>
           ) : <span />}
           {project.url && (
             <a href={project.url} target="_blank" rel="noopener noreferrer" className="btn-ghost self-start">
-              Ver proyecto en vivo <ArrowUpRight size={16} />
+              {t.live} <ArrowUpRight size={16} />
             </a>
           )}
           </div>
@@ -158,18 +163,18 @@ export default function ProjectDetail({
 
       {/* Llamado a la acción */}
       <QuoteCTA
-        title="¿Buscas un resultado similar?"
+        title={t.ctaTitle}
         whatsapp={whatsapp}
-        message={`Hola, vi el proyecto "${project.title}" y me gustaría cotizar algo similar.`}
+        message={dict.whatsapp.project(project.title)}
       />
 
       {/* Navegación entre proyectos */}
       {(prev || next) && (
-        <nav aria-label="Otros proyectos" className="container-x mt-16 grid gap-4 sm:grid-cols-2">
+        <nav aria-label={t.otherProjects} className="container-x mt-16 grid gap-4 sm:grid-cols-2">
           {prev ? (
             <Link href={`/proyectos/${prev.slug}`} className="card group">
               <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-                <ArrowLeft size={14} className="transition group-hover:-translate-x-1" /> Anterior
+                <ArrowLeft size={14} className="transition group-hover:-translate-x-1" /> {t.prev}
               </span>
               <span className="mt-2 block text-lg font-semibold">{prev.title}</span>
             </Link>
@@ -177,7 +182,7 @@ export default function ProjectDetail({
           {next && (
             <Link href={`/proyectos/${next.slug}`} className="card group sm:text-right">
               <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400 sm:justify-end">
-                Siguiente <ArrowRight size={14} className="transition group-hover:translate-x-1" />
+                {t.next} <ArrowRight size={14} className="transition group-hover:translate-x-1" />
               </span>
               <span className="mt-2 block text-lg font-semibold">{next.title}</span>
             </Link>

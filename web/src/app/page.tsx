@@ -13,11 +13,13 @@ import Faq from '@/components/public/Faq';
 import Contact from '@/components/public/Contact';
 import Footer from '@/components/public/Footer';
 import FloatingWhatsApp from '@/components/public/FloatingWhatsApp';
+import { getT } from '@/i18n';
 
 export default async function HomePage() {
   const content = await getSiteContent();
   const s = content.settings;
   const siteName = s.siteName || 'Nathan Quevedo';
+  const t = getT();
 
   // Schema.org: negocio de servicios profesionales.
   const jsonLd = {
@@ -65,12 +67,12 @@ export default async function HomePage() {
       <main>
         <Hero slides={content.heroSlides} tagline={s.tagline} />
         <LogosMarquee logos={content.logos} />
-        <About title={s.aboutTitle || 'Sobre Nathan Quevedo'} text={s.aboutText || ''} settings={s} />
+        <About title={s.aboutTitle || t.about.titleFor(siteName)} text={s.aboutText || ''} settings={s} />
         <Services services={content.services} whatsapp={s.whatsapp} />
         <FeaturedProjects projects={content.projects} />
         <Platforms platforms={content.platforms} />
         <Licenses licenses={content.licenses} whatsapp={s.whatsapp} />
-        <Process title={s.processTitle || 'Proceso de trabajo'} />
+        <Process title={s.processTitle || t.process.defaultTitle} />
         <BannerCTA banner={content.banners[0]} />
         <Faq faqs={content.faqs} />
         <Contact info={content.contactInfo} />

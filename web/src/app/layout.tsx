@@ -3,16 +3,17 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { getSeo, SITE_URL } from '@/lib/api';
 import ConsentAndAnalytics from '@/components/ConsentAndAnalytics';
+import { getLocale, getT, languageAlternates, LOCALE_META } from '@/i18n';
+import { I18nProvider } from '@/i18n/client';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
 
 /** Metadatos dinámicos leídos desde el panel (módulo SEO). */
 export async function generateMetadata(): Promise<Metadata> {
   const seo = await getSeo('home');
-  const title = seo?.title ?? 'Nathan Quevedo | Software y Licencias Premium';
-  const description =
-    seo?.description ??
-    'Licencias originales, streaming premium, VPN, antivirus y almacenamiento en la nube con instalación remota y soporte técnico.';
+  const t = getT().pages.home;
+  const title = seo?.title ?? t.metaTitle;
+  const description = seo?.description ?? t.metaDescription;
   // Si hay una imagen OG personalizada se usa; si no, Next usa la generada en opengraph-image.tsx.
   const customImages = seo?.ogImage ? [{ url: seo.ogImage, width: 1200, height: 630, alt: title }] : undefined;
 
@@ -23,10 +24,10 @@ export async function generateMetadata(): Promise<Metadata> {
     keywords: seo?.keywords ?? undefined,
     authors: [{ name: 'Nathan Quevedo' }],
     robots: seo?.noindex ? { index: false, follow: false } : { index: true, follow: true },
-    alternates: { canonical: seo?.canonical ?? '/' },
+    alternates: { canonical: seo?.canonical ?? '/', languages: languageAlternates('/') },
     openGraph: {
       type: 'website',
-      locale: 'es_ES',
+      locale: LOCALE_META[getLocale()].og,
       url: SITE_URL,
       title,
       description,
@@ -50,8 +51,9 @@ export const viewport = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = getLocale();
   return (
-    <html lang="es" suppressHydrationWarning className={inter.variable}>
+    <html lang={locale} suppressHydrationWarning className={inter.variable}>
       <head>
         {/* Evita el parpadeo de tema (FOUC) aplicando la clase antes del render. */}
         <script
@@ -61,8 +63,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
-        {children}
-        <ConsentAndAnalytics />
+        <I18nProvider locale={locale}>
+          {children}
+          <ConsentAndAnalytics />
+        </I18nProvider>
       </body>
     </html>
   );

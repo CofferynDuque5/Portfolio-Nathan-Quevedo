@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { getSiteContent, SITE_URL } from '@/lib/api';
 import { pageMetadata } from '@/lib/seo';
+import { getT } from '@/i18n';
 import { Category, Service } from '@/lib/types';
 import PageShell from '@/components/public/PageShell';
 import PageHeader from '@/components/public/PageHeader';
@@ -11,11 +12,8 @@ import Process from '@/components/public/Process';
 import QuoteCTA from '@/components/public/QuoteCTA';
 
 export function generateMetadata(): Promise<Metadata> {
-  return pageMetadata('servicios', '/servicios', {
-    title: 'Servicios: streaming, licencias y soporte',
-    description:
-      'Plataformas de streaming premium, licencias de software original, nube, seguridad y soporte técnico remoto con garantía.',
-  });
+  const t = getT().pages.services;
+  return pageMetadata('servicios', '/servicios', { title: t.metaTitle, description: t.metaDescription });
 }
 
 /** Agrupa los servicios por categoría respetando el orden del panel. */
@@ -33,11 +31,13 @@ export default async function ServicesPage() {
   const content = await getSiteContent();
   const s = content.settings;
   const groups = groupByCategory(content.services, content.categories);
+  const dict = getT();
+  const t = dict.pages.services;
 
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    name: 'Servicios',
+    name: dict.nav.services,
     url: `${SITE_URL}/servicios`,
     itemListElement: content.services.map((svc, i) => ({
       '@type': 'ListItem',
@@ -55,19 +55,19 @@ export default async function ServicesPage() {
   return (
     <PageShell content={content} jsonLd={jsonLd}>
       <PageHeader
-        eyebrow="Servicios"
-        title="Streaming, software y soporte, con garantía"
-        lead="Activación de plataformas de streaming premium, licencias originales y asistencia técnica remota. Elige lo que necesitas y te lo dejo funcionando."
+        eyebrow={t.eyebrow}
+        title={t.title}
+        lead={t.lead}
       >
         {groups.length > 1 && (
-          <nav aria-label="Categorías de servicios" className="mt-10 flex flex-wrap gap-2">
+          <nav aria-label={t.categoriesLabel} className="mt-10 flex flex-wrap gap-2">
             {groups.map((g) => (
               <a
                 key={g.category?.slug ?? 'otros'}
                 href={`#${g.category?.slug ?? 'otros'}`}
                 className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-400 hover:text-slate-900 dark:border-white/15 dark:text-slate-300 dark:hover:border-white/40 dark:hover:text-white"
               >
-                {g.category?.name ?? 'Otros servicios'}
+                {g.category?.name ?? t.others}
               </a>
             ))}
           </nav>
@@ -89,13 +89,13 @@ export default async function ServicesPage() {
             <div className="lg:col-span-4">
               <div className="lg:sticky lg:top-28">
                 <h2 id={`h-${g.category?.slug ?? 'otros'}`} className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                  {g.category?.name ?? 'Otros servicios'}
+                  {g.category?.name ?? t.others}
                 </h2>
                 {g.category?.description && (
                   <p className="mt-3 max-w-sm text-slate-500 dark:text-slate-400">{g.category.description}</p>
                 )}
                 <p className="mt-3 text-sm text-slate-400">
-                  {g.items.length} {g.items.length === 1 ? 'servicio' : 'servicios'}
+                  {t.count(g.items.length)}
                 </p>
               </div>
             </div>
@@ -110,12 +110,12 @@ export default async function ServicesPage() {
 
       <div className="mt-20 sm:mt-28">
         <Licenses licenses={content.licenses} whatsapp={s.whatsapp} />
-        <Process title={s.processTitle || 'Proceso de trabajo'} />
+        <Process title={s.processTitle || dict.process.defaultTitle} />
       </div>
 
       <QuoteCTA
-        title="¿No ves lo que buscas?"
-        text="Escríbeme y te preparo una cotización a medida, sin compromiso."
+        title={t.ctaTitle}
+        text={t.ctaText}
         whatsapp={s.whatsapp}
         className="container-x"
       />

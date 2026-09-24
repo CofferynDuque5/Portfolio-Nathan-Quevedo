@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { getSiteContent, SITE_URL } from '@/lib/api';
 import { pageMetadata } from '@/lib/seo';
+import { getT } from '@/i18n';
 import PageShell from '@/components/public/PageShell';
 import PageHeader from '@/components/public/PageHeader';
 import Process from '@/components/public/Process';
@@ -11,17 +12,15 @@ import QuoteCTA from '@/components/public/QuoteCTA';
 import { Icon } from '@/lib/icon';
 
 export function generateMetadata(): Promise<Metadata> {
-  return pageMetadata('sobre-mi', '/sobre-mi', {
-    title: 'Sobre Nathan Quevedo',
-    description:
-      'Quién es Nathan Quevedo y cómo trabaja: servicios digitales, streaming, licencias originales y soporte técnico remoto.',
-  });
+  const t = getT().pages.about;
+  return pageMetadata('sobre-mi', '/sobre-mi', { title: t.metaTitle, description: t.metaDescription });
 }
 
 export default async function AboutPage() {
   const content = await getSiteContent();
   const s = content.settings;
   const name = s.siteName || 'Nathan Quevedo';
+  const t = getT();
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -38,13 +37,13 @@ export default async function AboutPage() {
   return (
     <PageShell content={content} jsonLd={jsonLd}>
       {/* Texto editable en el panel: Configuración general > aboutTitle / aboutText. */}
-      <PageHeader eyebrow="Sobre mí" title={s.aboutTitle || `Sobre ${name}`} lead={s.aboutText || undefined}>
+      <PageHeader eyebrow={t.pages.about.eyebrow} title={s.aboutTitle || t.about.titleFor(name)} lead={s.aboutText || undefined}>
         <div className="mt-10 flex flex-wrap gap-3">
           <Link href="/servicios" className="btn-primary">
-            Ver servicios <ArrowRight size={16} />
+            {t.common.seeServices} <ArrowRight size={16} />
           </Link>
           <Link href="/contacto" className="btn-ghost">
-            Contactar
+            {t.common.contact}
           </Link>
         </div>
       </PageHeader>
@@ -53,7 +52,7 @@ export default async function AboutPage() {
       {content.categories.length > 0 && (
         <section aria-labelledby="h-areas" className="container-x">
           <h2 id="h-areas" className="border-t border-slate-200 pt-8 text-2xl font-semibold tracking-tight sm:text-3xl dark:border-white/10">
-            En qué te puedo ayudar
+            {t.pages.about.areasTitle}
           </h2>
           <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {content.categories.map((c) => (
@@ -75,7 +74,7 @@ export default async function AboutPage() {
         </section>
       )}
 
-      <Process title={s.processTitle || 'Proceso de trabajo'} />
+      <Process title={s.processTitle || t.process.defaultTitle} />
       <FeaturedProjects projects={content.projects} />
       <QuoteCTA whatsapp={s.whatsapp} className="container-x" />
     </PageShell>

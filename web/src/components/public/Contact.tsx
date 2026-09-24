@@ -9,6 +9,7 @@ import { Icon } from '@/lib/icon';
 import { API_URL } from '@/lib/api';
 import { waLink } from '@/lib/utils';
 import { track } from '@/lib/analytics';
+import { useI18n } from '@/i18n/client';
 
 interface FormValues {
   name: string;
@@ -38,6 +39,8 @@ export default function Contact({
   asPage?: boolean;
 }) {
   const Heading = asPage ? 'h1' : 'h2';
+  const { t: dict } = useI18n();
+  const t = dict.contact;
   const { register, handleSubmit, reset, formState } = useForm<FormValues>();
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,13 +55,13 @@ export default function Contact({
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || 'No se pudo enviar el mensaje.');
+        throw new Error(data.error || t.sendError);
       }
       setSent(true);
       track('contact_submit');
       reset();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error inesperado.');
+      setError(e instanceof Error ? e.message : t.unexpectedError);
     }
   };
 
@@ -67,12 +70,12 @@ export default function Contact({
       <div className="container-x grid gap-10 lg:grid-cols-2">
         {/* Info */}
         <div>
-          <span className="eyebrow">Contacto</span>
+          <span className="eyebrow">{t.eyebrow}</span>
           <Heading className={asPage ? 'mt-6 text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl' : 'section-title mt-4'}>
-            Hablemos de tu proyecto
+            {t.title}
           </Heading>
           <p className="mt-4 text-slate-600 dark:text-slate-300">
-            Cuéntanos qué necesitas y te responderemos lo antes posible. Estamos aquí para ayudarte.
+            {t.lead}
           </p>
 
           <div className="mt-8 space-y-4">
@@ -96,12 +99,12 @@ export default function Contact({
             <div className="mt-8 flex flex-wrap items-center gap-3">
               {whatsapp && (
                 <a
-                  href={waLink(whatsapp, 'Hola, me gustaría solicitar una cotización.')}
+                  href={waLink(whatsapp, dict.whatsapp.quote)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn bg-[#25D366] text-white hover:bg-[#1ebe5b]"
                 >
-                  <MessageCircle size={18} /> Escribir por WhatsApp
+                  <MessageCircle size={18} /> {t.whatsappButton}
                 </a>
               )}
               {social.map((l) => (
@@ -129,60 +132,60 @@ export default function Contact({
               className="flex flex-col items-center justify-center py-14 text-center"
             >
               <CheckCircle2 className="mb-4 text-green-500" size={56} />
-              <h3 className="text-xl font-semibold">¡Mensaje enviado!</h3>
+              <h3 className="text-xl font-semibold">{t.sentTitle}</h3>
               <p className="mt-2 text-slate-600 dark:text-slate-400">
-                Gracias por escribirnos. Te contactaremos muy pronto.
+                {t.sentText}
               </p>
               <button onClick={() => setSent(false)} className="btn-ghost mt-6">
-                Enviar otro mensaje
+                {t.sendAnother}
               </button>
             </motion.div>
           ) : (
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label htmlFor="contact-name" className="label">Nombre *</label>
-                  <input id="contact-name" autoComplete="name" className="field" placeholder="Tu nombre" {...register('name', { required: true })} />
-                  {formState.errors.name && <p className="mt-1 text-xs text-red-500">El nombre es requerido.</p>}
+                  <label htmlFor="contact-name" className="label">{t.name} *</label>
+                  <input id="contact-name" autoComplete="name" className="field" placeholder={t.namePlaceholder} {...register('name', { required: true })} />
+                  {formState.errors.name && <p className="mt-1 text-xs text-red-500">{t.nameRequired}</p>}
                 </div>
                 <div>
-                  <label htmlFor="contact-email" className="label">Correo *</label>
+                  <label htmlFor="contact-email" className="label">{t.email} *</label>
                   <input
                     id="contact-email"
                     autoComplete="email"
                     className="field"
                     type="email"
-                    placeholder="tu@correo.com"
+                    placeholder={t.emailPlaceholder}
                     {...register('email', { required: true })}
                   />
-                  {formState.errors.email && <p className="mt-1 text-xs text-red-500">El correo es requerido.</p>}
+                  {formState.errors.email && <p className="mt-1 text-xs text-red-500">{t.emailRequired}</p>}
                 </div>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label htmlFor="contact-phone" className="label">Teléfono</label>
-                  <input id="contact-phone" type="tel" autoComplete="tel" className="field" placeholder="Opcional" {...register('phone')} />
+                  <label htmlFor="contact-phone" className="label">{t.phone}</label>
+                  <input id="contact-phone" type="tel" autoComplete="tel" className="field" placeholder={t.optional} {...register('phone')} />
                 </div>
                 <div>
-                  <label htmlFor="contact-subject" className="label">Asunto</label>
-                  <input id="contact-subject" className="field" placeholder="Opcional" {...register('subject')} />
+                  <label htmlFor="contact-subject" className="label">{t.subject}</label>
+                  <input id="contact-subject" className="field" placeholder={t.optional} {...register('subject')} />
                 </div>
               </div>
               <div>
-                <label htmlFor="contact-message" className="label">Mensaje *</label>
+                <label htmlFor="contact-message" className="label">{t.message} *</label>
                 <textarea
                   id="contact-message"
                   className="field min-h-[120px] resize-y"
-                  placeholder="¿En qué podemos ayudarte?"
+                  placeholder={t.messagePlaceholder}
                   {...register('message', { required: true })}
                 />
-                {formState.errors.message && <p className="mt-1 text-xs text-red-500">El mensaje es requerido.</p>}
+                {formState.errors.message && <p className="mt-1 text-xs text-red-500">{t.messageRequired}</p>}
               </div>
 
               {error && <p className="text-sm text-red-500">{error}</p>}
 
               <button type="submit" disabled={formState.isSubmitting} className="btn-primary w-full">
-                {formState.isSubmitting ? 'Enviando…' : (<>Enviar mensaje <Send size={16} /></>)}
+                {formState.isSubmitting ? t.sending : (<>{t.send} <Send size={16} /></>)}
               </button>
             </form>
           )}

@@ -5,16 +5,17 @@ import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
 import { cn } from '@/lib/utils';
-
-const links = [
-  { href: '/servicios', label: 'Servicios' },
-  { href: '/servicios#plataformas', label: 'Streaming' },
-  { href: '/proyectos', label: 'Proyectos' },
-  { href: '/sobre-mi', label: 'Sobre mí' },
-  { href: '/contacto#faq', label: 'FAQ' },
-];
+import { useI18n } from '@/i18n/client';
 
 export default function Navbar({ siteName }: { siteName: string }) {
+  const { t } = useI18n();
+  const links = [
+    { href: '/servicios', label: t.nav.services },
+    { href: '/servicios#plataformas', label: t.nav.streaming },
+    { href: '/proyectos', label: t.nav.projects },
+    { href: '/sobre-mi', label: t.nav.about },
+    { href: '/contacto#faq', label: t.nav.faq },
+  ];
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -60,11 +61,11 @@ export default function Navbar({ siteName }: { siteName: string }) {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <a href="/contacto" className="btn-primary hidden sm:inline-flex">
-            Contactar
+            {t.nav.contact}
           </a>
           <button
             onClick={() => setOpen((v) => !v)}
-            aria-label="Menú"
+            aria-label={t.nav.menu}
             className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 lg:hidden dark:border-white/10"
           >
             {open ? <X size={18} /> : <Menu size={18} />}
@@ -87,7 +88,7 @@ export default function Navbar({ siteName }: { siteName: string }) {
               </a>
             ))}
             <a href="/contacto" onClick={() => setOpen(false)} className="btn-primary mt-2">
-              Contactar
+              {t.nav.contact}
             </a>
           </div>
         </div>

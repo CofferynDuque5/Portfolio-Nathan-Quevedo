@@ -7,6 +7,7 @@ import { ProjectCategory, ProjectSummary } from '@/lib/types';
 import { CATEGORY_PARAM } from '@/lib/projects';
 import { cn } from '@/lib/utils';
 import ProjectCard from './ProjectCard';
+import { useI18n } from '@/i18n/client';
 
 /**
  * Listado de proyectos con filtro por categoría.
@@ -20,6 +21,8 @@ export default function ProjectsExplorer({
   projects: ProjectSummary[];
   initialCategory?: string;
 }) {
+  const { t: dict, locale } = useI18n();
+  const t = dict.projects;
   // Solo se ofrecen las categorías que tienen al menos un proyecto publicado.
   const categories = useMemo(() => {
     const map = new Map<string, ProjectCategory & { count: number }>();
@@ -29,8 +32,8 @@ export default function ProjectsExplorer({
       if (entry) entry.count += 1;
       else map.set(p.category.slug, { ...p.category, count: 1 });
     }
-    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, 'es'));
-  }, [projects]);
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, locale));
+  }, [projects, locale]);
 
   const [active, setActive] = useState<string | null>(
     initialCategory && categories.some((c) => c.slug === initialCategory) ? initialCategory : null
@@ -50,12 +53,12 @@ export default function ProjectsExplorer({
     return (
       <div className="rounded-3xl border border-dashed border-slate-300 px-6 py-20 text-center dark:border-white/15">
         <FolderKanban className="mx-auto mb-4 text-slate-300 dark:text-slate-600" size={40} strokeWidth={1.4} />
-        <p className="text-lg font-semibold">Muy pronto, nuevos casos de estudio</p>
+        <p className="text-lg font-semibold">{t.emptyTitle}</p>
         <p className="mx-auto mt-2 max-w-md text-sm text-slate-500 dark:text-slate-400">
-          Estamos documentando los proyectos más recientes. Mientras tanto, cuéntanos qué necesitas.
+          {t.emptyText}
         </p>
         <a href="/contacto" className="btn-primary mt-6">
-          Solicitar cotización
+          {t.emptyCta}
         </a>
       </div>
     );
@@ -82,14 +85,14 @@ export default function ProjectsExplorer({
   return (
     <div>
       {categories.length > 1 && (
-        <div role="group" aria-label="Filtrar por categoría" className="mb-10 flex flex-wrap gap-2">
-          {chip(null, 'Todos', projects.length)}
+        <div role="group" aria-label={t.filterLabel} className="mb-10 flex flex-wrap gap-2">
+          {chip(null, t.all, projects.length)}
           {categories.map((c) => chip(c.slug, c.name, c.count))}
         </div>
       )}
 
       <p className="sr-only" aria-live="polite">
-        {visible.length} proyecto(s) mostrados
+        {t.shown(visible.length)}
       </p>
 
       <motion.ul layout className="grid gap-x-8 gap-y-14 md:grid-cols-2">

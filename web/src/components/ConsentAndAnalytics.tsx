@@ -6,6 +6,7 @@ import { ShieldCheck } from 'lucide-react';
 import {
   browserOptedOut, CONSENT_CHANGED, getConsent, OPEN_CONSENT, setConsent, track,
 } from '@/lib/analytics';
+import { useI18n } from '@/i18n/client';
 
 const WHATSAPP_RE = /(wa\.me|api\.whatsapp\.com|whatsapp:)/i;
 
@@ -17,6 +18,7 @@ const WHATSAPP_RE = /(wa\.me|api\.whatsapp\.com|whatsapp:)/i;
  */
 export default function ConsentAndAnalytics() {
   const pathname = usePathname();
+  const t = useI18n().t.consent;
   const isAdmin = pathname?.startsWith('/admin');
   const [open, setOpen] = useState(false);
   const [details, setDetails] = useState(false);
@@ -75,32 +77,30 @@ export default function ConsentAndAnalytics() {
           <ShieldCheck size={20} />
         </span>
         <div className="min-w-0">
-          <h2 id="consent-title" className="font-semibold">Tu privacidad, primero</h2>
+          <h2 id="consent-title" className="font-semibold">{t.title}</h2>
           <p className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-            ¿Nos permites medir de forma anónima cómo se usa el sitio? Nos ayuda a mejorarlo. No usamos
-            cookies de terceros ni publicidad.
+            {t.text}
           </p>
           {details && (
             <ul className="mt-3 space-y-1.5 text-sm text-slate-500 dark:text-slate-400">
-              <li>• Se registran las páginas vistas, el tipo de dispositivo y navegador, y de qué sitio llegas.</li>
-              <li>• También los clics en WhatsApp y los formularios enviados.</li>
-              <li>• No guardamos tu IP. Se usa un identificador aleatorio en tu navegador.</li>
-              <li>• Los datos se borran a los 13 meses. Puedes cambiar tu elección en el pie de página.</li>
+              {t.details.map((line) => (
+                <li key={line}>• {line}</li>
+              ))}
             </ul>
           )}
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <button onClick={() => choose('granted')} className="btn-primary px-5 py-2.5">
-              Aceptar
+              {t.accept}
             </button>
             <button onClick={() => choose('denied')} className="btn-ghost px-5 py-2.5">
-              Rechazar
+              {t.reject}
             </button>
             {!details && (
               <button
                 onClick={() => setDetails(true)}
                 className="px-2 py-2 text-sm font-medium text-slate-500 underline-offset-4 hover:text-slate-900 hover:underline dark:text-slate-400 dark:hover:text-white"
               >
-                Qué medimos
+                {t.more}
               </button>
             )}
           </div>

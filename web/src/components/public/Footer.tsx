@@ -1,6 +1,7 @@
 import { SocialLink } from '@/lib/types';
 import { Icon } from '@/lib/icon';
 import PrivacyPreferencesButton from './PrivacyPreferencesButton';
+import { getT } from '@/i18n';
 
 export default function Footer({
   siteName,
@@ -12,6 +13,7 @@ export default function Footer({
   social: SocialLink[];
 }) {
   const year = 2026;
+  const t = getT().footer;
 
   return (
     <footer className="border-t border-slate-200/60 bg-slate-50 py-14 dark:border-white/10 dark:bg-white/[0.02]">
@@ -25,7 +27,7 @@ export default function Footer({
               {siteName}
             </div>
             <p className="mt-3 max-w-sm text-sm text-slate-500 dark:text-slate-400">
-              {tagline || 'Servicios y licencias digitales premium con soporte garantizado.'}
+              {tagline || t.defaultTagline}
             </p>
             <div className="mt-5 flex gap-3">
               {social.map((s) => (
@@ -44,30 +46,30 @@ export default function Footer({
           </div>
 
           <div>
-            <h4 className="text-sm font-semibold">Enlaces</h4>
+            <h4 className="text-sm font-semibold">{t.links}</h4>
             <ul className="mt-4 space-y-2 text-sm text-slate-500 dark:text-slate-400">
-              <li><a href="/servicios" className="hover:text-brand-600">Servicios</a></li>
-              <li><a href="/proyectos" className="hover:text-brand-600">Proyectos</a></li>
-              <li><a href="/sobre-mi" className="hover:text-brand-600">Sobre mí</a></li>
-              <li><a href="/servicios#licencias" className="hover:text-brand-600">Licencias</a></li>
-              <li><a href="/sobre-mi#proceso" className="hover:text-brand-600">Proceso</a></li>
-              <li><a href="/contacto#faq" className="hover:text-brand-600">Preguntas frecuentes</a></li>
+              <li><a href="/servicios" className="hover:text-brand-600">{t.services}</a></li>
+              <li><a href="/proyectos" className="hover:text-brand-600">{t.projects}</a></li>
+              <li><a href="/sobre-mi" className="hover:text-brand-600">{t.about}</a></li>
+              <li><a href="/servicios#licencias" className="hover:text-brand-600">{t.licenses}</a></li>
+              <li><a href="/sobre-mi#proceso" className="hover:text-brand-600">{t.process}</a></li>
+              <li><a href="/contacto#faq" className="hover:text-brand-600">{t.faq}</a></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="text-sm font-semibold">Contacto</h4>
+            <h4 className="text-sm font-semibold">{t.contact}</h4>
             <ul className="mt-4 space-y-2 text-sm text-slate-500 dark:text-slate-400">
-              <li><a href="/contacto" className="hover:text-brand-600">Formulario de contacto</a></li>
-              <li><a href="/admin" className="hover:text-brand-600">Panel administrativo</a></li>
+              <li><a href="/contacto" className="hover:text-brand-600">{t.contactForm}</a></li>
+              <li><a href="/admin" className="hover:text-brand-600">{t.admin}</a></li>
               <li><PrivacyPreferencesButton className="hover:text-brand-600" /></li>
             </ul>
           </div>
         </div>
 
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-slate-200/60 pt-6 text-sm text-slate-400 dark:border-white/10 sm:flex-row">
-          <p>© {year} {siteName}. Todos los derechos reservados.</p>
-          <p>Hecho con Next.js · TailwindCSS · Prisma</p>
+          <p>© {year} {siteName}. {t.rights}</p>
+          <p>{t.builtWith}</p>
         </div>
       </div>
     </footer>

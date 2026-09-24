@@ -3,25 +3,27 @@ import { ArrowRight } from 'lucide-react';
 import { ProjectSummary } from '@/lib/types';
 import Reveal from '@/components/Reveal';
 import ProjectCard from './projects/ProjectCard';
+import { getT } from '@/i18n';
 
 /** Sección de la home con los proyectos publicados más relevantes. */
 export default function FeaturedProjects({ projects }: { projects: ProjectSummary[] }) {
   if (!projects.length) return null;
   const [first, ...rest] = projects.slice(0, 3);
+  const t = getT();
 
   return (
     <section id="proyectos" className="py-20 sm:py-28">
       <div className="container-x">
         <Reveal className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-2xl">
-            <span className="eyebrow">Proyectos</span>
-            <h2 className="section-title mt-4">Casos de estudio</h2>
+            <span className="eyebrow">{t.projects.eyebrow}</span>
+            <h2 className="section-title mt-4">{t.projects.homeTitle}</h2>
             <p className="mt-4 text-slate-600 dark:text-slate-300">
-              Trabajos reales, explicados de principio a fin.
+              {t.projects.homeLead}
             </p>
           </div>
           <Link href="/proyectos" className="btn-ghost self-start sm:self-auto">
-            Ver todos <ArrowRight size={16} />
+            {t.common.seeAll} <ArrowRight size={16} />
           </Link>
         </Reveal>
 

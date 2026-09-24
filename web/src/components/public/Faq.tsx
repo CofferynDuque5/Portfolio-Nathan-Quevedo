@@ -4,17 +4,19 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import { Faq as FaqType } from '@/lib/types';
+import { useI18n } from '@/i18n/client';
 
 export default function Faq({ faqs }: { faqs: FaqType[] }) {
   const [open, setOpen] = useState<number | null>(0);
+  const { t } = useI18n();
   if (!faqs.length) return null;
 
   return (
     <section id="faq" className="py-20 sm:py-28">
       <div className="container-x max-w-3xl">
         <div className="text-center">
-          <span className="eyebrow">Preguntas frecuentes</span>
-          <h2 className="section-title mt-4">Resolvemos tus dudas</h2>
+          <span className="eyebrow">{t.faq.eyebrow}</span>
+          <h2 className="section-title mt-4">{t.faq.title}</h2>
         </div>
 
         <div className="mt-10 space-y-3">

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getProject, getSiteContent, SITE_URL } from '@/lib/api';
 import { parseTags } from '@/lib/projects';
+import { getLocale, getT, languageAlternates, LOCALE_META } from '@/i18n';
 import PageShell from '@/components/public/PageShell';
 import ProjectDetail from '@/components/public/projects/ProjectDetail';
 
@@ -10,7 +11,7 @@ type Params = { params: Promise<{ slug: string }> };
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
   const page = await getProject(slug);
-  if (!page) return { title: 'Proyecto no encontrado', robots: { index: false, follow: false } };
+  if (!page) return { title: getT().pages.projects.notFound, robots: { index: false, follow: false } };
 
   const p = page.data;
   const title = p.seoTitle || p.title;
@@ -20,9 +21,10 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     title,
     description,
     keywords: parseTags(p.tags),
-    alternates: { canonical: `/proyectos/${p.slug}` },
+    alternates: { canonical: `/proyectos/${p.slug}`, languages: languageAlternates(`/proyectos/${p.slug}`) },
     openGraph: {
       type: 'article',
+      locale: LOCALE_META[getLocale()].og,
       url,
       title,
       description,
@@ -50,6 +52,7 @@ export default async function ProjectPage({ params }: Params) {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'CreativeWork',
+    inLanguage: getLocale(),
     name: p.title,
     headline: p.seoTitle || p.title,
     description: p.seoDescription || p.summary || undefined,

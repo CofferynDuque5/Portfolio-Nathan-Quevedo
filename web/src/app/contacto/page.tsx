@@ -1,16 +1,14 @@
 import type { Metadata } from 'next';
 import { getSiteContent, SITE_URL } from '@/lib/api';
 import { pageMetadata } from '@/lib/seo';
+import { getT } from '@/i18n';
 import PageShell from '@/components/public/PageShell';
 import Contact from '@/components/public/Contact';
 import Faq from '@/components/public/Faq';
 
 export function generateMetadata(): Promise<Metadata> {
-  return pageMetadata('contacto', '/contacto', {
-    title: 'Contacto y cotizaciones',
-    description:
-      'Escríbeme por WhatsApp o con el formulario y te preparo una cotización para streaming, licencias o soporte técnico.',
-  });
+  const t = getT().pages.contact;
+  return pageMetadata('contacto', '/contacto', { title: t.metaTitle, description: t.metaDescription });
 }
 
 export default async function ContactPage() {

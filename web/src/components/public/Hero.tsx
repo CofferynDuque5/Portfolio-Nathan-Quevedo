@@ -3,8 +3,10 @@
 import { motion } from 'framer-motion';
 import { ArrowRight, ShieldCheck, Zap, BadgeCheck } from 'lucide-react';
 import { HeroSlide } from '@/lib/types';
+import { useI18n } from '@/i18n/client';
 
 export default function Hero({ slides, tagline }: { slides: HeroSlide[]; tagline?: string }) {
+  const { t } = useI18n();
   const slide = slides[0];
   if (!slide) return null;
 
@@ -22,7 +24,7 @@ export default function Hero({ slides, tagline }: { slides: HeroSlide[]; tagline
             transition={{ duration: 0.5 }}
             className="eyebrow"
           >
-            <BadgeCheck size={14} /> {tagline || 'Servicios digitales premium'}
+            <BadgeCheck size={14} /> {tagline || t.hero.badge}
           </motion.span>
 
           <motion.h1
@@ -57,10 +59,10 @@ export default function Hero({ slides, tagline }: { slides: HeroSlide[]; tagline
             className="mt-9 flex flex-wrap items-center justify-center gap-3"
           >
             <a href={slide.ctaLink || '#contacto'} className="btn-primary">
-              {slide.ctaText || 'Contactar'} <ArrowRight size={16} />
+              {slide.ctaText || t.common.contact} <ArrowRight size={16} />
             </a>
             <a href="#servicios" className="btn-ghost">
-              Ver servicios
+              {t.common.seeServices}
             </a>
           </motion.div>
 
@@ -71,13 +73,13 @@ export default function Hero({ slides, tagline }: { slides: HeroSlide[]; tagline
             className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-slate-500 dark:text-slate-400"
           >
             <li className="flex items-center gap-2">
-              <ShieldCheck size={16} className="text-brand-500" /> Licencias 100% originales
+              <ShieldCheck size={16} className="text-brand-500" /> {t.hero.trust[0]}
             </li>
             <li className="flex items-center gap-2">
-              <Zap size={16} className="text-brand-500" /> Activación rápida
+              <Zap size={16} className="text-brand-500" /> {t.hero.trust[1]}
             </li>
             <li className="flex items-center gap-2">
-              <BadgeCheck size={16} className="text-brand-500" /> Soporte garantizado
+              <BadgeCheck size={16} className="text-brand-500" /> {t.hero.trust[2]}
             </li>
           </motion.ul>
         </div>

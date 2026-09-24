@@ -1,9 +1,12 @@
+'use client';
+
 import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 import { ProjectSummary } from '@/lib/types';
 import { Icon } from '@/lib/icon';
 import { parseTags } from '@/lib/projects';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/i18n/client';
 
 /** Tarjeta editorial de un proyecto: portada, categoría, título y etiquetas. */
 export default function ProjectCard({
@@ -13,6 +16,7 @@ export default function ProjectCard({
   project: ProjectSummary;
   large?: boolean;
 }) {
+  const { t: dict } = useI18n();
   const tags = parseTags(project.tags).slice(0, 3);
   const meta = [project.client, project.year].filter(Boolean).join(' · ');
 
@@ -48,7 +52,7 @@ export default function ProjectCard({
         </span>
         {project.featured && (
           <span className="absolute left-4 top-4 rounded-full bg-brand-600 px-3 py-1 text-xs font-semibold text-white shadow-glow">
-            Destacado
+            {dict.common.featured}
           </span>
         )}
       </div>
@@ -73,7 +77,7 @@ export default function ProjectCard({
           </p>
         )}
         {tags.length > 0 && (
-          <ul className="mt-4 flex flex-wrap gap-2" aria-label="Etiquetas">
+          <ul className="mt-4 flex flex-wrap gap-2" aria-label={dict.common.tags}>
             {tags.map((t) => (
               <li
                 key={t}

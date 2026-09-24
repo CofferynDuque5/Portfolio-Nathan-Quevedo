@@ -14,6 +14,7 @@ Construido con una arquitectura escalable y **sin depender de servicios externos
 - **CRUD completo** en cada módulo: tabla con búsqueda, ordenamiento, paginación, crear, editar, eliminar, activar/desactivar y confirmaciones.
 - **SEO** dinámico: meta tags, Open Graph, Twitter Cards, `sitemap.xml`, `robots.txt`, Schema.org (JSON-LD) y URLs amigables.
 - **Optimizado para rendimiento** (compresión, imágenes WebP/AVIF, revalidación incremental).
+- **Preparado para varios idiomas**: los textos fijos del sitio público están en un diccionario (`web/src/i18n`), listos para traducir.
 
 ---
 
@@ -57,6 +58,7 @@ Portfolio-Nathan-Quevedo/
     │   ├── components/
     │   │   ├── public/      # Secciones del sitio
     │   │   └── admin/       # DataTable, formularios, media picker…
+    │   ├── i18n/            # Idiomas: configuración y diccionarios de textos
     │   └── lib/             # API client, tipos, helpers, config de módulos
     └── public/uploads/      # Archivos subidos (organizados por carpeta)
 ```
@@ -198,6 +200,35 @@ Si una página no tiene registro en el módulo SEO se usan un título y una desc
   formularios, porcentaje de visitas con conversión, evolución diaria, páginas más vistas,
   fuentes de tráfico, dispositivos y navegadores, para 7, 30 o 90 días.
 - Los eventos se borran automáticamente a los 13 meses.
+
+### 🌍 Idiomas
+
+Hoy el sitio está solo en español, pero ya no hay textos fijos repartidos por los
+componentes: todo lo que no se edita en el panel (menú, pie, botones, formularios,
+aviso de privacidad, cabeceras de página, textos SEO por defecto…) está en
+`web/src/i18n/dictionaries/es.ts`.
+
+- `web/src/i18n/config.ts`: idiomas activos (`LOCALES`), idioma por defecto y datos
+  de cada uno (código para fechas, `og:locale`).
+- Componentes de servidor: `getT()` devuelve los textos del idioma actual.
+- Componentes de cliente: `useI18n()` devuelve `{ t, locale, intl }`
+  (el `I18nProvider` está en `app/layout.tsx`).
+- El `<html lang>`, el `og:locale`, las fechas y las etiquetas `hreflang` (metadatos
+  y `sitemap.xml`) salen de esa configuración.
+- El panel `/admin` sigue solo en español.
+
+**Añadir inglés**
+
+1. Copia `es.ts` como `en.ts` y traduce los textos. El tipo `Dictionary` obliga a
+   tener exactamente las mismas claves, así que `npm run build` avisa de lo que falte.
+2. Añade `'en'` a `LOCALES` y su entrada en `LOCALE_META` (`intl: 'en-US'`,
+   `og: 'en_US'`), y registra el diccionario en `web/src/i18n/index.ts`.
+3. Enrutado: mueve las páginas públicas a `app/[lang]/…` (o usa un `middleware.ts`
+   que reescriba `/en/...`) y haz que `getLocale()` lea el idioma de la URL.
+   `localizedPath()` ya genera `/servicios` para español y `/en/servicios` para inglés.
+4. Contenido del panel: servicios, proyectos, FAQ y ajustes están en la base de datos
+   en español. Para traducirlos hace falta añadir campos o filas por idioma; es una
+   decisión aparte (qué módulos traducir) que conviene tomar antes del paso 3.
 
 > **Actualizaciones de la base de datos:** al reiniciar la app se aplican solas las
 > migraciones nuevas de `server/prisma/migrations` (registro en la tabla

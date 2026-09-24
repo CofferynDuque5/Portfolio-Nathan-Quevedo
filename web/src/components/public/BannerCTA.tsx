@@ -1,6 +1,7 @@
 import { ArrowRight } from 'lucide-react';
 import Reveal from '@/components/Reveal';
 import { Banner } from '@/lib/types';
+import { getT } from '@/i18n';
 
 export default function BannerCTA({ banner }: { banner?: Banner }) {
   if (!banner) return null;
@@ -20,7 +21,7 @@ export default function BannerCTA({ banner }: { banner?: Banner }) {
                 href={banner.link || '#contacto'}
                 className="btn mt-7 bg-white text-brand-700 hover:bg-white/90"
               >
-                Contactar ahora <ArrowRight size={16} />
+                {getT().common.contactNow} <ArrowRight size={16} />
               </a>
             </div>
           </div>
