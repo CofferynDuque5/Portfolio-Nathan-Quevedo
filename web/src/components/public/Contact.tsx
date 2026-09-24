@@ -39,7 +39,7 @@ export default function Contact({
   asPage?: boolean;
 }) {
   const Heading = asPage ? 'h1' : 'h2';
-  const { t: dict } = useI18n();
+  const { t: dict, locale } = useI18n();
   const t = dict.contact;
   const { register, handleSubmit, reset, formState } = useForm<FormValues>();
   const [sent, setSent] = useState(false);
@@ -55,7 +55,7 @@ export default function Contact({
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || t.sendError);
+        throw new Error((locale === 'es' && data.error) || t.sendError);
       }
       setSent(true);
       track('contact_submit');
@@ -145,8 +145,8 @@ export default function Contact({
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label htmlFor="contact-name" className="label">{t.name} *</label>
-                  <input id="contact-name" autoComplete="name" className="field" placeholder={t.namePlaceholder} {...register('name', { required: true })} />
-                  {formState.errors.name && <p className="mt-1 text-xs text-red-500">{t.nameRequired}</p>}
+                  <input id="contact-name" autoComplete="name" className="field" placeholder={t.namePlaceholder} {...register('name', { required: t.nameRequired, minLength: { value: 2, message: t.nameRequired } })} />
+                  {formState.errors.name && <p className="mt-1 text-xs text-red-500">{formState.errors.name.message}</p>}
                 </div>
                 <div>
                   <label htmlFor="contact-email" className="label">{t.email} *</label>
@@ -156,9 +156,9 @@ export default function Contact({
                     className="field"
                     type="email"
                     placeholder={t.emailPlaceholder}
-                    {...register('email', { required: true })}
+                    {...register('email', { required: t.emailRequired, pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: t.emailInvalid } })}
                   />
-                  {formState.errors.email && <p className="mt-1 text-xs text-red-500">{t.emailRequired}</p>}
+                  {formState.errors.email && <p className="mt-1 text-xs text-red-500">{formState.errors.email.message}</p>}
                 </div>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
@@ -177,9 +177,9 @@ export default function Contact({
                   id="contact-message"
                   className="field min-h-[120px] resize-y"
                   placeholder={t.messagePlaceholder}
-                  {...register('message', { required: true })}
+                  {...register('message', { required: t.messageRequired, minLength: { value: 5, message: t.messageShort } })}
                 />
-                {formState.errors.message && <p className="mt-1 text-xs text-red-500">{t.messageRequired}</p>}
+                {formState.errors.message && <p className="mt-1 text-xs text-red-500">{formState.errors.message.message}</p>}
               </div>
 
               {error && <p className="text-sm text-red-500">{error}</p>}

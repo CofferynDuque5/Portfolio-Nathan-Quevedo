@@ -5,28 +5,19 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { getResource } from '../lib/resources';
 import { HttpError } from '../middleware/error';
 import { PROJECT_ORDER, projectCardSelect } from './projects.controller';
+import { parseLocale, translateRecord, translateRecords } from '../lib/translations';
+
+const CATEGORY = [{ key: 'category', resource: 'categories' }];
 
 /**
- * GET /api/public/content
+ * GET /api/public/content?lang=en
  * Devuelve TODO el contenido activo del sitio en una sola llamada,
  * optimizado para el renderizado de la home (menos round-trips = mejor SEO/perf).
+ * Con `lang` se aplican las traducciones disponibles (el resto, en español).
  */
-export const getSiteContent = asyncHandler(async (_req: Request, res: Response) => {
-  const [
-    heroSlides,
-    categories,
-    services,
-    platforms,
-    licenses,
-    faqs,
-    gallery,
-    banners,
-    logos,
-    socialLinks,
-    contactInfo,
-    settingsRows,
-    projects,
-  ] = await Promise.all([
+export const getSiteContent = asyncHandler(async (req: Request, res: Response) => {
+  const locale = parseLocale(req.query.lang);
+  const raw = await Promise.all([
     prisma.heroSlide.findMany({ where: { active: true }, orderBy: { order: 'asc' } }),
     prisma.category.findMany({ where: { active: true }, orderBy: { order: 'asc' } }),
     prisma.service.findMany({
@@ -52,6 +43,38 @@ export const getSiteContent = asyncHandler(async (_req: Request, res: Response) 
     }),
   ]);
 
+  const tr = <T extends { id: number }>(resource: string, rows: T[], nested = false) =>
+    translateRecords(locale, resource, rows, nested ? CATEGORY : []);
+  const [
+    heroSlides,
+    categories,
+    services,
+    platforms,
+    licenses,
+    faqs,
+    gallery,
+    banners,
+    logos,
+    socialLinks,
+    contactInfo,
+    settingsRows,
+    projects,
+  ] = await Promise.all([
+    tr('heroSlides', raw[0]),
+    tr('categories', raw[1]),
+    tr('services', raw[2], true),
+    tr('platforms', raw[3]),
+    tr('licenses', raw[4]),
+    tr('faqs', raw[5]),
+    raw[6],
+    tr('banners', raw[7]),
+    raw[8],
+    raw[9],
+    tr('contactInfo', raw[10]),
+    tr('settings', raw[11]),
+    tr('projects', raw[12], true),
+  ]);
+
   const settings: Record<string, string> = {};
   for (const row of settingsRows) settings[row.key] = row.value;
 
@@ -72,7 +95,7 @@ export const getSiteContent = asyncHandler(async (_req: Request, res: Response) 
   });
 });
 
-/** GET /api/public/:resource — listado público de un recurso activo. */
+/** GET /api/public/:resource?lang=en — listado público de un recurso activo. */
 export const getPublicResource = asyncHandler(async (req: Request, res: Response) => {
   const config = getResource(req.params.resource);
   if (!config || !config.public) {
@@ -83,13 +106,14 @@ export const getPublicResource = asyncHandler(async (req: Request, res: Response
     orderBy: config.defaultOrderBy,
     include: config.include,
   });
-  res.json({ data });
+  const nested = config.include?.category ? CATEGORY : [];
+  res.json({ data: await translateRecords(parseLocale(req.query.lang), req.params.resource, data, nested) });
 });
 
-/** GET /api/public/seo/:page — metadatos SEO de una página. */
+/** GET /api/public/seo/:page?lang=en — metadatos SEO de una página. */
 export const getSeo = asyncHandler(async (req: Request, res: Response) => {
   const seo = await prisma.seo.findUnique({ where: { page: req.params.page } });
-  res.json({ data: seo });
+  res.json({ data: await translateRecord(parseLocale(req.query.lang), 'seo', seo) });
 });
 
 const contactSchema = z.object({

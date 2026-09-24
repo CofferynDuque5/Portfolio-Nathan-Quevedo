@@ -13,13 +13,13 @@ import Faq from '@/components/public/Faq';
 import Contact from '@/components/public/Contact';
 import Footer from '@/components/public/Footer';
 import FloatingWhatsApp from '@/components/public/FloatingWhatsApp';
-import { getT } from '@/i18n';
+import { getI18n } from '@/i18n';
 
 export default async function HomePage() {
-  const content = await getSiteContent();
+  const { t, locale, href } = await getI18n();
+  const content = await getSiteContent(locale);
   const s = content.settings;
   const siteName = s.siteName || 'Nathan Quevedo';
-  const t = getT();
 
   // Schema.org: negocio de servicios profesionales.
   const jsonLd = {
@@ -27,7 +27,8 @@ export default async function HomePage() {
     '@type': 'ProfessionalService',
     name: siteName,
     description: s.tagline,
-    url: SITE_URL,
+    url: `${SITE_URL}${href('/') === '/' ? '' : href('/')}`,
+    inLanguage: locale,
     email: s.email || undefined,
     telephone: s.whatsapp || undefined,
     sameAs: content.socialLinks.map((l) => l.url),

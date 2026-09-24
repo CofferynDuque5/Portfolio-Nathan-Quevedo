@@ -21,7 +21,7 @@ export default function ProjectsExplorer({
   projects: ProjectSummary[];
   initialCategory?: string;
 }) {
-  const { t: dict, locale } = useI18n();
+  const { t: dict, locale, href } = useI18n();
   const t = dict.projects;
   // Solo se ofrecen las categorías que tienen al menos un proyecto publicado.
   const categories = useMemo(() => {
@@ -57,7 +57,7 @@ export default function ProjectsExplorer({
         <p className="mx-auto mt-2 max-w-md text-sm text-slate-500 dark:text-slate-400">
           {t.emptyText}
         </p>
-        <a href="/contacto" className="btn-primary mt-6">
+        <a href={href('/contacto')} className="btn-primary mt-6">
           {t.emptyCta}
         </a>
       </div>

@@ -58,6 +58,11 @@ export interface ResourceDef {
   previewPath?: string;
   /** Pestañas de filtro sobre el listado (ej: estado de publicación). */
   filter?: FilterDef;
+  /**
+   * Tiene traducción al inglés (pestaña "English" al editar). La API decide
+   * qué campos; en Configuración general, solo los textos visibles.
+   */
+  translatable?: boolean;
 }
 
 const orderField: FieldDef = { name: 'order', label: 'Orden', type: 'number', placeholder: '0' };
@@ -66,6 +71,7 @@ const activeField: FieldDef = { name: 'active', label: 'Activo', type: 'boolean'
 export const RESOURCES: Record<string, ResourceDef> = {
   projects: {
     key: 'projects',
+    translatable: true,
     label: 'Proyectos',
     singular: 'Proyecto',
     icon: 'FolderKanban',
@@ -121,6 +127,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
   },
   heroSlides: {
     key: 'heroSlides',
+    translatable: true,
     label: 'Hero',
     singular: 'Slide',
     icon: 'LayoutTemplate',
@@ -146,6 +153,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
   },
   categories: {
     key: 'categories',
+    translatable: true,
     label: 'Categorías',
     singular: 'Categoría',
     icon: 'FolderTree',
@@ -169,6 +177,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
   },
   services: {
     key: 'services',
+    translatable: true,
     label: 'Servicios',
     singular: 'Servicio',
     icon: 'Briefcase',
@@ -198,6 +207,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
   },
   platforms: {
     key: 'platforms',
+    translatable: true,
     label: 'Plataformas',
     singular: 'Plataforma',
     icon: 'MonitorPlay',
@@ -223,6 +233,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
   },
   licenses: {
     key: 'licenses',
+    translatable: true,
     label: 'Licencias',
     singular: 'Licencia',
     icon: 'KeyRound',
@@ -249,6 +260,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
   },
   faqs: {
     key: 'faqs',
+    translatable: true,
     label: 'FAQ',
     singular: 'Pregunta',
     icon: 'HelpCircle',
@@ -293,6 +305,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
   },
   banners: {
     key: 'banners',
+    translatable: true,
     label: 'Banners',
     singular: 'Banner',
     icon: 'GalleryHorizontalEnd',
@@ -358,6 +371,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
   },
   contactInfo: {
     key: 'contactInfo',
+    translatable: true,
     label: 'Contacto',
     singular: 'Dato de contacto',
     icon: 'Contact',
@@ -393,6 +407,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
   },
   seo: {
     key: 'seo',
+    translatable: true,
     label: 'SEO',
     singular: 'Página SEO',
     icon: 'Search',
@@ -415,6 +430,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
   },
   settings: {
     key: 'settings',
+    translatable: true,
     label: 'Configuración general',
     singular: 'Ajuste',
     icon: 'Settings',

@@ -1,14 +1,17 @@
 import { ImageResponse } from 'next/og';
-import { getT } from '@/i18n';
+import { DEFAULT_LOCALE, isLocale } from '@/i18n/config';
+import { getDictionary } from '@/i18n/dictionaries';
 
 export const runtime = 'edge';
-export const alt = getT().pages.home.ogAlt;
-export const size = { width: 1200, height: 630 };
-export const contentType = 'image/png';
+const size = { width: 1200, height: 630 };
 
-/** Imagen Open Graph generada dinámicamente (compartir en redes / WhatsApp). */
-export default function OpengraphImage() {
-  const t = getT().pages.home;
+/**
+ * Imagen Open Graph generada dinámicamente (compartir en redes / WhatsApp).
+ * GET /og?lang=en devuelve la versión en ese idioma.
+ */
+export function GET(req: Request) {
+  const lang = new URL(req.url).searchParams.get('lang');
+  const t = getDictionary(isLocale(lang) ? lang : DEFAULT_LOCALE).pages.home;
   return new ImageResponse(
     (
       <div
@@ -50,6 +53,9 @@ export default function OpengraphImage() {
         </div>
       </div>
     ),
-    { ...size }
+    {
+      ...size,
+      headers: { 'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800' },
+    }
   );
 }

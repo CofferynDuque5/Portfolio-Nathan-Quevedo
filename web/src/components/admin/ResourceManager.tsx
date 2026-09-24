@@ -10,6 +10,7 @@ import {
 import { api } from '@/lib/admin/client';
 import { ColumnDef, ResourceDef } from '@/lib/admin/resources';
 import ResourceForm from './ResourceForm';
+import TranslationEditor from './TranslationEditor';
 import ConfirmDialog from './ConfirmDialog';
 import { useToast } from './Toast';
 import { TableSkeleton } from './Skeleton';
@@ -46,6 +47,13 @@ export default function ResourceManager({ def }: { def: ResourceDef }) {
   const [loading, setLoading] = useState(true);
 
   const [editing, setEditing] = useState<Record<string, any> | null>(null);
+  // Pestaña del formulario (español = registro, inglés = traducción) y si hay traducción posible.
+  const [formTab, setFormTab] = useState<'es' | 'en'>('es');
+  const [canTranslate, setCanTranslate] = useState(false);
+  useEffect(() => {
+    setFormTab('es');
+    setCanTranslate(false);
+  }, [editing?.id]);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [toDelete, setToDelete] = useState<any | null>(null);
@@ -339,13 +347,37 @@ export default function ResourceManager({ def }: { def: ResourceDef }) {
                 <X size={18} />
               </button>
             </div>
-            <ResourceForm
-              def={def}
-              initial={editing ?? buildDefaults(def)}
-              saving={saving}
-              onSubmit={save}
-              onCancel={() => { setEditing(null); setCreating(false); }}
-            />
+            {editing && def.translatable && canTranslate && (
+              <div role="tablist" aria-label="Idioma" className="mb-5 flex gap-1 rounded-xl bg-slate-100 p-1 dark:bg-white/5">
+                {(['es', 'en'] as const).map((l) => (
+                  <button
+                    key={l}
+                    type="button"
+                    role="tab"
+                    aria-selected={formTab === l}
+                    onClick={() => setFormTab(l)}
+                    className="flex-1 rounded-lg px-4 py-2 text-sm font-medium text-slate-500 transition aria-selected:bg-white aria-selected:text-slate-900 aria-selected:shadow-sm dark:text-slate-400 dark:aria-selected:bg-slate-800 dark:aria-selected:text-white"
+                  >
+                    {l === 'es' ? 'Español' : 'English'}
+                  </button>
+                ))}
+              </div>
+            )}
+            {/* Ambas pestañas quedan montadas para no perder lo escrito al cambiar. */}
+            <div hidden={formTab !== 'es'}>
+              <ResourceForm
+                def={def}
+                initial={editing ?? buildDefaults(def)}
+                saving={saving}
+                onSubmit={save}
+                onCancel={() => { setEditing(null); setCreating(false); }}
+              />
+            </div>
+            {editing && def.translatable && (
+              <div hidden={formTab !== 'en'}>
+                <TranslationEditor key={editing.id} def={def} record={editing} onAvailable={setCanTranslate} />
+              </div>
+            )}
           </div>
         </div>
       )}

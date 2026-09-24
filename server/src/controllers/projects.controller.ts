@@ -3,6 +3,9 @@ import { prisma } from '../lib/prisma';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AuthRequest } from '../middleware/auth';
 import { HttpError } from '../middleware/error';
+import { parseLocale, translateRecord, translateRecords } from '../lib/translations';
+
+const CATEGORY = [{ key: 'category', resource: 'categories' }];
 
 /** Solo los proyectos publicados son visibles en el sitio. */
 const PUBLISHED = { status: 'PUBLISHED' as const };
@@ -32,17 +35,19 @@ export const projectCardSelect = {
   category: categorySelect,
 };
 
-/** GET /api/public/projects — listado de proyectos publicados. */
-export const listPublished = asyncHandler(async (_req: Request, res: Response) => {
+/** GET /api/public/projects?lang=en — listado de proyectos publicados. */
+export const listPublished = asyncHandler(async (req: Request, res: Response) => {
   const data = await prisma.project.findMany({
     where: PUBLISHED,
     orderBy: PROJECT_ORDER,
     select: projectCardSelect,
   });
-  res.json({ data });
+  res.json({ data: await translateRecords(parseLocale(req.query.lang), 'projects', data, CATEGORY) });
 });
 
-/** GET /api/public/projects/:slug — caso de estudio publicado + anterior/siguiente. */
+const link = (p: { slug: string; title: string }) => ({ slug: p.slug, title: p.title });
+
+/** GET /api/public/projects/:slug?lang=en — caso de estudio publicado + anterior/siguiente. */
 export const getPublishedBySlug = asyncHandler(async (req: Request, res: Response) => {
   const project = await prisma.project.findFirst({
     where: { ...PUBLISHED, slug: req.params.slug },
@@ -50,16 +55,21 @@ export const getPublishedBySlug = asyncHandler(async (req: Request, res: Respons
   });
   if (!project) throw new HttpError(404, 'Proyecto no encontrado.');
 
-  const siblings = await prisma.project.findMany({
-    where: PUBLISHED,
-    orderBy: PROJECT_ORDER,
-    select: { slug: true, title: true },
-  });
+  const locale = parseLocale(req.query.lang);
+  const siblings = await translateRecords(
+    locale,
+    'projects',
+    await prisma.project.findMany({
+      where: PUBLISHED,
+      orderBy: PROJECT_ORDER,
+      select: { id: true, slug: true, title: true },
+    })
+  );
   const i = siblings.findIndex((p) => p.slug === project.slug);
   res.json({
-    data: project,
-    prev: i > 0 ? siblings[i - 1] : null,
-    next: i >= 0 && i < siblings.length - 1 ? siblings[i + 1] : null,
+    data: await translateRecord(locale, 'projects', project, CATEGORY),
+    prev: i > 0 ? link(siblings[i - 1]) : null,
+    next: i >= 0 && i < siblings.length - 1 ? link(siblings[i + 1]) : null,
   });
 });
 

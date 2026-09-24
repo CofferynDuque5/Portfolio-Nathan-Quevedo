@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { getSiteContent, SITE_URL } from '@/lib/api';
 import { pageMetadata } from '@/lib/seo';
-import { getT } from '@/i18n';
+import { getI18n, getT } from '@/i18n';
 import { Category, Service } from '@/lib/types';
 import PageShell from '@/components/public/PageShell';
 import PageHeader from '@/components/public/PageHeader';
@@ -11,8 +11,8 @@ import Licenses from '@/components/public/Licenses';
 import Process from '@/components/public/Process';
 import QuoteCTA from '@/components/public/QuoteCTA';
 
-export function generateMetadata(): Promise<Metadata> {
-  const t = getT().pages.services;
+export async function generateMetadata(): Promise<Metadata> {
+  const t = (await getT()).pages.services;
   return pageMetadata('servicios', '/servicios', { title: t.metaTitle, description: t.metaDescription });
 }
 
@@ -28,17 +28,18 @@ function groupByCategory(services: Service[], categories: Category[]) {
 }
 
 export default async function ServicesPage() {
-  const content = await getSiteContent();
+  const { t: dict, locale, href } = await getI18n();
+  const content = await getSiteContent(locale);
   const s = content.settings;
   const groups = groupByCategory(content.services, content.categories);
-  const dict = getT();
   const t = dict.pages.services;
 
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
     name: dict.nav.services,
-    url: `${SITE_URL}/servicios`,
+    url: `${SITE_URL}${href('/servicios')}`,
+    inLanguage: locale,
     itemListElement: content.services.map((svc, i) => ({
       '@type': 'ListItem',
       position: i + 1,

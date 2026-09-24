@@ -1,24 +1,26 @@
 import type { Metadata } from 'next';
 import { getSiteContent, SITE_URL } from '@/lib/api';
 import { pageMetadata } from '@/lib/seo';
-import { getT } from '@/i18n';
+import { getI18n, getT } from '@/i18n';
 import PageShell from '@/components/public/PageShell';
 import Contact from '@/components/public/Contact';
 import Faq from '@/components/public/Faq';
 
-export function generateMetadata(): Promise<Metadata> {
-  const t = getT().pages.contact;
+export async function generateMetadata(): Promise<Metadata> {
+  const t = (await getT()).pages.contact;
   return pageMetadata('contacto', '/contacto', { title: t.metaTitle, description: t.metaDescription });
 }
 
 export default async function ContactPage() {
-  const content = await getSiteContent();
+  const { locale, href } = await getI18n();
+  const content = await getSiteContent(locale);
   const s = content.settings;
 
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ContactPage',
-    url: `${SITE_URL}/contacto`,
+    url: `${SITE_URL}${href('/contacto')}`,
+    inLanguage: locale,
     mainEntity: {
       '@type': 'ProfessionalService',
       name: s.siteName || 'Nathan Quevedo',

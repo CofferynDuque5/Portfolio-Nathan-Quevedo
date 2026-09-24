@@ -35,6 +35,12 @@ export interface AnalyticsSummary {
   browsers: AnalyticsRow[];
 }
 
+/** Campos traducibles de un registro y sus valores guardados. */
+export interface TranslationData {
+  fields: string[];
+  values: Record<string, string>;
+}
+
 interface ListParams {
   page?: number;
   perPage?: number;
@@ -110,6 +116,17 @@ export const api = {
     }),
   remove: (resource: string, id: number) =>
     request<{ success: boolean }>(`/admin/${resource}/${id}`, { method: 'DELETE' }),
+
+  // --- Traducciones del contenido ---
+  translations: {
+    get: (resource: string, id: number, locale: string) =>
+      request<TranslationData>(`/admin/translations/${resource}/${id}?locale=${locale}`),
+    save: (resource: string, id: number, locale: string, values: Record<string, string>) =>
+      request<TranslationData>(`/admin/translations/${resource}/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ locale, values }),
+      }),
+  },
 
   // --- Media ---
   upload: async (files: FileList | File[], folder = 'general') => {

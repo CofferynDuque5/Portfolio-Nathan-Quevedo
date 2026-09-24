@@ -6,7 +6,7 @@ import { HeroSlide } from '@/lib/types';
 import { useI18n } from '@/i18n/client';
 
 export default function Hero({ slides, tagline }: { slides: HeroSlide[]; tagline?: string }) {
-  const { t } = useI18n();
+  const { t, href } = useI18n();
   const slide = slides[0];
   if (!slide) return null;
 
@@ -58,7 +58,7 @@ export default function Hero({ slides, tagline }: { slides: HeroSlide[]; tagline
             transition={{ duration: 0.6, delay: 0.25 }}
             className="mt-9 flex flex-wrap items-center justify-center gap-3"
           >
-            <a href={slide.ctaLink || '#contacto'} className="btn-primary">
+            <a href={href(slide.ctaLink || '#contacto')} className="btn-primary">
               {slide.ctaText || t.common.contact} <ArrowRight size={16} />
             </a>
             <a href="#servicios" className="btn-ghost">

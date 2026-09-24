@@ -1,9 +1,9 @@
 import { SocialLink } from '@/lib/types';
 import { Icon } from '@/lib/icon';
 import PrivacyPreferencesButton from './PrivacyPreferencesButton';
-import { getT } from '@/i18n';
+import { getI18n } from '@/i18n';
 
-export default function Footer({
+export default async function Footer({
   siteName,
   tagline,
   social,
@@ -13,7 +13,8 @@ export default function Footer({
   social: SocialLink[];
 }) {
   const year = 2026;
-  const t = getT().footer;
+  const { t: dict, href } = await getI18n();
+  const t = dict.footer;
 
   return (
     <footer className="border-t border-slate-200/60 bg-slate-50 py-14 dark:border-white/10 dark:bg-white/[0.02]">
@@ -48,19 +49,19 @@ export default function Footer({
           <div>
             <h4 className="text-sm font-semibold">{t.links}</h4>
             <ul className="mt-4 space-y-2 text-sm text-slate-500 dark:text-slate-400">
-              <li><a href="/servicios" className="hover:text-brand-600">{t.services}</a></li>
-              <li><a href="/proyectos" className="hover:text-brand-600">{t.projects}</a></li>
-              <li><a href="/sobre-mi" className="hover:text-brand-600">{t.about}</a></li>
-              <li><a href="/servicios#licencias" className="hover:text-brand-600">{t.licenses}</a></li>
-              <li><a href="/sobre-mi#proceso" className="hover:text-brand-600">{t.process}</a></li>
-              <li><a href="/contacto#faq" className="hover:text-brand-600">{t.faq}</a></li>
+              <li><a href={href("/servicios")} className="hover:text-brand-600">{t.services}</a></li>
+              <li><a href={href("/proyectos")} className="hover:text-brand-600">{t.projects}</a></li>
+              <li><a href={href("/sobre-mi")} className="hover:text-brand-600">{t.about}</a></li>
+              <li><a href={href("/servicios#licencias")} className="hover:text-brand-600">{t.licenses}</a></li>
+              <li><a href={href("/sobre-mi#proceso")} className="hover:text-brand-600">{t.process}</a></li>
+              <li><a href={href("/contacto#faq")} className="hover:text-brand-600">{t.faq}</a></li>
             </ul>
           </div>
 
           <div>
             <h4 className="text-sm font-semibold">{t.contact}</h4>
             <ul className="mt-4 space-y-2 text-sm text-slate-500 dark:text-slate-400">
-              <li><a href="/contacto" className="hover:text-brand-600">{t.contactForm}</a></li>
+              <li><a href={href("/contacto")} className="hover:text-brand-600">{t.contactForm}</a></li>
               <li><a href="/admin" className="hover:text-brand-600">{t.admin}</a></li>
               <li><PrivacyPreferencesButton className="hover:text-brand-600" /></li>
             </ul>

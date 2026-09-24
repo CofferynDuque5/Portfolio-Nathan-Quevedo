@@ -4,9 +4,9 @@ import { License } from '@/lib/types';
 import { waLink } from '@/lib/utils';
 import { getT } from '@/i18n';
 
-export default function Licenses({ licenses, whatsapp }: { licenses: License[]; whatsapp?: string }) {
+export default async function Licenses({ licenses, whatsapp }: { licenses: License[]; whatsapp?: string }) {
   if (!licenses.length) return null;
-  const t = getT();
+  const t = await getT();
 
   return (
     <section id="licencias" className="bg-slate-50 py-20 dark:bg-white/[0.02] sm:py-28">

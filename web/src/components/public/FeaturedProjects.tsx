@@ -3,13 +3,13 @@ import { ArrowRight } from 'lucide-react';
 import { ProjectSummary } from '@/lib/types';
 import Reveal from '@/components/Reveal';
 import ProjectCard from './projects/ProjectCard';
-import { getT } from '@/i18n';
+import { getI18n } from '@/i18n';
 
 /** Sección de la home con los proyectos publicados más relevantes. */
-export default function FeaturedProjects({ projects }: { projects: ProjectSummary[] }) {
+export default async function FeaturedProjects({ projects }: { projects: ProjectSummary[] }) {
   if (!projects.length) return null;
   const [first, ...rest] = projects.slice(0, 3);
-  const t = getT();
+  const { t, href } = await getI18n();
 
   return (
     <section id="proyectos" className="py-20 sm:py-28">
@@ -22,7 +22,7 @@ export default function FeaturedProjects({ projects }: { projects: ProjectSummar
               {t.projects.homeLead}
             </p>
           </div>
-          <Link href="/proyectos" className="btn-ghost self-start sm:self-auto">
+          <Link href={href('/proyectos')} className="btn-ghost self-start sm:self-auto">
             {t.common.seeAll} <ArrowRight size={16} />
           </Link>
         </Reveal>

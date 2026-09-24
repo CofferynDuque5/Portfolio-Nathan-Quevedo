@@ -5,7 +5,7 @@
  *  - Crea las tablas y aplica las migraciones pendientes (registro en
  *    la tabla `_app_migrations`).
  *  - Siembra el contenido inicial (admin, servicios, plataformas,
- *    licencias, FAQ, redes, contacto, SEO, etc.).
+ *    licencias, FAQ, redes, contacto, SEO, etc.) y su traducción al inglés.
  *
  *  Se usa de dos formas:
  *   1) Automático: app.js llama a autoBootstrap() al arrancar. Aplica las
@@ -22,6 +22,10 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
+const { seedTranslations, pruneTranslations } = require('./seed-translations.cjs');
+
+/** Marca en `_app_migrations` de la traducción inicial al inglés (se hace una vez). */
+const EN_SEED_MARK = 'seed:translations-en-v1';
 
 /** Parsea la DATABASE_URL en sus partes. */
 function parseDbUrl(dbUrl) {
@@ -533,6 +537,23 @@ async function seedContent(prisma, log = console.log) {
   log('   ✓ SEO');
 }
 
+async function markDone(prisma, name) {
+  await prisma.$executeRawUnsafe('INSERT IGNORE INTO `_app_migrations` (`name`) VALUES (?)', name);
+}
+
+/**
+ * Traducción al inglés del contenido base, una sola vez por instalación
+ * (instalaciones nuevas y las que se actualizan). Solo traduce los textos que
+ * siguen siendo los originales; lo que ya editaste queda en español hasta que
+ * lo traduzcas en el panel.
+ */
+async function seedTranslationsOnce(prisma, log = console.log) {
+  const rows = await prisma.$queryRawUnsafe('SELECT `name` FROM `_app_migrations` WHERE `name` = ?', EN_SEED_MARK);
+  if (rows.length) return;
+  await seedTranslations(prisma, log);
+  await markDone(prisma, EN_SEED_MARK);
+}
+
 /** ¿La base de datos necesita preparación (no hay tablas o no hay admin)? */
 async function needsSetup(prisma) {
   try {
@@ -559,13 +580,15 @@ async function autoBootstrap(log = console.log) {
     // Siempre aplica migraciones pendientes (instalaciones existentes que se
     // actualizan). No toca datos.
     await ensureSchema(prisma, log);
-    if (!(await needsSetup(prisma))) {
-      return { ok: true, action: 'skip' };
+    let action = 'skip';
+    if (await needsSetup(prisma)) {
+      log('🗄️  Base de datos vacía: preparándola automáticamente...');
+      await seedContent(prisma, log);
+      log('✅ Base de datos lista.');
+      action = 'created';
     }
-    log('🗄️  Base de datos vacía: preparándola automáticamente...');
-    await seedContent(prisma, log);
-    log('✅ Base de datos lista.');
-    return { ok: true, action: 'created' };
+    await seedTranslationsOnce(prisma, log);
+    return { ok: true, action };
   } catch (e) {
     return { ok: false, error: e };
   } finally {
@@ -588,6 +611,9 @@ async function runCli() {
     await ensureSchema(prisma);
     console.log('🌱 Sembrando contenido...');
     await seedContent(prisma);
+    await pruneTranslations(prisma);
+    await seedTranslations(prisma);
+    await markDone(prisma, EN_SEED_MARK);
     console.log('✅ Base de datos lista.');
   } finally {
     await prisma.$disconnect();

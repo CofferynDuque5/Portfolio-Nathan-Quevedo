@@ -16,13 +16,13 @@ export default function ProjectCard({
   project: ProjectSummary;
   large?: boolean;
 }) {
-  const { t: dict } = useI18n();
+  const { t: dict, href } = useI18n();
   const tags = parseTags(project.tags).slice(0, 3);
   const meta = [project.client, project.year].filter(Boolean).join(' · ');
 
   return (
     <Link
-      href={`/proyectos/${project.slug}`}
+      href={href(`/proyectos/${project.slug}`)}
       className="group flex h-full flex-col focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-4 rounded-3xl"
     >
       <div

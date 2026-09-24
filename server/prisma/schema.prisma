@@ -385,6 +385,26 @@ model AnalyticsEvent {
 }
 
 // ------------------------------------------------------------
+//  Traducciones del contenido del panel
+//  El español vive en cada tabla; aquí se guardan los demás
+//  idiomas campo a campo. Sin traducción, el sitio muestra el
+//  texto en español.
+// ------------------------------------------------------------
+model ContentTranslation {
+  id        Int      @id @default(autoincrement())
+  locale    String   @db.VarChar(8) // en
+  resource  String   @db.VarChar(40) // services, faqs, settings...
+  recordId  Int
+  field     String   @db.VarChar(60)
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+
+  @@unique([locale, resource, recordId, field])
+  @@index([resource, recordId])
+  @@map("content_translations")
+}
+
+// ------------------------------------------------------------
 //  Registro de migraciones aplicadas por scripts/setup-db.cjs
 //  (auto-arranque en cPanel). Declarado aquí para que
 //  `prisma db push` no lo considere una tabla ajena.

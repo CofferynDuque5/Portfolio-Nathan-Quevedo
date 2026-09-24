@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../utils/asyncHandler';
 import { getResource, normalizePayload, ResourceConfig } from '../lib/resources';
+import { deleteTranslations } from '../lib/translations';
 import { HttpError } from '../middleware/error';
 
 /** Convierte `password` en `passwordHash` para el recurso de usuarios. */
@@ -115,6 +116,7 @@ export const toggle = asyncHandler(async (req: AuthRequest, res: Response) => {
 export const remove = asyncHandler(async (req: AuthRequest, res: Response) => {
   const config = resolveResource(req.params.resource);
   await config.model.delete({ where: { id: Number(req.params.id) } });
+  await deleteTranslations(req.params.resource, Number(req.params.id));
   res.json({ success: true });
 });
 

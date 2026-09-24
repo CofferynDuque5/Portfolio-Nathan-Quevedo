@@ -25,7 +25,7 @@ export default function ProjectDetail({
   next?: ProjectLink | null;
   whatsapp?: string;
 }) {
-  const { t: dict, intl } = useI18n();
+  const { t: dict, intl, href } = useI18n();
   const t = dict.caseStudy;
   const tags = parseTags(project.tags);
   const gallery = parseGallery(project.gallery);
@@ -49,7 +49,7 @@ export default function ProjectDetail({
       {/* Cabecera editorial */}
       <header className="container-x pt-32 sm:pt-40">
         <Link
-          href="/proyectos"
+          href={href('/proyectos')}
           className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
         >
           <ArrowLeft size={16} /> {t.back}
@@ -172,7 +172,7 @@ export default function ProjectDetail({
       {(prev || next) && (
         <nav aria-label={t.otherProjects} className="container-x mt-16 grid gap-4 sm:grid-cols-2">
           {prev ? (
-            <Link href={`/proyectos/${prev.slug}`} className="card group">
+            <Link href={href(`/proyectos/${prev.slug}`)} className="card group">
               <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
                 <ArrowLeft size={14} className="transition group-hover:-translate-x-1" /> {t.prev}
               </span>
@@ -180,7 +180,7 @@ export default function ProjectDetail({
             </Link>
           ) : <span className="hidden sm:block" />}
           {next && (
-            <Link href={`/proyectos/${next.slug}`} className="card group sm:text-right">
+            <Link href={href(`/proyectos/${next.slug}`)} className="card group sm:text-right">
               <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400 sm:justify-end">
                 {t.next} <ArrowRight size={14} className="transition group-hover:translate-x-1" />
               </span>

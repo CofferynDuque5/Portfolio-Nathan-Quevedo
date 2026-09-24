@@ -6,15 +6,16 @@ import { Menu, X } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/i18n/client';
+import { LOCALES, LOCALE_META, switchLocalePath } from '@/i18n/config';
 
 export default function Navbar({ siteName }: { siteName: string }) {
-  const { t } = useI18n();
+  const { t, locale, href } = useI18n();
   const links = [
-    { href: '/servicios', label: t.nav.services },
-    { href: '/servicios#plataformas', label: t.nav.streaming },
-    { href: '/proyectos', label: t.nav.projects },
-    { href: '/sobre-mi', label: t.nav.about },
-    { href: '/contacto#faq', label: t.nav.faq },
+    { href: href('/servicios'), label: t.nav.services },
+    { href: href('/servicios#plataformas'), label: t.nav.streaming },
+    { href: href('/proyectos'), label: t.nav.projects },
+    { href: href('/sobre-mi'), label: t.nav.about },
+    { href: href('/contacto#faq'), label: t.nav.faq },
   ];
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -38,7 +39,7 @@ export default function Navbar({ siteName }: { siteName: string }) {
       )}
     >
       <nav className="container-x flex h-16 items-center justify-between">
-        <a href="/" className="flex items-center gap-2 text-lg font-bold">
+        <a href={href('/')} className="flex items-center gap-2 text-lg font-bold">
           <span className="grid h-8 w-8 place-items-center rounded-xl bg-brand-600 text-sm text-white">
             {siteName.charAt(0)}
           </span>
@@ -59,8 +60,24 @@ export default function Navbar({ siteName }: { siteName: string }) {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Selector de idioma: la misma página en el otro idioma. */}
+          <nav aria-label={t.nav.language} className="flex items-center">
+            {LOCALES.filter((l) => l !== locale).map((l) => (
+              <a
+                key={l}
+                href={switchLocalePath(pathname || '/', l)}
+                hrefLang={l}
+                lang={l}
+                title={LOCALE_META[l].name}
+                aria-label={LOCALE_META[l].name}
+                className="grid h-10 min-w-10 place-items-center rounded-full border border-slate-200 px-3 text-xs font-semibold tracking-wide text-slate-600 transition hover:border-slate-400 hover:text-slate-900 dark:border-white/10 dark:text-slate-300 dark:hover:border-white/30 dark:hover:text-white"
+              >
+                {LOCALE_META[l].short}
+              </a>
+            ))}
+          </nav>
           <ThemeToggle />
-          <a href="/contacto" className="btn-primary hidden sm:inline-flex">
+          <a href={href('/contacto')} className="btn-primary hidden sm:inline-flex">
             {t.nav.contact}
           </a>
           <button
@@ -87,7 +104,7 @@ export default function Navbar({ siteName }: { siteName: string }) {
                 {l.label}
               </a>
             ))}
-            <a href="/contacto" onClick={() => setOpen(false)} className="btn-primary mt-2">
+            <a href={href('/contacto')} onClick={() => setOpen(false)} className="btn-primary mt-2">
               {t.nav.contact}
             </a>
           </div>

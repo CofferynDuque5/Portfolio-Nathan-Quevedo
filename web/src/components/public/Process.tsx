@@ -4,8 +4,8 @@ import { getT } from '@/i18n';
 
 const ICONS = [MessageSquare, CreditCard, Download, HeadphonesIcon];
 
-export default function Process({ title }: { title: string }) {
-  const t = getT().process;
+export default async function Process({ title }: { title: string }) {
+  const t = (await getT()).process;
   const steps = t.steps.map((st, i) => ({ ...st, icon: ICONS[i] ?? MessageSquare }));
   return (
     <section id="proceso" className="py-20 sm:py-28">

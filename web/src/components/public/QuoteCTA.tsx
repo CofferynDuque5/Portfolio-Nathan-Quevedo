@@ -18,7 +18,7 @@ export default function QuoteCTA({
   message?: string;
   className?: string;
 }) {
-  const { t } = useI18n();
+  const { t, href } = useI18n();
   return (
     <section className={className}>
       <div className="relative overflow-hidden rounded-3xl bg-slate-900 px-6 py-14 text-white sm:px-14 sm:py-20 dark:bg-white/[0.04]">
@@ -30,7 +30,7 @@ export default function QuoteCTA({
             <a href={waLink(whatsapp, message ?? t.whatsapp.quote)} target="_blank" rel="noopener noreferrer" className="btn-primary">
               <MessageCircle size={16} /> {t.common.quoteWhatsapp}
             </a>
-            <a href="/contacto" className="btn border border-white/20 text-white hover:bg-white/10">
+            <a href={href('/contacto')} className="btn border border-white/20 text-white hover:bg-white/10">
               {t.common.writeMessage}
             </a>
           </div>

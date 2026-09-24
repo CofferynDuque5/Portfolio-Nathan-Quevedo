@@ -13,7 +13,7 @@ const STATS = [
   { key: 'statProducts', icon: Sparkles, fallback: '+50' },
 ] as const;
 
-export default function About({
+export default async function About({
   title,
   text,
   settings = {},
@@ -22,7 +22,7 @@ export default function About({
   text: string;
   settings?: Record<string, string>;
 }) {
-  const t = getT().about;
+  const t = (await getT()).about;
   const stats = STATS.map((st) => ({ ...st, label: t.stats[st.key], value: settings[st.key] ?? st.fallback })).filter((st) => st.value.trim());
 
   return (

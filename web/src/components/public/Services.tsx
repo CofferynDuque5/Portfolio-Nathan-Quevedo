@@ -2,12 +2,13 @@ import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { Service } from '@/lib/types';
 import ServiceCard from './ServiceCard';
-import { getT } from '@/i18n';
+import { getI18n } from '@/i18n';
 
 /** Sección de servicios de la home (con enlace a la página completa). */
-export default function Services({ services, whatsapp }: { services: Service[]; whatsapp?: string }) {
+export default async function Services({ services, whatsapp }: { services: Service[]; whatsapp?: string }) {
   if (!services.length) return null;
-  const t = getT().services;
+  const { t: dict, href } = await getI18n();
+  const t = dict.services;
 
   return (
     <section id="servicios" className="py-20 sm:py-28">
@@ -27,7 +28,7 @@ export default function Services({ services, whatsapp }: { services: Service[]; 
         </div>
 
         <div className="mt-10 text-center">
-          <Link href="/servicios" className="btn-ghost">
+          <Link href={href('/servicios')} className="btn-ghost">
             {t.seeAll} <ArrowRight size={16} />
           </Link>
         </div>

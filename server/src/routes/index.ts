@@ -10,6 +10,7 @@ import * as pub from '../controllers/public.controller';
 import { getStats } from '../controllers/stats.controller';
 import * as projects from '../controllers/projects.controller';
 import * as analytics from '../controllers/analytics.controller';
+import * as translations from '../controllers/translations.controller';
 
 const router = Router();
 
@@ -68,6 +69,8 @@ router.use('/admin', requireAuth);
 router.get('/admin/stats', getStats);
 router.get('/admin/analytics', analytics.summary);
 router.patch('/admin/projects/:id/publish', projects.setPublished);
+router.get('/admin/translations/:resource/:id', translations.get);
+router.put('/admin/translations/:resource/:id', translations.save);
 
 // El refuerzo de permisos para usuarios debe registrarse ANTES del CRUD genérico.
 router.use('/admin/users', requireRole('ADMIN'));

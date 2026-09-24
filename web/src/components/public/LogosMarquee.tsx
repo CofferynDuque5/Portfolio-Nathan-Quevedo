@@ -1,15 +1,16 @@
 import { Logo } from '@/lib/types';
 import { getT } from '@/i18n';
 
-export default function LogosMarquee({ logos }: { logos: Logo[] }) {
+export default async function LogosMarquee({ logos }: { logos: Logo[] }) {
   if (!logos.length) return null;
+  const t = await getT();
   const row = [...logos, ...logos]; // duplicado para el bucle continuo
 
   return (
     <section className="border-y border-slate-200/60 py-10 dark:border-white/10">
       <div className="container-x">
         <p className="mb-6 text-center text-sm font-medium uppercase tracking-wider text-slate-400">
-          {getT().logos.title}
+          {t.logos.title}
         </p>
       </div>
       <div className="group relative overflow-hidden">

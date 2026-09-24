@@ -1,5 +1,11 @@
 import { Project, ProjectLink, ProjectSummary, SiteContent } from './types';
 import { fallbackContent } from './fallback';
+import { DEFAULT_LOCALE, Locale } from '@/i18n/config';
+
+/** `?lang=xx` para pedir el contenido traducido (el español no lo necesita). */
+function lang(locale?: Locale, sep = '?') {
+  return locale && locale !== DEFAULT_LOCALE ? `${sep}lang=${locale}` : '';
+}
 
 /**
  * URL base de la API.
@@ -21,9 +27,9 @@ export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:30
  * Obtiene todo el contenido del sitio desde la API (Server Component).
  * Si la API falla, devuelve contenido de respaldo para no romper el render.
  */
-export async function getSiteContent(): Promise<SiteContent> {
+export async function getSiteContent(locale?: Locale): Promise<SiteContent> {
   try {
-    const res = await fetch(`${API_URL}/api/public/content`, {
+    const res = await fetch(`${API_URL}/api/public/content${lang(locale)}`, {
       // Siempre datos frescos: los cambios del panel se ven al instante.
       cache: 'no-store',
     });
@@ -46,9 +52,9 @@ export interface SeoData {
 }
 
 /** Obtiene los metadatos SEO de una página concreta. */
-export async function getSeo(page: string): Promise<SeoData | null> {
+export async function getSeo(page: string, locale?: Locale): Promise<SeoData | null> {
   try {
-    const res = await fetch(`${API_URL}/api/public/seo/${page}`, { cache: 'no-store' });
+    const res = await fetch(`${API_URL}/api/public/seo/${page}${lang(locale)}`, { cache: 'no-store' });
     if (!res.ok) return null;
     const json = await res.json();
     return json.data ?? null;
@@ -58,9 +64,9 @@ export async function getSeo(page: string): Promise<SeoData | null> {
 }
 
 /** Proyectos publicados (portfolio). Lista vacía si la API no responde. */
-export async function getProjects(): Promise<ProjectSummary[]> {
+export async function getProjects(locale?: Locale): Promise<ProjectSummary[]> {
   try {
-    const res = await fetch(`${API_URL}/api/public/projects`, { cache: 'no-store' });
+    const res = await fetch(`${API_URL}/api/public/projects${lang(locale)}`, { cache: 'no-store' });
     if (!res.ok) return [];
     const json = await res.json();
     return json.data ?? [];
@@ -76,9 +82,9 @@ export interface ProjectPage {
 }
 
 /** Caso de estudio publicado por slug; null si no existe o es un borrador. */
-export async function getProject(slug: string): Promise<ProjectPage | null> {
+export async function getProject(slug: string, locale?: Locale): Promise<ProjectPage | null> {
   try {
-    const res = await fetch(`${API_URL}/api/public/projects/${encodeURIComponent(slug)}`, {
+    const res = await fetch(`${API_URL}/api/public/projects/${encodeURIComponent(slug)}${lang(locale)}`, {
       cache: 'no-store',
     });
     if (!res.ok) return null;
