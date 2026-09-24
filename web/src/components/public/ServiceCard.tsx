@@ -1,9 +1,9 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { MessageCircle } from 'lucide-react';
 import { Service } from '@/lib/types';
 import { Icon } from '@/lib/icon';
+import Reveal from '@/components/Reveal';
 import { waLink } from '@/lib/utils';
 import { useI18n } from '@/i18n/client';
 
@@ -11,12 +11,10 @@ import { useI18n } from '@/i18n/client';
 export default function ServiceCard({ s, i, whatsapp }: { s: Service; i: number; whatsapp?: string }) {
   const { t } = useI18n();
   return (
-    <motion.article
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.45, delay: (i % 3) * 0.08 }}
-      className="group flex flex-col overflow-hidden rounded-3xl border border-slate-200/70 bg-white shadow-soft transition hover:-translate-y-1.5 hover:shadow-xl dark:border-white/10 dark:bg-white/[0.03]"
+    // La aparición va en un envoltorio para no chocar con la animación al pasar el ratón.
+    <Reveal delay={(i % 3) * 0.08} className="h-full">
+    <article
+      className="group flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200/70 bg-white shadow-soft transition hover:-translate-y-1.5 hover:shadow-xl dark:border-white/10 dark:bg-white/[0.03]"
     >
       {/* Imagen / cabecera visual */}
       <div className="relative aspect-[16/10] overflow-hidden">
@@ -73,6 +71,7 @@ export default function ServiceCard({ s, i, whatsapp }: { s: Service; i: number;
           <MessageCircle size={16} /> {s.ctaText || t.common.requestWhatsapp}
         </a>
       </div>
-    </motion.article>
+    </article>
+    </Reveal>
   );
 }

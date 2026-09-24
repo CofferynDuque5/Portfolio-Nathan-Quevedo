@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Image as ImageIcon, Inbox, LogOut, ExternalLink, BarChart3 } from 'lucide-react';
 import { RESOURCES, RESOURCE_GROUPS } from '@/lib/admin/resources';
-import { Icon } from '@/lib/icon';
+import { Icon } from '@/lib/admin/icon';
 import { useAuth } from '@/lib/admin/auth';
 import { cn } from '@/lib/utils';
 

@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { motion } from 'framer-motion';
 import { Send, CheckCircle2, Mail, Phone, Clock, MessageCircle } from 'lucide-react';
 import { ContactInfo, SocialLink } from '@/lib/types';
 import { Icon } from '@/lib/icon';
@@ -126,10 +125,8 @@ export default function Contact({
         {/* Formulario */}
         <div className="card">
           {sent ? (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex flex-col items-center justify-center py-14 text-center"
+            <div
+              className="flex animate-fade-up flex-col items-center justify-center py-14 text-center"
             >
               <CheckCircle2 className="mb-4 text-green-500" size={56} />
               <h3 className="text-xl font-semibold">{t.sentTitle}</h3>
@@ -139,7 +136,7 @@ export default function Contact({
               <button onClick={() => setSent(false)} className="btn-ghost mt-6">
                 {t.sendAnother}
               </button>
-            </motion.div>
+            </div>
           ) : (
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">

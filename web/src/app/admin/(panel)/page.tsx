@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Inbox, ArrowRight, Clock, TrendingUp, Mail } from 'lucide-react';
 import { api } from '@/lib/admin/client';
 import { RESOURCES } from '@/lib/admin/resources';
-import { Icon } from '@/lib/icon';
+import { Icon } from '@/lib/admin/icon';
 import { useAuth } from '@/lib/admin/auth';
 import { CardSkeleton, Skeleton } from '@/components/admin/Skeleton';
 

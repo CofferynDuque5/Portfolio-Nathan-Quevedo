@@ -22,7 +22,7 @@ Construido con una arquitectura escalable y **sin depender de servicios externos
 
 | Capa | Tecnología |
 |------|------------|
-| Frontend | Next.js 15 (App Router), TypeScript, TailwindCSS, Framer Motion, React Hook Form, Swiper, Lucide React |
+| Frontend | Next.js 15 (App Router), TypeScript, TailwindCSS (animaciones con CSS), React Hook Form, Lucide React |
 | Backend | Node.js, Express, Prisma ORM |
 | Base de datos | MySQL |
 | Autenticación | JWT + bcrypt |

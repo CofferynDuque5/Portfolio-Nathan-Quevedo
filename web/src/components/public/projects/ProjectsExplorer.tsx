@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 import { FolderKanban } from 'lucide-react';
 import { ProjectCategory, ProjectSummary } from '@/lib/types';
 import { CATEGORY_PARAM } from '@/lib/projects';
@@ -95,28 +94,22 @@ export default function ProjectsExplorer({
         {t.shown(visible.length)}
       </p>
 
-      <motion.ul layout className="grid gap-x-8 gap-y-14 md:grid-cols-2">
-        <AnimatePresence mode="popLayout" initial={false}>
+      <ul className="grid gap-x-8 gap-y-14 md:grid-cols-2">
           {visible.map((p, i) => {
             // Ritmo editorial: cada tercer proyecto ocupa el ancho completo; también
             // el último si quedaría solo en su fila.
             const wide = i % 3 === 0 || (i % 3 === 1 && i === visible.length - 1);
             return (
-            <motion.li
+            <li
               key={p.id}
-              layout
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.97 }}
-              transition={{ duration: 0.4, delay: Math.min(i, 4) * 0.05, ease: 'easeOut' }}
-              className={cn(wide && 'md:col-span-2')}
+              className={cn('animate-fade-in-up', wide && 'md:col-span-2')}
+              style={{ animationDelay: `${Math.min(i, 4) * 50}ms` }}
             >
               <ProjectCard project={p} large={wide} headingLevel="h2" />
-            </motion.li>
+            </li>
             );
           })}
-        </AnimatePresence>
-      </motion.ul>
+      </ul>
     </div>
   );
 }

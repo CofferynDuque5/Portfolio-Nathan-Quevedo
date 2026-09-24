@@ -55,7 +55,7 @@ export default function ProjectDetail({
           <ArrowLeft size={16} /> {t.back}
         </Link>
 
-        <Reveal>
+        <div className="animate-rise">
           <h1 className="mt-8 max-w-5xl text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">
             {project.title}
           </h1>
@@ -64,7 +64,7 @@ export default function ProjectDetail({
               {project.summary}
             </p>
           )}
-        </Reveal>
+        </div>
 
         {(facts.length > 0 || project.url) && (
           <Reveal delay={0.1}>

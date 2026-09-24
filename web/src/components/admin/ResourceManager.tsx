@@ -14,7 +14,7 @@ import TranslationEditor from './TranslationEditor';
 import ConfirmDialog from './ConfirmDialog';
 import { useToast } from './Toast';
 import { TableSkeleton } from './Skeleton';
-import { Icon } from '@/lib/icon';
+import { Icon } from '@/lib/admin/icon';
 import { cn } from '@/lib/utils';
 
 /** Valores por defecto sensatos al crear un registro nuevo. */

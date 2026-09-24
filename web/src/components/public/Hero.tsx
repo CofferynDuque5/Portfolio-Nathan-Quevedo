@@ -1,6 +1,5 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { ArrowRight, ShieldCheck, Zap, BadgeCheck } from 'lucide-react';
 import { HeroSlide } from '@/lib/types';
 import { useI18n } from '@/i18n/client';
@@ -18,20 +17,14 @@ export default function Hero({ slides, tagline }: { slides: HeroSlide[]; tagline
 
       <div className="container-x">
         <div className="mx-auto max-w-3xl text-center">
-          <motion.span
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="eyebrow"
+          <span
+            className="animate-fade-in-up eyebrow"
           >
             <BadgeCheck size={14} /> {tagline || t.hero.badge}
-          </motion.span>
+          </span>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.05 }}
-            className="mt-6 text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-6xl"
+          <h1
+            className="animate-rise mt-6 text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-6xl"
           >
             {slide.title}{' '}
             {slide.highlight && (
@@ -39,24 +32,18 @@ export default function Hero({ slides, tagline }: { slides: HeroSlide[]; tagline
                 {slide.highlight}
               </span>
             )}
-          </motion.h1>
+          </h1>
 
           {slide.subtitle && (
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.15 }}
-              className="mx-auto mt-6 max-w-2xl text-lg text-slate-600 dark:text-slate-300"
+            <p
+              className="animate-fade-in-up [animation-delay:150ms] mx-auto mt-6 max-w-2xl text-lg text-slate-600 dark:text-slate-300"
             >
               {slide.subtitle}
-            </motion.p>
+            </p>
           )}
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.25 }}
-            className="mt-9 flex flex-wrap items-center justify-center gap-3"
+          <div
+            className="animate-fade-in-up [animation-delay:250ms] mt-9 flex flex-wrap items-center justify-center gap-3"
           >
             <a href={href(slide.ctaLink || '#contacto')} className="btn-primary">
               {slide.ctaText || t.common.contact} <ArrowRight size={16} />
@@ -64,13 +51,10 @@ export default function Hero({ slides, tagline }: { slides: HeroSlide[]; tagline
             <a href="#servicios" className="btn-ghost">
               {t.common.seeServices}
             </a>
-          </motion.div>
+          </div>
 
-          <motion.ul
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-slate-500 dark:text-slate-400"
+          <ul
+            className="animate-fade-in-up [animation-delay:400ms] mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-slate-500 dark:text-slate-400"
           >
             <li className="flex items-center gap-2">
               <ShieldCheck size={16} className="text-brand-500" /> {t.hero.trust[0]}
@@ -81,7 +65,7 @@ export default function Hero({ slides, tagline }: { slides: HeroSlide[]; tagline
             <li className="flex items-center gap-2">
               <BadgeCheck size={16} className="text-brand-500" /> {t.hero.trust[2]}
             </li>
-          </motion.ul>
+          </ul>
         </div>
       </div>
     </section>

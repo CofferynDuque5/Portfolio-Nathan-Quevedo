@@ -85,6 +85,38 @@
   background-size: 32px 32px;
 }
 
+/* Aparición al hacer scroll (componente Reveal) */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+  transition-delay: var(--reveal-delay, 0s);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+/* Sin JavaScript, el contenido se ve igualmente */
+@media (scripting: none) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Carrusel continuo (Platforms): la segunda copia solo existe para el bucle */
+@media (prefers-reduced-motion: reduce) {
+  .marquee {
+    overflow-x: auto;
+  }
+  .marquee-track {
+    animation: none !important;
+  }
+  .marquee-copy {
+    display: none;
+  }
+}
+
 /* Accesibilidad: respeta la preferencia de movimiento reducido */
 @media (prefers-reduced-motion: reduce) {
   *,
