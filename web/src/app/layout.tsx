@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { getSeo, SITE_URL } from '@/lib/api';
+import ConsentAndAnalytics from '@/components/ConsentAndAnalytics';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
 
@@ -59,7 +60,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <ConsentAndAnalytics />
+      </body>
     </html>
   );
 }

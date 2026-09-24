@@ -9,6 +9,7 @@ import * as upload from '../controllers/upload.controller';
 import * as pub from '../controllers/public.controller';
 import { getStats } from '../controllers/stats.controller';
 import * as projects from '../controllers/projects.controller';
+import * as analytics from '../controllers/analytics.controller';
 
 const router = Router();
 
@@ -29,6 +30,15 @@ router.post('/auth/change-password', requireAuth, auth.changePassword);
 router.get('/public/content', pub.getSiteContent);
 router.get('/public/seo/:page', pub.getSeo);
 router.post('/public/contact', pub.submitContact);
+// Métricas: límite propio para que un abuso no llene la base de datos.
+const trackLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiadas peticiones.' },
+});
+router.post('/public/track', trackLimiter, analytics.track);
 router.get('/public/projects', projects.listPublished);
 router.get('/public/projects/:slug', projects.getPublishedBySlug);
 router.get('/public/:resource', pub.getPublicResource);
@@ -56,6 +66,7 @@ router.use('/admin', requireAuth);
 
 // Estadísticas del dashboard (antes del CRUD genérico para no chocar con :resource).
 router.get('/admin/stats', getStats);
+router.get('/admin/analytics', analytics.summary);
 router.patch('/admin/projects/:id/publish', projects.setPublished);
 
 // El refuerzo de permisos para usuarios debe registrarse ANTES del CRUD genérico.

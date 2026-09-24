@@ -7,6 +7,7 @@ import { Send, CheckCircle2, Mail, Phone, Clock, MessageCircle } from 'lucide-re
 import { ContactInfo } from '@/lib/types';
 import { Icon } from '@/lib/icon';
 import { API_URL } from '@/lib/api';
+import { track } from '@/lib/analytics';
 
 interface FormValues {
   name: string;
@@ -41,6 +42,7 @@ export default function Contact({ info }: { info: ContactInfo[] }) {
         throw new Error(data.error || 'No se pudo enviar el mensaje.');
       }
       setSent(true);
+      track('contact_submit');
       reset();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error inesperado.');

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Image as ImageIcon, Inbox, LogOut, ExternalLink } from 'lucide-react';
+import { LayoutDashboard, Image as ImageIcon, Inbox, LogOut, ExternalLink, BarChart3 } from 'lucide-react';
 import { RESOURCES, RESOURCE_GROUPS } from '@/lib/admin/resources';
 import { Icon } from '@/lib/icon';
 import { useAuth } from '@/lib/admin/auth';
@@ -40,6 +40,7 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
       <nav className="flex-1 space-y-1 overflow-y-auto p-3">
         {link('/admin', 'Dashboard', <LayoutDashboard size={18} />)}
+        {link('/admin/analytics', 'Métricas', <BarChart3 size={18} />)}
         {link('/admin/media', 'Multimedia', <ImageIcon size={18} />)}
         {link('/admin/messages', 'Mensajes', <Inbox size={18} />)}
 

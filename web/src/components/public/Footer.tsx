@@ -1,5 +1,6 @@
 import { SocialLink } from '@/lib/types';
 import { Icon } from '@/lib/icon';
+import PrivacyPreferencesButton from './PrivacyPreferencesButton';
 
 export default function Footer({
   siteName,
@@ -58,6 +59,7 @@ export default function Footer({
             <ul className="mt-4 space-y-2 text-sm text-slate-500 dark:text-slate-400">
               <li><a href="/#contacto" className="hover:text-brand-600">Formulario de contacto</a></li>
               <li><a href="/admin" className="hover:text-brand-600">Panel administrativo</a></li>
+              <li><PrivacyPreferencesButton className="hover:text-brand-600" /></li>
             </ul>
           </div>
         </div>

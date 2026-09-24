@@ -13,6 +13,28 @@ export function clearToken() {
   localStorage.removeItem(TOKEN_KEY);
 }
 
+export interface AnalyticsRow {
+  label: string | null;
+  value: number;
+}
+
+export interface AnalyticsSummary {
+  days: number;
+  totals: {
+    pageviews: number;
+    visitors: number;
+    sessions: number;
+    whatsappClicks: number;
+    contactSubmits: number;
+    conversionRate: number;
+  };
+  series: { date: string; pageviews: number; visitors: number }[];
+  pages: AnalyticsRow[];
+  sources: AnalyticsRow[];
+  devices: AnalyticsRow[];
+  browsers: AnalyticsRow[];
+}
+
 interface ListParams {
   page?: number;
   perPage?: number;
@@ -59,6 +81,7 @@ export const api = {
       activity: { type: string; name: string; at: string; resource: string }[];
       recentMessages: { id: number; name: string; subject?: string | null; message: string; read: boolean; createdAt: string }[];
     }>('/admin/stats'),
+  analytics: (days: number) => request<AnalyticsSummary>(`/admin/analytics?days=${days}`),
   changePassword: (currentPassword: string, newPassword: string) =>
     request<{ success: boolean }>('/auth/change-password', {
       method: 'POST',

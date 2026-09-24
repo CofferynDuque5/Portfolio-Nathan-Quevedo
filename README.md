@@ -154,7 +154,7 @@ Password: Admin1234!
 
 ## 🗂️ Módulos del panel administrativo
 
-Dashboard · **Proyectos** · Hero · Servicios · Categorías · Plataformas · Licencias · FAQ · Galería · Banners · Logos · Redes sociales · Información de contacto · SEO · Configuración general · Usuarios · Multimedia · Mensajes.
+Dashboard · **Métricas** · **Proyectos** · Hero · Servicios · Categorías · Plataformas · Licencias · FAQ · Galería · Banners · Logos · Redes sociales · Información de contacto · SEO · Configuración general · Usuarios · Multimedia · Mensajes.
 
 Cada módulo de contenido incluye: **búsqueda, ordenamiento, paginación, crear, editar, eliminar, activar/desactivar, vista previa de imágenes y confirmación antes de borrar.**
 
@@ -172,6 +172,20 @@ Cada módulo de contenido incluye: **búsqueda, ordenamiento, paginación, crear
   `/proyectos/<slug>` (SEO, Open Graph y Schema.org por proyecto) y una sección en la home.
 - La primera instalación crea dos proyectos **[Ejemplo]** como borradores; reemplázalos o
   elimínalos. Nunca se publican solos.
+
+### 📊 Métricas y privacidad
+
+- Aviso de privacidad propio: la medición solo empieza si el visitante pulsa **Aceptar**.
+  Si rechaza, o su navegador envía *Global Privacy Control* / *Do Not Track*, no se envía
+  nada. El enlace **Preferencias de privacidad** del pie permite cambiar la elección.
+- Se registran páginas vistas, clics en cualquier enlace de WhatsApp y formularios de
+  contacto enviados. **Sin cookies ni IP**: un identificador aleatorio en el navegador,
+  la ruta sin parámetros, el dominio de procedencia (o `utm_source`) y el tipo de
+  dispositivo y navegador.
+- Panel **Métricas** (`/admin/analytics`): visitantes, páginas vistas, clics en WhatsApp,
+  formularios, porcentaje de visitas con conversión, evolución diaria, páginas más vistas,
+  fuentes de tráfico, dispositivos y navegadores, para 7, 30 o 90 días.
+- Los eventos se borran automáticamente a los 13 meses.
 
 > **Actualizaciones de la base de datos:** al reiniciar la app se aplican solas las
 > migraciones nuevas de `server/prisma/migrations` (registro en la tabla

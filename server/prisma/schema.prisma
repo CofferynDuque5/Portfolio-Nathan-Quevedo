@@ -363,6 +363,28 @@ model ContactMessage {
 }
 
 // ------------------------------------------------------------
+//  Métricas propias (solo con consentimiento del visitante)
+//  Sin IP ni cookies de terceros: identificadores aleatorios
+//  generados en el navegador, ruta sin parámetros y dominio de
+//  procedencia. Se purgan a los 13 meses.
+// ------------------------------------------------------------
+model AnalyticsEvent {
+  id        Int      @id @default(autoincrement())
+  type      String   @db.VarChar(32) // pageview | whatsapp_click | contact_submit
+  path      String
+  source    String?  @db.VarChar(100) // dominio de procedencia o utm_source; null = directo
+  device    String   @db.VarChar(16) // mobile | tablet | desktop
+  browser   String?  @db.VarChar(32)
+  visitorId String   @db.VarChar(64)
+  sessionId String   @db.VarChar(64)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([type, createdAt])
+  @@map("analytics_events")
+}
+
+// ------------------------------------------------------------
 //  Registro de migraciones aplicadas por scripts/setup-db.cjs
 //  (auto-arranque en cPanel). Declarado aquí para que
 //  `prisma db push` no lo considere una tabla ajena.
