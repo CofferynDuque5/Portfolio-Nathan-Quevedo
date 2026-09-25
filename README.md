@@ -157,7 +157,7 @@ Password: Admin1234!
 
 ## 🗂️ Módulos del panel administrativo
 
-Dashboard · **Métricas** · **Proyectos** · **Blog** · Hero · Servicios · Categorías · Plataformas · Licencias · FAQ · Galería · Banners · Logos · Redes sociales · Información de contacto · SEO · Configuración general · Usuarios · Multimedia · Mensajes.
+Dashboard · **Métricas** · **Proyectos** · **Blog** · Hero · **Testimonios** · Servicios · Categorías · Plataformas · Licencias · FAQ · Galería · Banners · Logos · Redes sociales · Información de contacto · SEO · Configuración general · Usuarios · Multimedia · Mensajes.
 
 Los mensajes del formulario pueden llegarte también por correo (opcional, con una cuenta SMTP de tu dominio): ver `DEPLOY-CPANEL.md`.
 
@@ -207,6 +207,15 @@ Si una página no tiene registro en el módulo SEO se usan un título y una desc
 - Sitio público: `/blog` (el más reciente destacado y filtro por etiqueta con
   `?etiqueta=…`), `/blog/<slug>` (SEO, Open Graph y Schema.org `BlogPosting`), feed RSS en
   `/blog/rss.xml` y `/en/blog/rss.xml`, y entradas en el sitemap.
+
+### 💬 Testimonios
+
+- Módulo **Testimonios** (grupo Contenido): nombre, detalle opcional (qué contrató, cargo o
+  empresa), el texto, estrellas de 1 a 5 (opcionales) y foto (si no hay, se muestran las
+  iniciales). Traducción al inglés del detalle y del texto en la pestaña **English**.
+- Se muestran en la portada (tras los proyectos) y en `/sobre-mi`. Si no hay ninguno activo,
+  la sección no aparece.
+- El sitio no trae testimonios de ejemplo: publica solo reseñas reales y con permiso del cliente.
 
 ### 📊 Métricas y privacidad
 

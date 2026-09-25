@@ -428,6 +428,56 @@ describe('app completa', { skip: TEST_DB_URL ? false : 'define TEST_DATABASE_URL
     });
   });
 
+  describe('testimonios', () => {
+    let id = 0;
+
+    test('sin testimonios la sección no aparece', async () => {
+      assert.deepEqual((await api('/public/content')).body.testimonials, []);
+      assert.ok(!(await page('/')).html.includes('id="testimonios"'));
+    });
+
+    test('valida las estrellas y el texto', async () => {
+      const bad = await api('/admin/testimonials', { method: 'POST', auth: true, body: json({ name: 'Ana', quote: 'Hola', rating: 7 }) });
+      assert.equal(bad.status, 400);
+      const empty = await api('/admin/testimonials', { method: 'POST', auth: true, body: json({ name: 'Ana', quote: '  ' }) });
+      assert.equal(empty.status, 400);
+    });
+
+    test('uno activo sale en la portada y en Sobre mí, en los dos idiomas', async () => {
+      const created = await api('/admin/testimonials', {
+        method: 'POST',
+        auth: true,
+        body: json({ name: 'Cliente de prueba', role: 'Cliente de streaming', quote: 'Todo funcionó a la primera.', rating: '5' }),
+      });
+      assert.equal(created.status, 201);
+      assert.equal(created.body.data.rating, 5);
+      id = created.body.data.id;
+
+      const home = await page('/');
+      assert.match(home.html, /id="testimonios"/);
+      assert.match(home.html, /Todo funcionó a la primera\./);
+      assert.match(home.html, /aria-label="5 de 5 estrellas"/);
+      assert.match((await page('/sobre-mi')).html, /Cliente de prueba/);
+
+      await api(`/admin/translations/testimonials/${id}`, {
+        method: 'PUT',
+        auth: true,
+        body: json({ locale: 'en', values: { quote: 'Everything worked first time.', role: 'Streaming client' } }),
+      });
+      const en = await page('/en');
+      assert.match(en.html, /What my clients say/);
+      assert.match(en.html, /Everything worked first time\./);
+      assert.match(en.html, /aria-label="5 out of 5 stars"/);
+    });
+
+    test('al desactivarlo desaparece del sitio', async () => {
+      await api(`/admin/testimonials/${id}`, { method: 'PUT', auth: true, body: json({ active: false }) });
+      assert.deepEqual((await api('/public/testimonials')).body.data, []);
+      assert.ok(!(await page('/')).html.includes('Todo funcionó a la primera'));
+      assert.equal((await api(`/admin/testimonials/${id}`, { method: 'DELETE', auth: true })).status, 200);
+    });
+  });
+
   describe('páginas del sitio', () => {
     test('español: sin prefijo, lang="es" y enlace a la versión en inglés', async () => {
       const home = await page('/');

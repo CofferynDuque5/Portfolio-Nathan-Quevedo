@@ -1,7 +1,7 @@
 /**
  * Definición declarativa de cada módulo del panel.
  * Una sola configuración describe las columnas de la tabla y los campos del
- * formulario, de modo que un componente genérico sirve a los 17 módulos.
+ * formulario, de modo que un componente genérico sirve a los 18 módulos.
  * Añadir una sección nueva = añadir una entrada aquí.
  */
 
@@ -332,6 +332,53 @@ export const RESOURCES: Record<string, ResourceDef> = {
       { name: 'question', label: 'Pregunta', type: 'text', required: true, full: true },
       { name: 'answer', label: 'Respuesta', type: 'textarea', required: true, full: true },
       { name: 'category', label: 'Categoría', type: 'text' },
+      orderField,
+      activeField,
+    ],
+  },
+  testimonials: {
+    key: 'testimonials',
+    translatable: true,
+    label: 'Testimonios',
+    singular: 'Testimonio',
+    icon: 'MessageSquareQuote',
+    group: 'Contenido',
+    hasActive: true,
+    searchable: true,
+    columns: [
+      { key: 'avatar', label: 'Foto', type: 'image', sortable: false },
+      { key: 'name', label: 'Cliente' },
+      { key: 'role', label: 'Detalle' },
+      { key: 'rating', label: 'Estrellas' },
+      { key: 'order', label: 'Orden' },
+      { key: 'active', label: 'Estado', type: 'boolean' },
+    ],
+    fields: [
+      { name: 'name', label: 'Nombre del cliente', type: 'text', required: true, help: 'Como quiera aparecer: nombre completo, nombre e inicial o solo el nombre.' },
+      { name: 'role', label: 'Detalle', type: 'text', placeholder: 'Cliente de streaming · Empresa X', help: 'Opcional: qué contrató, su cargo o su empresa.' },
+      {
+        name: 'quote',
+        label: 'Testimonio',
+        type: 'textarea',
+        required: true,
+        full: true,
+        rows: 4,
+        help: 'Sus palabras tal cual (máximo 1000 caracteres). Publícalo solo si es real y tienes su permiso.',
+      },
+      {
+        name: 'rating',
+        label: 'Estrellas',
+        type: 'select',
+        options: [
+          { value: '', label: 'Sin estrellas' },
+          { value: '5', label: '★★★★★ (5)' },
+          { value: '4', label: '★★★★ (4)' },
+          { value: '3', label: '★★★ (3)' },
+          { value: '2', label: '★★ (2)' },
+          { value: '1', label: '★ (1)' },
+        ],
+      },
+      { name: 'avatar', label: 'Foto (opcional)', type: 'image', full: true, help: 'Si no hay foto se muestran sus iniciales.' },
       orderField,
       activeField,
     ],

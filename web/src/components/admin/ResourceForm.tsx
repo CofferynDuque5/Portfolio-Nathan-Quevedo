@@ -7,12 +7,12 @@ import { FieldDef, ResourceDef } from '@/lib/admin/resources';
 import { api } from '@/lib/admin/client';
 import MediaPicker from './MediaPicker';
 
-/** Adapta los valores de la API a los inputs (fechas ISO -> YYYY-MM-DD). */
+/** Adapta los valores de la API a los inputs (fechas ISO -> YYYY-MM-DD, null -> "" en listas). */
 function toFormValues(def: ResourceDef, initial?: Record<string, any>) {
   const out: Record<string, any> = { ...(initial ?? {}) };
   for (const f of def.fields) {
     if (f.type === 'date') out[f.name] = out[f.name] ? String(out[f.name]).slice(0, 10) : '';
-    if (f.type === 'relation') out[f.name] = out[f.name] == null ? '' : String(out[f.name]);
+    if (f.type === 'relation' || f.type === 'select') out[f.name] = out[f.name] == null ? '' : String(out[f.name]);
   }
   return out;
 }

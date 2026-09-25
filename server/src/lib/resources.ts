@@ -1,6 +1,7 @@
 import { prisma } from './prisma';
 import { prepareProject, PROJECT_STATUSES } from './projects';
 import { preparePost, POST_STATUSES } from './posts';
+import { prepareTestimonial } from './testimonials';
 
 /**
  * Registro central de recursos administrables.
@@ -113,6 +114,16 @@ export const resources: Record<string, ResourceConfig> = {
     boolFields: ['active'],
     public: true,
     hasActive: true,
+  },
+  testimonials: {
+    model: prisma.testimonial,
+    searchable: ['name', 'role', 'quote'],
+    defaultOrderBy: { order: 'asc' },
+    intFields: ['order', 'rating'],
+    boolFields: ['active'],
+    public: true,
+    hasActive: true,
+    prepare: prepareTestimonial,
   },
   gallery: {
     model: prisma.galleryItem,

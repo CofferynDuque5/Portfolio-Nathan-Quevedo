@@ -11,6 +11,7 @@ import Process from '@/components/public/Process';
 import LogosMarquee from '@/components/public/LogosMarquee';
 import BannerCTA from '@/components/public/BannerCTA';
 import Faq from '@/components/public/Faq';
+import Testimonials from '@/components/public/Testimonials';
 import Contact from '@/components/public/Contact';
 import Footer from '@/components/public/Footer';
 import FloatingWhatsApp from '@/components/public/FloatingWhatsApp';
@@ -72,6 +73,12 @@ export default async function HomePage() {
         <About title={s.aboutTitle || t.about.titleFor(siteName)} text={s.aboutText || ''} settings={s} />
         <Services services={content.services} whatsapp={s.whatsapp} />
         <FeaturedProjects projects={content.projects} />
+        <Testimonials
+          testimonials={content.testimonials}
+          eyebrow={t.testimonials.eyebrow}
+          title={t.testimonials.title}
+          ratingLabel={t.testimonials.rating}
+        />
         <Platforms platforms={content.platforms} />
         <Licenses licenses={content.licenses} whatsapp={s.whatsapp} />
         <Process title={s.processTitle || t.process.defaultTitle} />

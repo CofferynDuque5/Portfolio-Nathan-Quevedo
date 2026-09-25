@@ -98,6 +98,11 @@ export const en: Dictionary = {
     ],
   },
   faq: { eyebrow: 'FAQ', title: 'Answers to your questions' },
+  testimonials: {
+    eyebrow: 'Testimonials',
+    title: 'What my clients say',
+    rating: (n: number) => `${n} out of 5 stars`,
+  },
   contact: {
     eyebrow: 'Contact',
     title: "Let's talk about your project",

@@ -72,6 +72,17 @@ export interface Faq {
   active: boolean;
 }
 
+export interface Testimonial {
+  id: number;
+  name: string;
+  role?: string | null;
+  quote: string;
+  rating?: number | null;
+  avatar?: string | null;
+  order: number;
+  active: boolean;
+}
+
 export interface GalleryItem {
   id: number;
   title: string;
@@ -217,5 +228,6 @@ export interface SiteContent {
   socialLinks: SocialLink[];
   contactInfo: ContactInfo[];
   projects: ProjectSummary[];
+  testimonials: Testimonial[];
   settings: Record<string, string>;
 }

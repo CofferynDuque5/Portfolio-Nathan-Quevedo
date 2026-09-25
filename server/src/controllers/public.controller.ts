@@ -42,6 +42,7 @@ export const getSiteContent = asyncHandler(async (req: Request, res: Response) =
       select: projectCardSelect,
       take: 6,
     }),
+    prisma.testimonial.findMany({ where: { active: true }, orderBy: { order: 'asc' } }),
   ]);
 
   const tr = <T extends { id: number }>(resource: string, rows: T[], nested = false) =>
@@ -60,6 +61,7 @@ export const getSiteContent = asyncHandler(async (req: Request, res: Response) =
     contactInfo,
     settingsRows,
     projects,
+    testimonials,
   ] = await Promise.all([
     tr('heroSlides', raw[0]),
     tr('categories', raw[1]),
@@ -74,6 +76,7 @@ export const getSiteContent = asyncHandler(async (req: Request, res: Response) =
     tr('contactInfo', raw[10]),
     tr('settings', raw[11]),
     tr('projects', raw[12], true),
+    tr('testimonials', raw[13]),
   ]);
 
   const settings: Record<string, string> = {};
@@ -92,6 +95,7 @@ export const getSiteContent = asyncHandler(async (req: Request, res: Response) =
     socialLinks,
     contactInfo,
     projects,
+    testimonials,
     settings,
   });
 });

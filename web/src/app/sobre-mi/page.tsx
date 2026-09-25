@@ -9,6 +9,7 @@ import PageHeader from '@/components/public/PageHeader';
 import Process from '@/components/public/Process';
 import FeaturedProjects from '@/components/public/FeaturedProjects';
 import QuoteCTA from '@/components/public/QuoteCTA';
+import Testimonials from '@/components/public/Testimonials';
 import { Icon } from '@/lib/icon';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -76,6 +77,12 @@ export default async function AboutPage() {
       )}
 
       <Process title={s.processTitle || t.process.defaultTitle} />
+      <Testimonials
+        testimonials={content.testimonials}
+        eyebrow={t.testimonials.eyebrow}
+        title={t.testimonials.title}
+        ratingLabel={t.testimonials.rating}
+      />
       <FeaturedProjects projects={content.projects} />
       <QuoteCTA whatsapp={s.whatsapp} className="container-x" />
     </PageShell>

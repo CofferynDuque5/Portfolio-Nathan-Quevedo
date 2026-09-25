@@ -100,6 +100,11 @@ export const es = {
     ],
   },
   faq: { eyebrow: 'Preguntas frecuentes', title: 'Resolvemos tus dudas' },
+  testimonials: {
+    eyebrow: 'Testimonios',
+    title: 'Lo que dicen mis clientes',
+    rating: (n: number) => `${n} de 5 estrellas`,
+  },
   contact: {
     eyebrow: 'Contacto',
     title: 'Hablemos de tu proyecto',

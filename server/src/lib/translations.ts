@@ -22,6 +22,7 @@ export const TRANSLATABLE: Record<string, readonly string[]> = {
   platforms: ['description', 'price'],
   licenses: ['type', 'description', 'price'],
   faqs: ['question', 'answer'],
+  testimonials: ['role', 'quote'],
   banners: ['title', 'subtitle'],
   contactInfo: ['label', 'value'],
   seo: ['title', 'description', 'keywords'],
