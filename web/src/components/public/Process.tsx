@@ -1,19 +1,17 @@
 import { MessageSquare, CreditCard, Download, HeadphonesIcon } from 'lucide-react';
 import Reveal from '@/components/Reveal';
+import { getT } from '@/i18n';
 
-const steps = [
-  { icon: MessageSquare, title: 'Escríbenos', desc: 'Cuéntanos qué servicio o licencia necesitas.' },
-  { icon: CreditCard, title: 'Confirma tu pedido', desc: 'Te asesoramos y eliges el método de pago.' },
-  { icon: Download, title: 'Instalación remota', desc: 'Activamos y configuramos todo por ti.' },
-  { icon: HeadphonesIcon, title: 'Soporte continuo', desc: 'Quedamos disponibles para lo que necesites.' },
-];
+const ICONS = [MessageSquare, CreditCard, Download, HeadphonesIcon];
 
-export default function Process({ title }: { title: string }) {
+export default async function Process({ title }: { title: string }) {
+  const t = (await getT()).process;
+  const steps = t.steps.map((st, i) => ({ ...st, icon: ICONS[i] ?? MessageSquare }));
   return (
     <section id="proceso" className="py-20 sm:py-28">
       <div className="container-x">
         <div className="mx-auto max-w-2xl text-center">
-          <span className="eyebrow">Cómo trabajo</span>
+          <span className="eyebrow">{t.eyebrow}</span>
           <h2 className="section-title mt-4">{title}</h2>
         </div>
 
@@ -24,7 +22,7 @@ export default function Process({ title }: { title: string }) {
                 <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-brand-600 text-white shadow-glow">
                   <s.icon size={26} />
                 </div>
-                <span className="mt-4 inline-block text-sm font-bold text-brand-500">Paso {i + 1}</span>
+                <span className="mt-4 inline-block text-sm font-bold text-brand-500">{t.step(i + 1)}</span>
                 <h3 className="mt-1 text-lg font-semibold">{s.title}</h3>
                 <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{s.desc}</p>
               </div>

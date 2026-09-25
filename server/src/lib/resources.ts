@@ -1,4 +1,7 @@
 import { prisma } from './prisma';
+import { prepareProject, PROJECT_STATUSES } from './projects';
+import { preparePost, POST_STATUSES } from './posts';
+import { prepareTestimonial } from './testimonials';
 
 /**
  * Registro central de recursos administrables.
@@ -25,6 +28,10 @@ export interface ResourceConfig {
   include?: Record<string, boolean>;
   /** ¿Tiene columna `active` para activar/desactivar? */
   hasActive?: boolean;
+  /** Filtros exactos admitidos en el listado (?campo=valor) y sus valores válidos. */
+  filterable?: Record<string, readonly string[]>;
+  /** Validación / normalización propia del recurso antes de guardar. */
+  prepare?: (data: Record<string, any>) => Record<string, any>;
 }
 
 export const resources: Record<string, ResourceConfig> = {
@@ -56,6 +63,31 @@ export const resources: Record<string, ResourceConfig> = {
     include: { category: true },
     hasActive: true,
   },
+  projects: {
+    model: prisma.project,
+    searchable: ['title', 'slug', 'client', 'summary', 'tags'],
+    defaultOrderBy: { updatedAt: 'desc' },
+    intFields: ['order', 'categoryId'],
+    boolFields: ['featured'],
+    // Sin endpoint público genérico: el sitio usa /public/projects, que solo
+    // devuelve proyectos PUBLICADOS.
+    public: false,
+    include: { category: true },
+    filterable: { status: PROJECT_STATUSES },
+    prepare: prepareProject,
+  },
+  posts: {
+    model: prisma.post,
+    searchable: ['title', 'slug', 'excerpt', 'tags'],
+    defaultOrderBy: { updatedAt: 'desc' },
+    intFields: ['categoryId'],
+    // Sin endpoint público genérico: el sitio usa /public/posts, que solo
+    // devuelve artículos PUBLICADOS.
+    public: false,
+    include: { category: true },
+    filterable: { status: POST_STATUSES },
+    prepare: preparePost,
+  },
   platforms: {
     model: prisma.platform,
     searchable: ['name', 'slug', 'description'],
@@ -82,6 +114,16 @@ export const resources: Record<string, ResourceConfig> = {
     boolFields: ['active'],
     public: true,
     hasActive: true,
+  },
+  testimonials: {
+    model: prisma.testimonial,
+    searchable: ['name', 'role', 'quote'],
+    defaultOrderBy: { order: 'asc' },
+    intFields: ['order', 'rating'],
+    boolFields: ['active'],
+    public: true,
+    hasActive: true,
+    prepare: prepareTestimonial,
   },
   gallery: {
     model: prisma.galleryItem,
@@ -191,5 +233,8 @@ export function normalizePayload(config: ResourceConfig, data: Record<string, an
   delete out.id;
   delete out.createdAt;
   delete out.updatedAt;
-  return out;
+  // Las relaciones incluidas en las respuestas (ej: `category`) vuelven en el
+  // payload al editar; se guardan por su clave foránea, no como objeto.
+  for (const rel of Object.keys(config.include ?? {})) delete out[rel];
+  return config.prepare ? config.prepare(out) : out;
 }

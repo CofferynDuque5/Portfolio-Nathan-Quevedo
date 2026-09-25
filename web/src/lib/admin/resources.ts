@@ -1,7 +1,7 @@
 /**
  * Definición declarativa de cada módulo del panel.
  * Una sola configuración describe las columnas de la tabla y los campos del
- * formulario, de modo que un componente genérico sirve a los 16 módulos.
+ * formulario, de modo que un componente genérico sirve a los 18 módulos.
  * Añadir una sección nueva = añadir una entrada aquí.
  */
 
@@ -12,7 +12,9 @@ export type FieldType =
   | 'boolean'
   | 'image'
   | 'select'
-  | 'password';
+  | 'password'
+  | 'date'
+  | 'relation';
 
 export interface FieldDef {
   name: string;
@@ -23,12 +25,21 @@ export interface FieldDef {
   help?: string;
   options?: { value: string; label: string }[];
   full?: boolean; // ocupa todo el ancho del formulario
+  rows?: number; // alto de los textarea
+  /** type 'relation': recurso de la API que da las opciones y campo a mostrar. */
+  relation?: { resource: string; labelKey: string };
 }
 
 export interface ColumnDef {
-  key: string;
+  key: string; // admite rutas con punto, ej: category.name
   label: string;
-  type?: 'text' | 'image' | 'boolean' | 'badge';
+  type?: 'text' | 'image' | 'boolean' | 'badge' | 'status' | 'date';
+  sortable?: boolean; // por defecto true
+}
+
+export interface FilterDef {
+  param: string;
+  options: { value: string; label: string }[];
 }
 
 export interface ResourceDef {
@@ -41,14 +52,138 @@ export interface ResourceDef {
   fields: FieldDef[];
   hasActive?: boolean;
   searchable?: boolean;
+  /** Flujo borrador/publicado: botón publicar/despublicar en cada fila. */
+  publishable?: boolean;
+  /** Ruta de la vista previa en el panel; se le añade el id del registro. */
+  previewPath?: string;
+  /** Pestañas de filtro sobre el listado (ej: estado de publicación). */
+  filter?: FilterDef;
+  /**
+   * Tiene traducción al inglés (pestaña "English" al editar). La API decide
+   * qué campos; en Configuración general, solo los textos visibles.
+   */
+  translatable?: boolean;
 }
 
 const orderField: FieldDef = { name: 'order', label: 'Orden', type: 'number', placeholder: '0' };
 const activeField: FieldDef = { name: 'active', label: 'Activo', type: 'boolean' };
 
 export const RESOURCES: Record<string, ResourceDef> = {
+  projects: {
+    key: 'projects',
+    translatable: true,
+    label: 'Proyectos',
+    singular: 'Proyecto',
+    icon: 'FolderKanban',
+    group: 'Portfolio',
+    searchable: true,
+    publishable: true,
+    previewPath: '/admin/preview/projects',
+    filter: {
+      param: 'status',
+      options: [
+        { value: '', label: 'Todos' },
+        { value: 'DRAFT', label: 'Borradores' },
+        { value: 'PUBLISHED', label: 'Publicados' },
+      ],
+    },
+    columns: [
+      { key: 'coverImage', label: 'Portada', type: 'image', sortable: false },
+      { key: 'title', label: 'Título' },
+      { key: 'category.name', label: 'Categoría', type: 'badge', sortable: false },
+      { key: 'status', label: 'Estado', type: 'status' },
+      { key: 'publishedAt', label: 'Publicado', type: 'date' },
+      { key: 'updatedAt', label: 'Modificado', type: 'date' },
+    ],
+    fields: [
+      { name: 'title', label: 'Título', type: 'text', required: true, full: true },
+      { name: 'slug', label: 'Slug', type: 'text', help: 'URL del proyecto. Si lo dejas vacío se genera desde el título.' },
+      { name: 'categoryId', label: 'Categoría', type: 'relation', relation: { resource: 'categories', labelKey: 'name' } },
+      { name: 'client', label: 'Cliente', type: 'text' },
+      { name: 'year', label: 'Año', type: 'text', placeholder: '2026' },
+      { name: 'summary', label: 'Resumen', type: 'textarea', full: true, help: 'Aparece en las tarjetas y como introducción del caso.' },
+      { name: 'coverImage', label: 'Imagen de portada', type: 'image', full: true },
+      { name: 'challenge', label: 'El reto', type: 'textarea', full: true, rows: 5, help: 'Separa párrafos con una línea en blanco. Empieza una línea con "- " para hacer listas.' },
+      { name: 'solution', label: 'La solución', type: 'textarea', full: true, rows: 5 },
+      { name: 'results', label: 'Resultados', type: 'textarea', full: true, rows: 5 },
+      { name: 'gallery', label: 'Galería', type: 'textarea', full: true, placeholder: '/uploads/projects/imagen-1.webp', help: 'Una URL de imagen por línea (cópialas desde Multimedia).' },
+      { name: 'tags', label: 'Etiquetas', type: 'text', full: true, placeholder: 'Streaming, Soporte, Configuración', help: 'Separadas por comas.' },
+      { name: 'url', label: 'Enlace al proyecto', type: 'text', full: true, placeholder: 'https://…' },
+      { name: 'seoTitle', label: 'Título SEO', type: 'text', full: true, help: 'Opcional. Por defecto se usa el título.' },
+      { name: 'seoDescription', label: 'Descripción SEO', type: 'textarea', full: true, help: 'Opcional. Por defecto se usa el resumen.' },
+      {
+        name: 'status',
+        label: 'Estado',
+        type: 'select',
+        options: [
+          { value: 'DRAFT', label: 'Borrador' },
+          { value: 'PUBLISHED', label: 'Publicado' },
+        ],
+      },
+      { name: 'publishedAt', label: 'Fecha de publicación', type: 'date', help: 'Se fija sola al publicar si la dejas vacía.' },
+      { name: 'featured', label: 'Destacado (aparece primero)', type: 'boolean' },
+      orderField,
+    ],
+  },
+  posts: {
+    key: 'posts',
+    translatable: true,
+    label: 'Blog',
+    singular: 'Artículo',
+    icon: 'Newspaper',
+    group: 'Portfolio',
+    searchable: true,
+    publishable: true,
+    previewPath: '/admin/preview/posts',
+    filter: {
+      param: 'status',
+      options: [
+        { value: '', label: 'Todos' },
+        { value: 'DRAFT', label: 'Borradores' },
+        { value: 'PUBLISHED', label: 'Publicados' },
+      ],
+    },
+    columns: [
+      { key: 'coverImage', label: 'Portada', type: 'image', sortable: false },
+      { key: 'title', label: 'Título' },
+      { key: 'category.name', label: 'Categoría', type: 'badge', sortable: false },
+      { key: 'status', label: 'Estado', type: 'status' },
+      { key: 'publishedAt', label: 'Publicado', type: 'date' },
+      { key: 'updatedAt', label: 'Modificado', type: 'date' },
+    ],
+    fields: [
+      { name: 'title', label: 'Título', type: 'text', required: true, full: true },
+      { name: 'slug', label: 'Slug', type: 'text', help: 'URL del artículo. Si lo dejas vacío se genera desde el título.' },
+      { name: 'categoryId', label: 'Categoría', type: 'relation', relation: { resource: 'categories', labelKey: 'name' } },
+      { name: 'excerpt', label: 'Resumen', type: 'textarea', full: true, help: 'Aparece en el listado y bajo el título. Una o dos frases.' },
+      { name: 'coverImage', label: 'Imagen de portada', type: 'image', full: true },
+      {
+        name: 'content',
+        label: 'Artículo',
+        type: 'textarea',
+        full: true,
+        rows: 18,
+        placeholder: '## Un subtítulo\n\nUn párrafo con **negrita**, *cursiva* y un [enlace](https://…).\n\n- Un punto\n- Otro punto',
+        help: 'Formato: ## subtítulo, ### apartado, **negrita**, *cursiva*, [texto](https://enlace), "- " para listas, "1. " para listas numeradas, "> " para citas y ![descripción](/uploads/…) para imágenes. Deja una línea en blanco entre párrafos.',
+      },
+      { name: 'tags', label: 'Etiquetas', type: 'text', full: true, placeholder: 'Streaming, Seguridad, Guías', help: 'Separadas por comas. Sirven para filtrar el blog.' },
+      { name: 'seoTitle', label: 'Título SEO', type: 'text', full: true, help: 'Opcional. Por defecto se usa el título.' },
+      { name: 'seoDescription', label: 'Descripción SEO', type: 'textarea', full: true, help: 'Opcional. Por defecto se usa el resumen.' },
+      {
+        name: 'status',
+        label: 'Estado',
+        type: 'select',
+        options: [
+          { value: 'DRAFT', label: 'Borrador' },
+          { value: 'PUBLISHED', label: 'Publicado' },
+        ],
+      },
+      { name: 'publishedAt', label: 'Fecha de publicación', type: 'date', help: 'Se fija sola al publicar si la dejas vacía. Con una fecha futura, el artículo aparece ese día.' },
+    ],
+  },
   heroSlides: {
     key: 'heroSlides',
+    translatable: true,
     label: 'Hero',
     singular: 'Slide',
     icon: 'LayoutTemplate',
@@ -74,6 +209,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
   },
   categories: {
     key: 'categories',
+    translatable: true,
     label: 'Categorías',
     singular: 'Categoría',
     icon: 'FolderTree',
@@ -97,6 +233,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
   },
   services: {
     key: 'services',
+    translatable: true,
     label: 'Servicios',
     singular: 'Servicio',
     icon: 'Briefcase',
@@ -126,6 +263,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
   },
   platforms: {
     key: 'platforms',
+    translatable: true,
     label: 'Plataformas',
     singular: 'Plataforma',
     icon: 'MonitorPlay',
@@ -151,6 +289,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
   },
   licenses: {
     key: 'licenses',
+    translatable: true,
     label: 'Licencias',
     singular: 'Licencia',
     icon: 'KeyRound',
@@ -177,6 +316,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
   },
   faqs: {
     key: 'faqs',
+    translatable: true,
     label: 'FAQ',
     singular: 'Pregunta',
     icon: 'HelpCircle',
@@ -192,6 +332,53 @@ export const RESOURCES: Record<string, ResourceDef> = {
       { name: 'question', label: 'Pregunta', type: 'text', required: true, full: true },
       { name: 'answer', label: 'Respuesta', type: 'textarea', required: true, full: true },
       { name: 'category', label: 'Categoría', type: 'text' },
+      orderField,
+      activeField,
+    ],
+  },
+  testimonials: {
+    key: 'testimonials',
+    translatable: true,
+    label: 'Testimonios',
+    singular: 'Testimonio',
+    icon: 'MessageSquareQuote',
+    group: 'Contenido',
+    hasActive: true,
+    searchable: true,
+    columns: [
+      { key: 'avatar', label: 'Foto', type: 'image', sortable: false },
+      { key: 'name', label: 'Cliente' },
+      { key: 'role', label: 'Detalle' },
+      { key: 'rating', label: 'Estrellas' },
+      { key: 'order', label: 'Orden' },
+      { key: 'active', label: 'Estado', type: 'boolean' },
+    ],
+    fields: [
+      { name: 'name', label: 'Nombre del cliente', type: 'text', required: true, help: 'Como quiera aparecer: nombre completo, nombre e inicial o solo el nombre.' },
+      { name: 'role', label: 'Detalle', type: 'text', placeholder: 'Cliente de streaming · Empresa X', help: 'Opcional: qué contrató, su cargo o su empresa.' },
+      {
+        name: 'quote',
+        label: 'Testimonio',
+        type: 'textarea',
+        required: true,
+        full: true,
+        rows: 4,
+        help: 'Sus palabras tal cual (máximo 1000 caracteres). Publícalo solo si es real y tienes su permiso.',
+      },
+      {
+        name: 'rating',
+        label: 'Estrellas',
+        type: 'select',
+        options: [
+          { value: '', label: 'Sin estrellas' },
+          { value: '5', label: '★★★★★ (5)' },
+          { value: '4', label: '★★★★ (4)' },
+          { value: '3', label: '★★★ (3)' },
+          { value: '2', label: '★★ (2)' },
+          { value: '1', label: '★ (1)' },
+        ],
+      },
+      { name: 'avatar', label: 'Foto (opcional)', type: 'image', full: true, help: 'Si no hay foto se muestran sus iniciales.' },
       orderField,
       activeField,
     ],
@@ -221,6 +408,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
   },
   banners: {
     key: 'banners',
+    translatable: true,
     label: 'Banners',
     singular: 'Banner',
     icon: 'GalleryHorizontalEnd',
@@ -286,6 +474,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
   },
   contactInfo: {
     key: 'contactInfo',
+    translatable: true,
     label: 'Contacto',
     singular: 'Dato de contacto',
     icon: 'Contact',
@@ -321,6 +510,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
   },
   seo: {
     key: 'seo',
+    translatable: true,
     label: 'SEO',
     singular: 'Página SEO',
     icon: 'Search',
@@ -332,7 +522,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
       { key: 'noindex', label: 'Noindex', type: 'boolean' },
     ],
     fields: [
-      { name: 'page', label: 'Página (clave)', type: 'text', required: true, help: 'ej: home' },
+      { name: 'page', label: 'Página (clave)', type: 'text', required: true, help: 'Claves: home, servicios, proyectos, blog, sobre-mi, contacto' },
       { name: 'title', label: 'Título SEO', type: 'text', required: true, full: true },
       { name: 'description', label: 'Meta descripción', type: 'textarea', required: true, full: true },
       { name: 'keywords', label: 'Palabras clave', type: 'textarea', full: true },
@@ -343,6 +533,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
   },
   settings: {
     key: 'settings',
+    translatable: true,
     label: 'Configuración general',
     singular: 'Ajuste',
     icon: 'Settings',
@@ -405,7 +596,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
   },
 };
 
-export const RESOURCE_GROUPS = ['Contenido', 'Catálogo', 'Configuración', 'Sistema'];
+export const RESOURCE_GROUPS = ['Portfolio', 'Contenido', 'Catálogo', 'Configuración', 'Sistema'];
 
 export function getResourceDef(key: string): ResourceDef | null {
   return RESOURCES[key] ?? null;

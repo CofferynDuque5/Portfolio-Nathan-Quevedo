@@ -39,3 +39,8 @@ Thumbs.db
 
 # Testing
 coverage/
+
+# Clave de sesiones generada automáticamente
+.jwt-secret
+# Contraseña inicial del admin generada al instalar
+ADMIN-PASSWORD.txt

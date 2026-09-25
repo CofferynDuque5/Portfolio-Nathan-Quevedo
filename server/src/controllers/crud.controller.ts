@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../utils/asyncHandler';
 import { getResource, normalizePayload, ResourceConfig } from '../lib/resources';
+import { deleteTranslations } from '../lib/translations';
 import { HttpError } from '../middleware/error';
 
 /** Convierte `password` en `passwordHash` para el recurso de usuarios. */
@@ -37,6 +38,10 @@ export const list = asyncHandler(async (req: AuthRequest, res: Response) => {
     where.OR = config.searchable.map((field) => ({
       [field]: { contains: search },
     }));
+  }
+  for (const [field, allowed] of Object.entries(config.filterable ?? {})) {
+    const value = req.query[field];
+    if (typeof value === 'string' && allowed.includes(value)) where[field] = value;
   }
 
   const orderBy = sortBy ? { [sortBy]: sortDir } : config.defaultOrderBy;
@@ -111,6 +116,7 @@ export const toggle = asyncHandler(async (req: AuthRequest, res: Response) => {
 export const remove = asyncHandler(async (req: AuthRequest, res: Response) => {
   const config = resolveResource(req.params.resource);
   await config.model.delete({ where: { id: Number(req.params.id) } });
+  await deleteTranslations(req.params.resource, Number(req.params.id));
   res.json({ success: true });
 });
 

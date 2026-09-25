@@ -27,8 +27,20 @@ export function errorHandler(err: any, _req: Request, res: Response, _next: Next
     const msg = err?.code === 'LIMIT_FILE_SIZE' ? 'El archivo supera el tamaño máximo permitido.' : err.message;
     return res.status(400).json({ error: msg });
   }
+  // Campos que no existen o con un tipo incorrecto (sin mostrar el detalle de Prisma).
+  if (err?.name === 'PrismaClientValidationError') {
+    return res.status(400).json({ error: 'Datos inválidos: revisa los campos enviados.' });
+  }
+  // JSON mal formado o cuerpo demasiado grande (body-parser).
+  if (err?.type === 'entity.parse.failed') {
+    return res.status(400).json({ error: 'El cuerpo de la petición no es JSON válido.' });
+  }
+  if (err?.type === 'entity.too.large') {
+    return res.status(413).json({ error: 'La petición es demasiado grande.' });
+  }
   const status = err instanceof HttpError ? err.status : 500;
-  const message = err?.message ?? 'Error interno del servidor.';
+  // Los errores inesperados no muestran detalles internos (base de datos, rutas...).
+  const message = status >= 500 ? 'Error interno del servidor.' : err?.message ?? 'Solicitud inválida.';
   if (status >= 500) {
     console.error('[error]', err);
   }

@@ -1,20 +1,25 @@
 import { getSiteContent, SITE_URL } from '@/lib/api';
+import { jsonLdHtml } from '@/lib/jsonld';
 import Navbar from '@/components/public/Navbar';
 import Hero from '@/components/public/Hero';
 import About from '@/components/public/About';
 import Services from '@/components/public/Services';
+import FeaturedProjects from '@/components/public/FeaturedProjects';
 import Platforms from '@/components/public/Platforms';
 import Licenses from '@/components/public/Licenses';
 import Process from '@/components/public/Process';
 import LogosMarquee from '@/components/public/LogosMarquee';
 import BannerCTA from '@/components/public/BannerCTA';
 import Faq from '@/components/public/Faq';
+import Testimonials from '@/components/public/Testimonials';
 import Contact from '@/components/public/Contact';
 import Footer from '@/components/public/Footer';
 import FloatingWhatsApp from '@/components/public/FloatingWhatsApp';
+import { getI18n } from '@/i18n';
 
 export default async function HomePage() {
-  const content = await getSiteContent();
+  const { t, locale, href } = await getI18n();
+  const content = await getSiteContent(locale);
   const s = content.settings;
   const siteName = s.siteName || 'Nathan Quevedo';
 
@@ -24,7 +29,8 @@ export default async function HomePage() {
     '@type': 'ProfessionalService',
     name: siteName,
     description: s.tagline,
-    url: SITE_URL,
+    url: `${SITE_URL}${href('/') === '/' ? '' : href('/')}`,
+    inLanguage: locale,
     email: s.email || undefined,
     telephone: s.whatsapp || undefined,
     sameAs: content.socialLinks.map((l) => l.url),
@@ -51,12 +57,12 @@ export default async function HomePage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
       {faqLd && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }}
+          dangerouslySetInnerHTML={{ __html: jsonLdHtml(faqLd) }}
         />
       )}
 
@@ -64,11 +70,18 @@ export default async function HomePage() {
       <main>
         <Hero slides={content.heroSlides} tagline={s.tagline} />
         <LogosMarquee logos={content.logos} />
-        <About title={s.aboutTitle || 'Sobre Nathan Quevedo'} text={s.aboutText || ''} />
+        <About title={s.aboutTitle || t.about.titleFor(siteName)} text={s.aboutText || ''} settings={s} />
         <Services services={content.services} whatsapp={s.whatsapp} />
+        <FeaturedProjects projects={content.projects} />
+        <Testimonials
+          testimonials={content.testimonials}
+          eyebrow={t.testimonials.eyebrow}
+          title={t.testimonials.title}
+          ratingLabel={t.testimonials.rating}
+        />
         <Platforms platforms={content.platforms} />
         <Licenses licenses={content.licenses} whatsapp={s.whatsapp} />
-        <Process title={s.processTitle || 'Proceso de trabajo'} />
+        <Process title={s.processTitle || t.process.defaultTitle} />
         <BannerCTA banner={content.banners[0]} />
         <Faq faqs={content.faqs} />
         <Contact info={content.contactInfo} />

@@ -2,11 +2,13 @@
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { motion } from 'framer-motion';
 import { Send, CheckCircle2, Mail, Phone, Clock, MessageCircle } from 'lucide-react';
-import { ContactInfo } from '@/lib/types';
+import { ContactInfo, SocialLink } from '@/lib/types';
 import { Icon } from '@/lib/icon';
 import { API_URL } from '@/lib/api';
+import { waLink } from '@/lib/utils';
+import { track } from '@/lib/analytics';
+import { useI18n } from '@/i18n/client';
 
 interface FormValues {
   name: string;
@@ -23,7 +25,21 @@ const iconByType: Record<string, React.ComponentType<{ size?: number; className?
   hours: Clock,
 };
 
-export default function Contact({ info }: { info: ContactInfo[] }) {
+export default function Contact({
+  info,
+  whatsapp,
+  social = [],
+  asPage = false,
+}: {
+  info: ContactInfo[];
+  whatsapp?: string;
+  social?: SocialLink[];
+  /** En /contacto el título es el h1 de la página. */
+  asPage?: boolean;
+}) {
+  const Heading = asPage ? 'h1' : 'h2';
+  const { t: dict, locale } = useI18n();
+  const t = dict.contact;
   const { register, handleSubmit, reset, formState } = useForm<FormValues>();
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,24 +54,27 @@ export default function Contact({ info }: { info: ContactInfo[] }) {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || 'No se pudo enviar el mensaje.');
+        throw new Error((locale === 'es' && data.error) || t.sendError);
       }
       setSent(true);
+      track('contact_submit');
       reset();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error inesperado.');
+      setError(e instanceof Error ? e.message : t.unexpectedError);
     }
   };
 
   return (
-    <section id="contacto" className="py-20 sm:py-28">
+    <section id="contacto" className={asPage ? 'pb-20 pt-32 sm:pb-28 sm:pt-40' : 'py-20 sm:py-28'}>
       <div className="container-x grid gap-10 lg:grid-cols-2">
         {/* Info */}
         <div>
-          <span className="eyebrow">Contacto</span>
-          <h2 className="section-title mt-4">Hablemos de tu proyecto</h2>
+          <span className="eyebrow">{t.eyebrow}</span>
+          <Heading className={asPage ? 'mt-6 text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl' : 'section-title mt-4'}>
+            {t.title}
+          </Heading>
           <p className="mt-4 text-slate-600 dark:text-slate-300">
-            Cuéntanos qué necesitas y te responderemos lo antes posible. Estamos aquí para ayudarte.
+            {t.lead}
           </p>
 
           <div className="mt-8 space-y-4">
@@ -74,68 +93,96 @@ export default function Contact({ info }: { info: ContactInfo[] }) {
               );
             })}
           </div>
+
+          {(whatsapp || social.length > 0) && (
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              {whatsapp && (
+                <a
+                  href={waLink(whatsapp, dict.whatsapp.quote)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn bg-[#25D366] text-[#0b141a] hover:bg-[#1ebe5b]"
+                >
+                  <MessageCircle size={18} /> {t.whatsappButton}
+                </a>
+              )}
+              {social.map((l) => (
+                <a
+                  key={l.id}
+                  href={l.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={l.platform}
+                  className="grid h-11 w-11 place-items-center rounded-full border border-slate-200 text-slate-600 transition hover:border-brand-500 hover:text-brand-600 dark:border-white/10 dark:text-slate-300"
+                >
+                  <Icon name={l.icon} size={18} />
+                </a>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Formulario */}
         <div className="card">
           {sent ? (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex flex-col items-center justify-center py-14 text-center"
+            <div
+              className="flex animate-fade-up flex-col items-center justify-center py-14 text-center"
             >
               <CheckCircle2 className="mb-4 text-green-500" size={56} />
-              <h3 className="text-xl font-semibold">¡Mensaje enviado!</h3>
+              <h3 className="text-xl font-semibold">{t.sentTitle}</h3>
               <p className="mt-2 text-slate-600 dark:text-slate-400">
-                Gracias por escribirnos. Te contactaremos muy pronto.
+                {t.sentText}
               </p>
               <button onClick={() => setSent(false)} className="btn-ghost mt-6">
-                Enviar otro mensaje
+                {t.sendAnother}
               </button>
-            </motion.div>
+            </div>
           ) : (
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="label">Nombre *</label>
-                  <input className="field" placeholder="Tu nombre" {...register('name', { required: true })} />
-                  {formState.errors.name && <p className="mt-1 text-xs text-red-500">El nombre es requerido.</p>}
+                  <label htmlFor="contact-name" className="label">{t.name} *</label>
+                  <input id="contact-name" autoComplete="name" className="field" placeholder={t.namePlaceholder} {...register('name', { required: t.nameRequired, minLength: { value: 2, message: t.nameRequired } })} />
+                  {formState.errors.name && <p className="mt-1 text-xs text-red-500">{formState.errors.name.message}</p>}
                 </div>
                 <div>
-                  <label className="label">Correo *</label>
+                  <label htmlFor="contact-email" className="label">{t.email} *</label>
                   <input
+                    id="contact-email"
+                    autoComplete="email"
                     className="field"
                     type="email"
-                    placeholder="tu@correo.com"
-                    {...register('email', { required: true })}
+                    placeholder={t.emailPlaceholder}
+                    {...register('email', { required: t.emailRequired, pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: t.emailInvalid } })}
                   />
-                  {formState.errors.email && <p className="mt-1 text-xs text-red-500">El correo es requerido.</p>}
+                  {formState.errors.email && <p className="mt-1 text-xs text-red-500">{formState.errors.email.message}</p>}
                 </div>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="label">Teléfono</label>
-                  <input className="field" placeholder="Opcional" {...register('phone')} />
+                  <label htmlFor="contact-phone" className="label">{t.phone}</label>
+                  <input id="contact-phone" type="tel" autoComplete="tel" className="field" placeholder={t.optional} {...register('phone')} />
                 </div>
                 <div>
-                  <label className="label">Asunto</label>
-                  <input className="field" placeholder="Opcional" {...register('subject')} />
+                  <label htmlFor="contact-subject" className="label">{t.subject}</label>
+                  <input id="contact-subject" className="field" placeholder={t.optional} {...register('subject')} />
                 </div>
               </div>
               <div>
-                <label className="label">Mensaje *</label>
+                <label htmlFor="contact-message" className="label">{t.message} *</label>
                 <textarea
+                  id="contact-message"
                   className="field min-h-[120px] resize-y"
-                  placeholder="¿En qué podemos ayudarte?"
-                  {...register('message', { required: true })}
+                  placeholder={t.messagePlaceholder}
+                  {...register('message', { required: t.messageRequired, minLength: { value: 5, message: t.messageShort } })}
                 />
-                {formState.errors.message && <p className="mt-1 text-xs text-red-500">El mensaje es requerido.</p>}
+                {formState.errors.message && <p className="mt-1 text-xs text-red-500">{formState.errors.message.message}</p>}
               </div>
 
               {error && <p className="text-sm text-red-500">{error}</p>}
 
               <button type="submit" disabled={formState.isSubmitting} className="btn-primary w-full">
-                {formState.isSubmitting ? 'Enviando…' : (<>Enviar mensaje <Send size={16} /></>)}
+                {formState.isSubmitting ? t.sending : (<>{t.send} <Send size={16} /></>)}
               </button>
             </form>
           )}

@@ -1,25 +1,39 @@
 import { ShieldCheck, Clock, Sparkles, Users } from 'lucide-react';
 import Reveal from '@/components/Reveal';
+import { getT } from '@/i18n';
 
-const stats = [
-  { icon: Users, value: '+500', label: 'Clientes satisfechos' },
-  { icon: ShieldCheck, value: '100%', label: 'Software original' },
-  { icon: Clock, value: '24/7', label: 'Soporte disponible' },
-  { icon: Sparkles, value: '+50', label: 'Productos y licencias' },
-];
+/**
+ * Cifras destacadas. El valor se edita en el panel (Configuración general,
+ * claves stat*); si se deja vacío, esa cifra no se muestra.
+ */
+const STATS = [
+  { key: 'statClients', icon: Users, fallback: '+2000' },
+  { key: 'statOriginal', icon: ShieldCheck, fallback: '100%' },
+  { key: 'statSupport', icon: Clock, fallback: '24/7' },
+  { key: 'statProducts', icon: Sparkles, fallback: '+50' },
+] as const;
 
-export default function About({ title, text }: { title: string; text: string }) {
+export default async function About({
+  title,
+  text,
+  settings = {},
+}: {
+  title: string;
+  text: string;
+  settings?: Record<string, string>;
+}) {
+  const t = (await getT()).about;
+  const stats = STATS.map((st) => ({ ...st, label: t.stats[st.key], value: settings[st.key] ?? st.fallback })).filter((st) => st.value.trim());
+
   return (
     <section id="sobre" className="py-20 sm:py-28">
       <div className="container-x grid items-center gap-12 lg:grid-cols-2">
         <Reveal>
-          <span className="eyebrow">Sobre mí</span>
+          <span className="eyebrow">{t.eyebrow}</span>
           <h2 className="section-title mt-4">{title}</h2>
           <p className="mt-5 text-lg leading-relaxed text-slate-600 dark:text-slate-300">{text}</p>
           <p className="mt-4 text-slate-600 dark:text-slate-400">
-            Mi compromiso es ofrecerte tecnología de confianza, con procesos claros y atención
-            cercana. Trabajo con transparencia para que contratar servicios digitales sea simple y
-            seguro.
+            {t.commitment}
           </p>
         </Reveal>
 

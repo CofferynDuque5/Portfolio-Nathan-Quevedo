@@ -14,6 +14,7 @@ Construido con una arquitectura escalable y **sin depender de servicios externos
 - **CRUD completo** en cada módulo: tabla con búsqueda, ordenamiento, paginación, crear, editar, eliminar, activar/desactivar y confirmaciones.
 - **SEO** dinámico: meta tags, Open Graph, Twitter Cards, `sitemap.xml`, `robots.txt`, Schema.org (JSON-LD) y URLs amigables.
 - **Optimizado para rendimiento** (compresión, imágenes WebP/AVIF, revalidación incremental).
+- **Español e inglés**: versión en inglés en `/en` con selector de idioma, y traducción del contenido desde el panel.
 
 ---
 
@@ -21,7 +22,7 @@ Construido con una arquitectura escalable y **sin depender de servicios externos
 
 | Capa | Tecnología |
 |------|------------|
-| Frontend | Next.js 15 (App Router), TypeScript, TailwindCSS, Framer Motion, React Hook Form, Swiper, Lucide React |
+| Frontend | Next.js 15 (App Router), TypeScript, TailwindCSS (animaciones con CSS), React Hook Form, Lucide React |
 | Backend | Node.js, Express, Prisma ORM |
 | Base de datos | MySQL |
 | Autenticación | JWT + bcrypt |
@@ -34,6 +35,7 @@ Construido con una arquitectura escalable y **sin depender de servicios externos
 ```
 Portfolio-Nathan-Quevedo/
 ├── package.json            # Monorepo (workspaces + scripts orquestadores)
+├── tests/                  # Pruebas unitarias y de integración (npm test)
 ├── .env.example            # Variables de entorno (copiar a .env)
 ├── server/                 # API REST (Express + Prisma + MySQL)
 │   ├── prisma/
@@ -57,6 +59,7 @@ Portfolio-Nathan-Quevedo/
     │   ├── components/
     │   │   ├── public/      # Secciones del sitio
     │   │   └── admin/       # DataTable, formularios, media picker…
+    │   ├── i18n/            # Idiomas: configuración y diccionarios de textos
     │   └── lib/             # API client, tipos, helpers, config de módulos
     └── public/uploads/      # Archivos subidos (organizados por carpeta)
 ```
@@ -154,13 +157,137 @@ Password: Admin1234!
 
 ## 🗂️ Módulos del panel administrativo
 
-Dashboard · Hero · Servicios · Categorías · Plataformas · Licencias · FAQ · Galería · Banners · Logos · Redes sociales · Información de contacto · SEO · Configuración general · Usuarios · Multimedia · Mensajes.
+Dashboard · **Métricas** · **Proyectos** · **Blog** · Hero · **Testimonios** · Servicios · Categorías · Plataformas · Licencias · FAQ · Galería · Banners · Logos · Redes sociales · Información de contacto · SEO · Configuración general · Usuarios · Multimedia · Mensajes.
+
+Los mensajes del formulario pueden llegarte también por correo (opcional, con una cuenta SMTP de tu dominio): ver `DEPLOY-CPANEL.md`.
 
 Cada módulo de contenido incluye: **búsqueda, ordenamiento, paginación, crear, editar, eliminar, activar/desactivar, vista previa de imágenes y confirmación antes de borrar.**
+
+### 🧭 Páginas del sitio
+
+| Ruta | Contenido | Clave SEO (panel) |
+|------|-----------|-------------------|
+| `/` | Home con todas las secciones | `home` |
+| `/servicios` | Streaming primero, servicios por categoría, licencias y proceso | `servicios` |
+| `/proyectos` y `/proyectos/<slug>` | Portfolio y casos de estudio | `proyectos` (el detalle usa el SEO de cada proyecto) |
+| `/blog` y `/blog/<slug>` | Artículos publicados, filtro por etiqueta y feed `/blog/rss.xml` | `blog` (el artículo usa su propio SEO) |
+| `/sobre-mi` | Texto *Sobre mí* (Configuración general), áreas, proceso y proyectos | `sobre-mi` |
+| `/contacto` | Formulario, WhatsApp, redes y FAQ | `contacto` |
+
+Si una página no tiene registro en el módulo SEO se usan un título y una descripción por defecto.
+
+### 📁 Proyectos / casos de estudio
+
+- Cada proyecto se crea como **borrador** y solo aparece en el sitio al **publicarlo**
+  (botón 🌐 de la tabla o desde la vista previa). Despublicar lo devuelve a borrador.
+- Pestañas **Todos / Borradores / Publicados**, fecha de publicación (se fija sola al
+  publicar si está vacía) y opción **Destacado** para mostrarlo primero.
+- **Vista previa** (icono de escáner o botón *Guardar y previsualizar*): muestra el caso
+  exactamente como se verá publicado, incluidos los borradores.
+- Textos del caso (reto, solución, resultados): una línea en blanco separa párrafos y las
+  líneas que empiezan por `- ` forman listas. La galería es una URL de imagen por línea.
+- Sitio público: `/proyectos` (filtros por categoría, compartibles con `?categoria=slug`),
+  `/proyectos/<slug>` (SEO, Open Graph y Schema.org por proyecto) y una sección en la home.
+- La primera instalación crea dos proyectos **[Ejemplo]** como borradores; reemplázalos o
+  elimínalos. Nunca se publican solos.
+
+### 📰 Blog
+
+- Módulo **Blog** del panel: cada artículo nace como **borrador** y se publica igual que
+  un proyecto (botón 🌐 o desde la vista previa). Con una fecha de publicación futura,
+  el artículo queda **programado** y aparece solo ese día.
+- El texto admite un Markdown sencillo: `## subtítulo`, `### apartado`, `**negrita**`,
+  `*cursiva*`, `[enlace](https://…)`, listas con `- ` o `1. `, citas con `> `, imágenes con
+  `![descripción](/uploads/…)` y bloques de código. No se admite HTML: el texto nunca puede
+  insertar scripts, y los enlaces que no son `http(s)`, `mailto` o del propio sitio se
+  muestran como texto.
+- Con tres o más subtítulos `##` el artículo muestra un índice. El tiempo de lectura se
+  calcula solo.
+- Traducción al inglés en la pestaña **English** (título, resumen, texto, etiquetas y SEO).
+- Sitio público: `/blog` (el más reciente destacado y filtro por etiqueta con
+  `?etiqueta=…`), `/blog/<slug>` (SEO, Open Graph y Schema.org `BlogPosting`), feed RSS en
+  `/blog/rss.xml` y `/en/blog/rss.xml`, y entradas en el sitemap.
+
+### 💬 Testimonios
+
+- Módulo **Testimonios** (grupo Contenido): nombre, detalle opcional (qué contrató, cargo o
+  empresa), el texto, estrellas de 1 a 5 (opcionales) y foto (si no hay, se muestran las
+  iniciales). Traducción al inglés del detalle y del texto en la pestaña **English**.
+- Se muestran en la portada (tras los proyectos) y en `/sobre-mi`. Si no hay ninguno activo,
+  la sección no aparece.
+- El sitio no trae testimonios de ejemplo: publica solo reseñas reales y con permiso del cliente.
+
+### 📊 Métricas y privacidad
+
+- Aviso de privacidad propio: la medición solo empieza si el visitante pulsa **Aceptar**.
+  Si rechaza, o su navegador envía *Global Privacy Control* / *Do Not Track*, no se envía
+  nada. El enlace **Preferencias de privacidad** del pie permite cambiar la elección.
+- Se registran páginas vistas, clics en cualquier enlace de WhatsApp y formularios de
+  contacto enviados. **Sin cookies ni IP**: un identificador aleatorio en el navegador,
+  la ruta sin parámetros, el dominio de procedencia (o `utm_source`) y el tipo de
+  dispositivo y navegador.
+- Panel **Métricas** (`/admin/analytics`): visitantes, páginas vistas, clics en WhatsApp,
+  formularios, porcentaje de visitas con conversión, evolución diaria, páginas más vistas,
+  fuentes de tráfico, dispositivos y navegadores, para 7, 30 o 90 días.
+- Los eventos se borran automáticamente a los 13 meses.
+
+### 🌍 Idiomas (español e inglés)
+
+El sitio público está en **español** (`/servicios`, `/proyectos`…) y en **inglés**
+bajo `/en` con rutas traducidas: `/en/services`, `/en/projects`, `/en/about`,
+`/en/contact`. El botón **ES / EN** del menú lleva a la misma página en el otro idioma.
+El panel `/admin` sigue en español.
+
+- **Textos fijos** (menú, botones, formulario, aviso de privacidad, SEO por defecto…):
+  `web/src/i18n/dictionaries/es.ts` y `en.ts`. El tipo `Dictionary` obliga a que los
+  dos tengan las mismas claves, así que `npm run build` avisa si falta una traducción.
+- **Contenido del panel**: al editar un servicio, proyecto, FAQ, categoría, plataforma,
+  licencia, banner, dato de contacto, página SEO o texto de Configuración general
+  (eslogan, textos de Sobre mí y título del proceso), la pestaña **English** guarda su
+  versión en inglés. **Lo que no se traduce se muestra en español**. Las traducciones se
+  guardan en la tabla `content_translations`.
+- **Contenido base**: al actualizar, los textos de ejemplo que no editaste reciben su
+  traducción al inglés automáticamente (una sola vez). Lo que ya editaste queda en
+  español hasta que lo traduzcas en la pestaña English.
+- **SEO**: `<html lang>`, `og:locale`, la imagen para redes (`/og?lang=en`), las
+  etiquetas `hreflang` y `sitemap.xml` (una entrada por página e idioma) salen de
+  `web/src/i18n/config.ts`.
+- **Cómo funciona**: `src/middleware.ts` reescribe `/en/...` a la página real y marca el
+  idioma; los componentes de servidor usan `getI18n()` y los de cliente `useI18n()`
+  (textos, idioma y `href()` para enlaces en el idioma actual). La API acepta `?lang=en`.
+
+**Añadir otro idioma**: crea su diccionario, añádelo en `config.ts` (`LOCALES`,
+`LOCALE_META`, `ROUTE_SEGMENTS`) y en `dictionaries/index.ts`, amplía el `matcher` de
+`middleware.ts` y añade el idioma a `TRANSLATION_LOCALES` en
+`server/src/lib/translations.ts`.
+
+> **Actualizaciones de la base de datos:** al reiniciar la app se aplican solas las
+> migraciones nuevas de `server/prisma/migrations` (registro en la tabla
+> `_app_migrations`), sin tocar el contenido existente.
 
 > La arquitectura es **declarativa**: para añadir una sección nueva basta con
 > registrar el modelo en `server/src/lib/resources.ts` y su configuración de
 > campos en `web/src/lib/admin/resources.ts`. El resto (API + UI) es genérico.
+
+---
+
+## 🧪 Pruebas
+
+```bash
+npm run build                 # las pruebas de integración usan la app compilada
+npm run test:unit             # rutas de idioma, diccionarios, reglas de proyectos y métricas
+TEST_DATABASE_URL="mysql://usuario:clave@127.0.0.1:3306/portfolio_test" npm run test:integration
+npm test                      # tipos + unitarias + integración
+```
+
+- **Unitarias** (`tests/unit`): no necesitan base de datos.
+- **Integración** (`tests/integration`): arrancan la app completa (`app.js`) contra una
+  base **de prueba vacía**, igual que en producción, y comprueban la API, el panel
+  (proyectos, publicación, traducciones, métricas) y las páginas en español e inglés.
+  La base indicada en `TEST_DATABASE_URL` **se borra y se vuelve a crear** en cada
+  ejecución; por seguridad su nombre debe contener `test`. Sin esa variable se omiten.
+- **CI**: `.github/workflows/ci.yml` compila y ejecuta todas las pruebas con MySQL 8 en
+  cada pull request.
 
 ---
 

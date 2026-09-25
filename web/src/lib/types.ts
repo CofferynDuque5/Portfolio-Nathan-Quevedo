@@ -72,6 +72,17 @@ export interface Faq {
   active: boolean;
 }
 
+export interface Testimonial {
+  id: number;
+  name: string;
+  role?: string | null;
+  quote: string;
+  rating?: number | null;
+  avatar?: string | null;
+  order: number;
+  active: boolean;
+}
+
 export interface GalleryItem {
   id: number;
   title: string;
@@ -135,6 +146,75 @@ export interface MediaFile {
   createdAt: string;
 }
 
+export type ProjectStatus = 'DRAFT' | 'PUBLISHED';
+
+/** Categoría resumida que acompaña a cada proyecto. */
+export type ProjectCategory = Pick<Category, 'id' | 'name' | 'slug' | 'icon'>;
+
+/** Proyecto tal como aparece en listados y tarjetas. */
+export interface ProjectSummary {
+  id: number;
+  title: string;
+  slug: string;
+  client?: string | null;
+  year?: string | null;
+  summary?: string | null;
+  coverImage?: string | null;
+  tags?: string | null;
+  featured: boolean;
+  publishedAt?: string | null;
+  updatedAt: string;
+  category?: ProjectCategory | null;
+}
+
+/** Caso de estudio completo. */
+export interface Project extends ProjectSummary {
+  challenge?: string | null;
+  solution?: string | null;
+  results?: string | null;
+  gallery?: string | null;
+  url?: string | null;
+  status: ProjectStatus;
+  order: number;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  categoryId?: number | null;
+}
+
+export interface ProjectLink {
+  slug: string;
+  title: string;
+}
+
+/** Artículo del blog tal como aparece en el listado. */
+export interface PostSummary {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt?: string | null;
+  coverImage?: string | null;
+  tags?: string | null;
+  publishedAt?: string | null;
+  updatedAt: string;
+  /** Lo calcula la API en el sitio público; en el panel se calcula al vuelo. */
+  readingMinutes?: number;
+  category?: ProjectCategory | null;
+}
+
+/** Artículo completo. */
+export interface Post extends PostSummary {
+  content?: string | null;
+  status: ProjectStatus;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  categoryId?: number | null;
+}
+
+export interface PostLink {
+  slug: string;
+  title: string;
+}
+
 export interface SiteContent {
   heroSlides: HeroSlide[];
   categories: Category[];
@@ -147,5 +227,7 @@ export interface SiteContent {
   logos: Logo[];
   socialLinks: SocialLink[];
   contactInfo: ContactInfo[];
+  projects: ProjectSummary[];
+  testimonials: Testimonial[];
   settings: Record<string, string>;
 }

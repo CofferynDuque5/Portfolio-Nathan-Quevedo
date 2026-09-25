@@ -1,0 +1,61 @@
+# Compila y ejecuta las pruebas en cada pull request y en la rama principal.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [claude/nathan-quevedo-portfolio-frctzj]
+
+# Solo lectura del código: el flujo no necesita escribir en el repositorio.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    env:
+      # Base de prueba: las pruebas la borran y la vuelven a crear.
+      TEST_DATABASE_URL: mysql://root:root@127.0.0.1:3306/portfolio_test
+      NEXT_TELEMETRY_DISABLED: '1'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Compilar API y sitio (tipos y lint incluidos)
+        run: npm run build
+
+      - name: Tipos de las pruebas
+        run: npm run test:types
+
+      - name: Pruebas unitarias
+        run: npm run test:unit
+
+      - name: Pruebas de la API y las páginas
+        run: npm run test:integration

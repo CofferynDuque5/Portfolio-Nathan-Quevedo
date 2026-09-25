@@ -22,6 +22,11 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 process.env.NODE_ENV = process.env.NODE_ENV || 'production';
 
+// Clave aleatoria con la que Next.js se identifica ante la API al renderizar
+// (sus peticiones no gastan el límite de peticiones de los visitantes).
+process.env.INTERNAL_API_KEY =
+  process.env.INTERNAL_API_KEY || require('crypto').randomBytes(32).toString('hex');
+
 const express = require('express');
 const next = require('next');
 

@@ -8,6 +8,11 @@ import * as crud from '../controllers/crud.controller';
 import * as upload from '../controllers/upload.controller';
 import * as pub from '../controllers/public.controller';
 import { getStats } from '../controllers/stats.controller';
+import * as projects from '../controllers/projects.controller';
+import * as posts from '../controllers/posts.controller';
+import * as analytics from '../controllers/analytics.controller';
+import * as translations from '../controllers/translations.controller';
+import { mailStatus, sendTestEmail } from '../lib/mailer';
 
 const router = Router();
 
@@ -27,7 +32,28 @@ router.post('/auth/change-password', requireAuth, auth.changePassword);
 // -------------------- Público (sitio) --------------------
 router.get('/public/content', pub.getSiteContent);
 router.get('/public/seo/:page', pub.getSeo);
-router.post('/public/contact', pub.submitContact);
+// Formulario de contacto: pocos envíos por visitante para frenar el spam.
+const contactLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Has enviado varios mensajes seguidos. Espera unos minutos o escríbenos por WhatsApp.' },
+});
+router.post('/public/contact', contactLimiter, pub.submitContact);
+// Métricas: límite propio para que un abuso no llene la base de datos.
+const trackLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiadas peticiones.' },
+});
+router.post('/public/track', trackLimiter, analytics.track);
+router.get('/public/projects', projects.listPublished);
+router.get('/public/projects/:slug', projects.getPublishedBySlug);
+router.get('/public/posts', posts.listPublished);
+router.get('/public/posts/:slug', posts.getPublishedBySlug);
 router.get('/public/:resource', pub.getPublicResource);
 
 // -------------------- Subida de archivos --------------------
@@ -53,6 +79,31 @@ router.use('/admin', requireAuth);
 
 // Estadísticas del dashboard (antes del CRUD genérico para no chocar con :resource).
 router.get('/admin/stats', getStats);
+router.get('/admin/analytics', analytics.summary);
+router.patch('/admin/projects/:id/publish', projects.setPublished);
+router.patch('/admin/posts/:id/publish', posts.setPublished);
+router.get('/admin/translations/:resource/:id', translations.get);
+router.put('/admin/translations/:resource/:id', translations.save);
+
+// Avisos por correo de mensajes nuevos: estado y correo de prueba.
+router.get('/admin/notifications', (_req, res) => {
+  res.json(mailStatus());
+});
+const testMailLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Has enviado varias pruebas seguidas. Espera unos minutos.' },
+});
+router.post('/admin/notifications/test', requireRole('ADMIN'), testMailLimiter, async (_req, res, next) => {
+  try {
+    const result = await sendTestEmail();
+    res.status(result.ok ? 200 : 502).json(result);
+  } catch (err) {
+    next(err);
+  }
+});
 
 // El refuerzo de permisos para usuarios debe registrarse ANTES del CRUD genérico.
 router.use('/admin/users', requireRole('ADMIN'));

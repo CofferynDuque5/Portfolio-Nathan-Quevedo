@@ -1,12 +1,17 @@
 import { ImageResponse } from 'next/og';
+import { DEFAULT_LOCALE, isLocale } from '@/i18n/config';
+import { getDictionary } from '@/i18n/dictionaries';
 
 export const runtime = 'edge';
-export const alt = 'Nathan Quevedo — Software y Licencias Premium';
-export const size = { width: 1200, height: 630 };
-export const contentType = 'image/png';
+const size = { width: 1200, height: 630 };
 
-/** Imagen Open Graph generada dinámicamente (compartir en redes / WhatsApp). */
-export default function OpengraphImage() {
+/**
+ * Imagen Open Graph generada dinámicamente (compartir en redes / WhatsApp).
+ * GET /og?lang=en devuelve la versión en ese idioma.
+ */
+export function GET(req: Request) {
+  const lang = new URL(req.url).searchParams.get('lang');
+  const t = getDictionary(isLocale(lang) ? lang : DEFAULT_LOCALE).pages.home;
   return new ImageResponse(
     (
       <div
@@ -41,13 +46,16 @@ export default function OpengraphImage() {
           <div style={{ fontSize: 34, fontWeight: 600, opacity: 0.9 }}>Nathan Quevedo</div>
         </div>
         <div style={{ fontSize: 68, fontWeight: 800, lineHeight: 1.1, maxWidth: 900 }}>
-          Software original y suscripciones premium
+          {t.ogTitle}
         </div>
         <div style={{ fontSize: 34, marginTop: 30, opacity: 0.8, maxWidth: 900 }}>
-          Licencias, streaming, seguridad y nube · Instalación remota y soporte garantizado
+          {t.ogSubtitle}
         </div>
       </div>
     ),
-    { ...size }
+    {
+      ...size,
+      headers: { 'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800' },
+    }
   );
 }

@@ -2,18 +2,20 @@ import { KeyRound, Check } from 'lucide-react';
 import Reveal from '@/components/Reveal';
 import { License } from '@/lib/types';
 import { waLink } from '@/lib/utils';
+import { getT } from '@/i18n';
 
-export default function Licenses({ licenses, whatsapp }: { licenses: License[]; whatsapp?: string }) {
+export default async function Licenses({ licenses, whatsapp }: { licenses: License[]; whatsapp?: string }) {
   if (!licenses.length) return null;
+  const t = await getT();
 
   return (
     <section id="licencias" className="bg-slate-50 py-20 dark:bg-white/[0.02] sm:py-28">
       <div className="container-x">
         <div className="mx-auto max-w-2xl text-center">
-          <span className="eyebrow">Licencias originales</span>
-          <h2 className="section-title mt-4">Software con licencia auténtica</h2>
+          <span className="eyebrow">{t.licenses.eyebrow}</span>
+          <h2 className="section-title mt-4">{t.licenses.title}</h2>
           <p className="mt-4 text-slate-600 dark:text-slate-300">
-            Windows, Office, Adobe y mucho más, con garantía y activación verificada.
+            {t.licenses.lead}
           </p>
         </div>
 
@@ -48,15 +50,15 @@ export default function Licenses({ licenses, whatsapp }: { licenses: License[]; 
                   <p className="mt-3 flex-1 text-sm text-slate-600 dark:text-slate-400">{l.description}</p>
                 )}
                 <div className="mt-4 flex items-center gap-2 text-sm text-slate-500">
-                  <Check size={16} className="text-green-500" /> Original y garantizado
+                  <Check size={16} className="text-green-500" /> {t.licenses.guarantee}
                 </div>
                 <a
-                  href={waLink(whatsapp, `Hola, me interesa la licencia de ${l.name}`)}
+                  href={waLink(whatsapp, t.whatsapp.license(l.name))}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn-ghost mt-4 w-full"
                 >
-                  Solicitar
+                  {t.common.request}
                 </a>
               </div>
             </Reveal>

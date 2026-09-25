@@ -21,6 +21,8 @@ export const fallbackContent: SiteContent = {
     },
   ],
   categories: [],
+  projects: [],
+  testimonials: [],
   services: [
     { id: 1, title: 'Plataformas de Streaming Premium', slug: 'streaming', icon: 'Play', shortDesc: 'Netflix, Disney+, HBO y más.', image: '/services/streaming-premium.svg', featured: true, order: 0, active: true },
     { id: 2, title: 'Instalación y Configuración Remota', slug: 'instalacion', icon: 'MonitorSmartphone', shortDesc: 'Configuramos todo por ti, de forma remota.', image: '/services/instalacion-remota.svg', featured: true, order: 1, active: true },

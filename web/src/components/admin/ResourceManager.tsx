@@ -1,17 +1,21 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Plus, Search, Pencil, Trash2, Eye, EyeOff, ChevronLeft, ChevronRight,
-  ArrowUpDown, X, Inbox,
+  ArrowUpDown, X, Inbox, Globe, GlobeLock, ScanEye,
 } from 'lucide-react';
 import { api } from '@/lib/admin/client';
 import { ColumnDef, ResourceDef } from '@/lib/admin/resources';
 import ResourceForm from './ResourceForm';
+import TranslationEditor from './TranslationEditor';
 import ConfirmDialog from './ConfirmDialog';
 import { useToast } from './Toast';
 import { TableSkeleton } from './Skeleton';
-import { Icon } from '@/lib/icon';
+import { Icon } from '@/lib/admin/icon';
+import { cn } from '@/lib/utils';
 
 /** Valores por defecto sensatos al crear un registro nuevo. */
 function buildDefaults(def: ResourceDef): Record<string, any> {
@@ -20,12 +24,20 @@ function buildDefaults(def: ResourceDef): Record<string, any> {
     if (f.type === 'boolean') out[f.name] = f.name === 'active'; // activo por defecto
     else if (f.type === 'number') out[f.name] = 0;
     else if (f.type === 'select') out[f.name] = f.options?.[0]?.value ?? '';
+    else if (f.type === 'relation' || f.type === 'date') out[f.name] = '';
   }
   return out;
 }
 
+/** Lee un valor anidado: getPath(row, 'category.name'). */
+function getPath(row: any, path: string): any {
+  return path.split('.').reduce((acc, k) => (acc == null ? acc : acc[k]), row);
+}
+
 export default function ResourceManager({ def }: { def: ResourceDef }) {
   const toast = useToast();
+  const router = useRouter();
+  const [filter, setFilter] = useState('');
   const [rows, setRows] = useState<any[]>([]);
   const [meta, setMeta] = useState({ total: 0, page: 1, perPage: 10, totalPages: 1 });
   const [search, setSearch] = useState('');
@@ -35,6 +47,13 @@ export default function ResourceManager({ def }: { def: ResourceDef }) {
   const [loading, setLoading] = useState(true);
 
   const [editing, setEditing] = useState<Record<string, any> | null>(null);
+  // Pestaña del formulario (español = registro, inglés = traducción) y si hay traducción posible.
+  const [formTab, setFormTab] = useState<'es' | 'en'>('es');
+  const [canTranslate, setCanTranslate] = useState(false);
+  useEffect(() => {
+    setFormTab('es');
+    setCanTranslate(false);
+  }, [editing?.id]);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [toDelete, setToDelete] = useState<any | null>(null);
@@ -45,7 +64,10 @@ export default function ResourceManager({ def }: { def: ResourceDef }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.list(def.key, { page, perPage: 10, search, sortBy, sortDir });
+      const res = await api.list(def.key, {
+        page, perPage: 10, search, sortBy, sortDir,
+        ...(def.filter && filter ? { [def.filter.param]: filter } : {}),
+      });
       setRows(res.data);
       setMeta(res.meta);
     } catch (e) {
@@ -53,7 +75,7 @@ export default function ResourceManager({ def }: { def: ResourceDef }) {
     } finally {
       setLoading(false);
     }
-  }, [def.key, page, search, sortBy, sortDir]);
+  }, [def.key, def.filter, filter, page, search, sortBy, sortDir]);
 
   useEffect(() => {
     const t = setTimeout(load, search ? 300 : 0);
@@ -65,13 +87,18 @@ export default function ResourceManager({ def }: { def: ResourceDef }) {
     else { setSortBy(key); setSortDir('asc'); }
   };
 
-  const save = async (values: Record<string, any>) => {
+  const save = async (values: Record<string, any>, preview = false) => {
     setSaving(true);
     setError(null);
     try {
-      if (editing) await api.update(def.key, editing.id, values);
-      else await api.create(def.key, values);
+      const res = editing
+        ? await api.update(def.key, editing.id, values)
+        : await api.create(def.key, values);
       toast.success(editing ? 'Cambios guardados correctamente.' : `${def.singular} creado correctamente.`);
+      if (preview && def.previewPath) {
+        router.push(`${def.previewPath}/${res.data.id}`);
+        return;
+      }
       setEditing(null);
       setCreating(false);
       await load();
@@ -110,6 +137,17 @@ export default function ResourceManager({ def }: { def: ResourceDef }) {
     }
   };
 
+  const doPublish = async (row: any) => {
+    const publish = row.status !== 'PUBLISHED';
+    try {
+      await api.publish(def.key, row.id, publish);
+      toast.success(publish ? 'Publicado: ya es visible en el sitio.' : 'Despublicado: vuelve a ser un borrador.');
+      await load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'No se pudo cambiar la publicación.');
+    }
+  };
+
   const showForm = creating || editing !== null;
 
   return (
@@ -145,6 +183,28 @@ export default function ResourceManager({ def }: { def: ResourceDef }) {
         </div>
       )}
 
+      {/* Filtro por estado */}
+      {def.filter && (
+        <div role="tablist" aria-label="Filtrar" className="mb-4 inline-flex rounded-xl border border-slate-200 bg-white p-1 dark:border-white/10 dark:bg-white/[0.02]">
+          {def.filter.options.map((o) => (
+            <button
+              key={o.value}
+              role="tab"
+              aria-selected={filter === o.value}
+              onClick={() => { setFilter(o.value); setPage(1); }}
+              className={cn(
+                'rounded-lg px-4 py-1.5 text-sm font-medium transition',
+                filter === o.value
+                  ? 'bg-brand-600 text-white'
+                  : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10'
+              )}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       {error && <div className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-500/10">{error}</div>}
 
       {/* Tabla */}
@@ -155,10 +215,14 @@ export default function ResourceManager({ def }: { def: ResourceDef }) {
               <tr>
                 {def.columns.map((c) => (
                   <th key={c.key} className="px-4 py-3 font-semibold">
-                    <button onClick={() => toggleSort(c.key)} className="inline-flex items-center gap-1 hover:text-brand-600">
-                      {c.label}
-                      <ArrowUpDown size={12} className={sortBy === c.key ? 'text-brand-500' : 'text-slate-300'} />
-                    </button>
+                    {c.sortable === false ? (
+                      c.label
+                    ) : (
+                      <button onClick={() => toggleSort(c.key)} className="inline-flex items-center gap-1 hover:text-brand-600">
+                        {c.label}
+                        <ArrowUpDown size={12} className={sortBy === c.key ? 'text-brand-500' : 'text-slate-300'} />
+                      </button>
+                    )}
                   </th>
                 ))}
                 <th className="px-4 py-3 text-right font-semibold">Acciones</th>
@@ -192,6 +256,26 @@ export default function ResourceManager({ def }: { def: ResourceDef }) {
                     ))}
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
+                        {def.previewPath && (
+                          <Link
+                            href={`${def.previewPath}/${row.id}`}
+                            title="Vista previa"
+                            className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10"
+                          >
+                            <ScanEye size={16} />
+                          </Link>
+                        )}
+                        {def.publishable && (
+                          <button
+                            onClick={() => doPublish(row)}
+                            title={row.status === 'PUBLISHED' ? 'Despublicar' : 'Publicar'}
+                            className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10"
+                          >
+                            {row.status === 'PUBLISHED'
+                              ? <GlobeLock size={16} />
+                              : <Globe size={16} className="text-brand-600 dark:text-brand-300" />}
+                          </button>
+                        )}
                         {def.hasActive && (
                           <button
                             onClick={() => doToggle(row)}
@@ -263,13 +347,37 @@ export default function ResourceManager({ def }: { def: ResourceDef }) {
                 <X size={18} />
               </button>
             </div>
-            <ResourceForm
-              def={def}
-              initial={editing ?? buildDefaults(def)}
-              saving={saving}
-              onSubmit={save}
-              onCancel={() => { setEditing(null); setCreating(false); }}
-            />
+            {editing && def.translatable && canTranslate && (
+              <div role="tablist" aria-label="Idioma" className="mb-5 flex gap-1 rounded-xl bg-slate-100 p-1 dark:bg-white/5">
+                {(['es', 'en'] as const).map((l) => (
+                  <button
+                    key={l}
+                    type="button"
+                    role="tab"
+                    aria-selected={formTab === l}
+                    onClick={() => setFormTab(l)}
+                    className="flex-1 rounded-lg px-4 py-2 text-sm font-medium text-slate-500 transition aria-selected:bg-white aria-selected:text-slate-900 aria-selected:shadow-sm dark:text-slate-400 dark:aria-selected:bg-slate-800 dark:aria-selected:text-white"
+                  >
+                    {l === 'es' ? 'Español' : 'English'}
+                  </button>
+                ))}
+              </div>
+            )}
+            {/* Ambas pestañas quedan montadas para no perder lo escrito al cambiar. */}
+            <div hidden={formTab !== 'es'}>
+              <ResourceForm
+                def={def}
+                initial={editing ?? buildDefaults(def)}
+                saving={saving}
+                onSubmit={save}
+                onCancel={() => { setEditing(null); setCreating(false); }}
+              />
+            </div>
+            {editing && def.translatable && (
+              <div hidden={formTab !== 'en'}>
+                <TranslationEditor key={editing.id} def={def} record={editing} onAvailable={setCanTranslate} />
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -286,7 +394,26 @@ export default function ResourceManager({ def }: { def: ResourceDef }) {
 }
 
 function Cell({ col, row }: { col: ColumnDef; row: any }) {
-  const value = row[col.key];
+  const value = getPath(row, col.key);
+  if (col.type === 'status') {
+    const published = value === 'PUBLISHED';
+    return (
+      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
+        published ? 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400'
+                  : 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400'
+      }`}>
+        <span className={`h-1.5 w-1.5 rounded-full ${published ? 'bg-green-500' : 'bg-amber-500'}`} />
+        {published ? 'Publicado' : 'Borrador'}
+      </span>
+    );
+  }
+  if (col.type === 'date') {
+    return value ? (
+      <span className="whitespace-nowrap text-slate-600 dark:text-slate-300">
+        {new Date(value).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })}
+      </span>
+    ) : <span className="text-slate-300">—</span>;
+  }
   if (col.type === 'image') {
     return value ? (
       // eslint-disable-next-line @next/next/no-img-element
