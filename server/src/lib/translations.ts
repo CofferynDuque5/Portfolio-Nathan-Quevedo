@@ -18,6 +18,7 @@ export const TRANSLATABLE: Record<string, readonly string[]> = {
   categories: ['name', 'description'],
   services: ['title', 'shortDesc', 'description', 'price', 'ctaText'],
   projects: ['title', 'summary', 'challenge', 'solution', 'results', 'tags', 'seoTitle', 'seoDescription'],
+  posts: ['title', 'excerpt', 'content', 'tags', 'seoTitle', 'seoDescription'],
   platforms: ['description', 'price'],
   licenses: ['type', 'description', 'price'],
   faqs: ['question', 'answer'],

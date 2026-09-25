@@ -9,6 +9,7 @@ import * as upload from '../controllers/upload.controller';
 import * as pub from '../controllers/public.controller';
 import { getStats } from '../controllers/stats.controller';
 import * as projects from '../controllers/projects.controller';
+import * as posts from '../controllers/posts.controller';
 import * as analytics from '../controllers/analytics.controller';
 import * as translations from '../controllers/translations.controller';
 import { mailStatus, sendTestEmail } from '../lib/mailer';
@@ -51,6 +52,8 @@ const trackLimiter = rateLimit({
 router.post('/public/track', trackLimiter, analytics.track);
 router.get('/public/projects', projects.listPublished);
 router.get('/public/projects/:slug', projects.getPublishedBySlug);
+router.get('/public/posts', posts.listPublished);
+router.get('/public/posts/:slug', posts.getPublishedBySlug);
 router.get('/public/:resource', pub.getPublicResource);
 
 // -------------------- Subida de archivos --------------------
@@ -78,6 +81,7 @@ router.use('/admin', requireAuth);
 router.get('/admin/stats', getStats);
 router.get('/admin/analytics', analytics.summary);
 router.patch('/admin/projects/:id/publish', projects.setPublished);
+router.patch('/admin/posts/:id/publish', posts.setPublished);
 router.get('/admin/translations/:resource/:id', translations.get);
 router.put('/admin/translations/:resource/:id', translations.save);
 

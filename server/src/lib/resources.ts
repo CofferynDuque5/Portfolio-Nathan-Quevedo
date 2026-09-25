@@ -1,5 +1,6 @@
 import { prisma } from './prisma';
 import { prepareProject, PROJECT_STATUSES } from './projects';
+import { preparePost, POST_STATUSES } from './posts';
 
 /**
  * Registro central de recursos administrables.
@@ -73,6 +74,18 @@ export const resources: Record<string, ResourceConfig> = {
     include: { category: true },
     filterable: { status: PROJECT_STATUSES },
     prepare: prepareProject,
+  },
+  posts: {
+    model: prisma.post,
+    searchable: ['title', 'slug', 'excerpt', 'tags'],
+    defaultOrderBy: { updatedAt: 'desc' },
+    intFields: ['categoryId'],
+    // Sin endpoint público genérico: el sitio usa /public/posts, que solo
+    // devuelve artículos PUBLICADOS.
+    public: false,
+    include: { category: true },
+    filterable: { status: POST_STATUSES },
+    prepare: preparePost,
   },
   platforms: {
     model: prisma.platform,

@@ -14,6 +14,7 @@ export default function Navbar({ siteName }: { siteName: string }) {
     { href: href('/servicios'), label: t.nav.services },
     { href: href('/servicios#plataformas'), label: t.nav.streaming },
     { href: href('/proyectos'), label: t.nav.projects },
+    { href: href('/blog'), label: t.nav.blog },
     { href: href('/sobre-mi'), label: t.nav.about },
     { href: href('/contacto#faq'), label: t.nav.faq },
   ];

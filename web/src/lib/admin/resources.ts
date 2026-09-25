@@ -1,7 +1,7 @@
 /**
  * Definición declarativa de cada módulo del panel.
  * Una sola configuración describe las columnas de la tabla y los campos del
- * formulario, de modo que un componente genérico sirve a los 16 módulos.
+ * formulario, de modo que un componente genérico sirve a los 17 módulos.
  * Añadir una sección nueva = añadir una entrada aquí.
  */
 
@@ -123,6 +123,62 @@ export const RESOURCES: Record<string, ResourceDef> = {
       { name: 'publishedAt', label: 'Fecha de publicación', type: 'date', help: 'Se fija sola al publicar si la dejas vacía.' },
       { name: 'featured', label: 'Destacado (aparece primero)', type: 'boolean' },
       orderField,
+    ],
+  },
+  posts: {
+    key: 'posts',
+    translatable: true,
+    label: 'Blog',
+    singular: 'Artículo',
+    icon: 'Newspaper',
+    group: 'Portfolio',
+    searchable: true,
+    publishable: true,
+    previewPath: '/admin/preview/posts',
+    filter: {
+      param: 'status',
+      options: [
+        { value: '', label: 'Todos' },
+        { value: 'DRAFT', label: 'Borradores' },
+        { value: 'PUBLISHED', label: 'Publicados' },
+      ],
+    },
+    columns: [
+      { key: 'coverImage', label: 'Portada', type: 'image', sortable: false },
+      { key: 'title', label: 'Título' },
+      { key: 'category.name', label: 'Categoría', type: 'badge', sortable: false },
+      { key: 'status', label: 'Estado', type: 'status' },
+      { key: 'publishedAt', label: 'Publicado', type: 'date' },
+      { key: 'updatedAt', label: 'Modificado', type: 'date' },
+    ],
+    fields: [
+      { name: 'title', label: 'Título', type: 'text', required: true, full: true },
+      { name: 'slug', label: 'Slug', type: 'text', help: 'URL del artículo. Si lo dejas vacío se genera desde el título.' },
+      { name: 'categoryId', label: 'Categoría', type: 'relation', relation: { resource: 'categories', labelKey: 'name' } },
+      { name: 'excerpt', label: 'Resumen', type: 'textarea', full: true, help: 'Aparece en el listado y bajo el título. Una o dos frases.' },
+      { name: 'coverImage', label: 'Imagen de portada', type: 'image', full: true },
+      {
+        name: 'content',
+        label: 'Artículo',
+        type: 'textarea',
+        full: true,
+        rows: 18,
+        placeholder: '## Un subtítulo\n\nUn párrafo con **negrita**, *cursiva* y un [enlace](https://…).\n\n- Un punto\n- Otro punto',
+        help: 'Formato: ## subtítulo, ### apartado, **negrita**, *cursiva*, [texto](https://enlace), "- " para listas, "1. " para listas numeradas, "> " para citas y ![descripción](/uploads/…) para imágenes. Deja una línea en blanco entre párrafos.',
+      },
+      { name: 'tags', label: 'Etiquetas', type: 'text', full: true, placeholder: 'Streaming, Seguridad, Guías', help: 'Separadas por comas. Sirven para filtrar el blog.' },
+      { name: 'seoTitle', label: 'Título SEO', type: 'text', full: true, help: 'Opcional. Por defecto se usa el título.' },
+      { name: 'seoDescription', label: 'Descripción SEO', type: 'textarea', full: true, help: 'Opcional. Por defecto se usa el resumen.' },
+      {
+        name: 'status',
+        label: 'Estado',
+        type: 'select',
+        options: [
+          { value: 'DRAFT', label: 'Borrador' },
+          { value: 'PUBLISHED', label: 'Publicado' },
+        ],
+      },
+      { name: 'publishedAt', label: 'Fecha de publicación', type: 'date', help: 'Se fija sola al publicar si la dejas vacía. Con una fecha futura, el artículo aparece ese día.' },
     ],
   },
   heroSlides: {
@@ -419,7 +475,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
       { key: 'noindex', label: 'Noindex', type: 'boolean' },
     ],
     fields: [
-      { name: 'page', label: 'Página (clave)', type: 'text', required: true, help: 'Claves: home, servicios, proyectos, sobre-mi, contacto' },
+      { name: 'page', label: 'Página (clave)', type: 'text', required: true, help: 'Claves: home, servicios, proyectos, blog, sobre-mi, contacto' },
       { name: 'title', label: 'Título SEO', type: 'text', required: true, full: true },
       { name: 'description', label: 'Meta descripción', type: 'textarea', required: true, full: true },
       { name: 'keywords', label: 'Palabras clave', type: 'textarea', full: true },

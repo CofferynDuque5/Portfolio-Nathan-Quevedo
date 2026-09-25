@@ -157,7 +157,7 @@ Password: Admin1234!
 
 ## 🗂️ Módulos del panel administrativo
 
-Dashboard · **Métricas** · **Proyectos** · Hero · Servicios · Categorías · Plataformas · Licencias · FAQ · Galería · Banners · Logos · Redes sociales · Información de contacto · SEO · Configuración general · Usuarios · Multimedia · Mensajes.
+Dashboard · **Métricas** · **Proyectos** · **Blog** · Hero · Servicios · Categorías · Plataformas · Licencias · FAQ · Galería · Banners · Logos · Redes sociales · Información de contacto · SEO · Configuración general · Usuarios · Multimedia · Mensajes.
 
 Los mensajes del formulario pueden llegarte también por correo (opcional, con una cuenta SMTP de tu dominio): ver `DEPLOY-CPANEL.md`.
 
@@ -170,6 +170,7 @@ Cada módulo de contenido incluye: **búsqueda, ordenamiento, paginación, crear
 | `/` | Home con todas las secciones | `home` |
 | `/servicios` | Streaming primero, servicios por categoría, licencias y proceso | `servicios` |
 | `/proyectos` y `/proyectos/<slug>` | Portfolio y casos de estudio | `proyectos` (el detalle usa el SEO de cada proyecto) |
+| `/blog` y `/blog/<slug>` | Artículos publicados, filtro por etiqueta y feed `/blog/rss.xml` | `blog` (el artículo usa su propio SEO) |
 | `/sobre-mi` | Texto *Sobre mí* (Configuración general), áreas, proceso y proyectos | `sobre-mi` |
 | `/contacto` | Formulario, WhatsApp, redes y FAQ | `contacto` |
 
@@ -189,6 +190,23 @@ Si una página no tiene registro en el módulo SEO se usan un título y una desc
   `/proyectos/<slug>` (SEO, Open Graph y Schema.org por proyecto) y una sección en la home.
 - La primera instalación crea dos proyectos **[Ejemplo]** como borradores; reemplázalos o
   elimínalos. Nunca se publican solos.
+
+### 📰 Blog
+
+- Módulo **Blog** del panel: cada artículo nace como **borrador** y se publica igual que
+  un proyecto (botón 🌐 o desde la vista previa). Con una fecha de publicación futura,
+  el artículo queda **programado** y aparece solo ese día.
+- El texto admite un Markdown sencillo: `## subtítulo`, `### apartado`, `**negrita**`,
+  `*cursiva*`, `[enlace](https://…)`, listas con `- ` o `1. `, citas con `> `, imágenes con
+  `![descripción](/uploads/…)` y bloques de código. No se admite HTML: el texto nunca puede
+  insertar scripts, y los enlaces que no son `http(s)`, `mailto` o del propio sitio se
+  muestran como texto.
+- Con tres o más subtítulos `##` el artículo muestra un índice. El tiempo de lectura se
+  calcula solo.
+- Traducción al inglés en la pestaña **English** (título, resumen, texto, etiquetas y SEO).
+- Sitio público: `/blog` (el más reciente destacado y filtro por etiqueta con
+  `?etiqueta=…`), `/blog/<slug>` (SEO, Open Graph y Schema.org `BlogPosting`), feed RSS en
+  `/blog/rss.xml` y `/en/blog/rss.xml`, y entradas en el sitemap.
 
 ### 📊 Métricas y privacidad
 

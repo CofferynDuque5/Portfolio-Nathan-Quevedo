@@ -13,10 +13,10 @@ type Stats = Awaited<ReturnType<typeof api.stats>>;
 
 const METRICS = [
   { key: 'projects', label: 'Proyectos', color: 'text-rose-600 bg-rose-500/10' },
+  { key: 'posts', label: 'Artículos del blog', color: 'text-amber-600 bg-amber-500/10' },
   { key: 'services', label: 'Servicios', color: 'text-brand-600 bg-brand-500/10' },
   { key: 'platforms', label: 'Plataformas', color: 'text-fuchsia-600 bg-fuchsia-500/10' },
   { key: 'licenses', label: 'Licencias', color: 'text-emerald-600 bg-emerald-500/10' },
-  { key: 'faqs', label: 'FAQ', color: 'text-amber-600 bg-amber-500/10' },
   { key: 'media', label: 'Multimedia', color: 'text-violet-600 bg-violet-500/10' },
 ];
 
@@ -67,6 +67,7 @@ export default function DashboardPage() {
                   <div className="text-sm text-slate-500">
                     {m.label}
                     {m.key === 'projects' && ` · ${counts.publishedProjects ?? 0} publicados`}
+                    {m.key === 'posts' && ` · ${counts.publishedPosts ?? 0} publicados`}
                   </div>
                 </div>
                 <ArrowRight size={18} className="text-slate-300 transition group-hover:translate-x-1 group-hover:text-brand-500" />

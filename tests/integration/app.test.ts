@@ -315,6 +315,119 @@ describe('app completa', { skip: TEST_DB_URL ? false : 'define TEST_DATABASE_URL
     });
   });
 
+  describe('blog', () => {
+    let id = 0;
+    const content = '## Primer paso\n\nTexto con **negrita** y un [enlace](javascript:alert(1)).\n\n<script>window.__blog=1</script>';
+
+    test('un artículo nuevo es un borrador y no se ve en el sitio', async () => {
+      const created = await api('/admin/posts', {
+        method: 'POST',
+        auth: true,
+        body: json({ title: 'Cómo elegir una VPN', excerpt: 'Resumen del artículo.', content, tags: 'Seguridad, Guías' }),
+      });
+      assert.equal(created.status, 201);
+      assert.equal(created.body.data.slug, 'como-elegir-una-vpn');
+      assert.equal(created.body.data.status, 'DRAFT');
+      id = created.body.data.id;
+      assert.equal((await api('/public/posts/como-elegir-una-vpn')).status, 404);
+      assert.equal((await api('/public/posts')).body.data.length, 0);
+      assert.equal((await page('/blog/como-elegir-una-vpn')).status, 404);
+    });
+
+    test('los borradores solo se ven en el panel, con sesión', async () => {
+      const drafts = await api('/admin/posts?status=DRAFT', { auth: true });
+      assert.equal(drafts.body.data.length, 1);
+      assert.equal((await api('/admin/posts')).status, 401);
+    });
+
+    test('con fecha futura queda programado hasta ese día', async () => {
+      const future = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10);
+      const upd = await api(`/admin/posts/${id}`, { method: 'PUT', auth: true, body: json({ status: 'PUBLISHED', publishedAt: future }) });
+      assert.equal(upd.status, 200);
+      assert.equal((await api('/public/posts/como-elegir-una-vpn')).status, 404);
+      await api(`/admin/posts/${id}`, { method: 'PUT', auth: true, body: json({ status: 'DRAFT', publishedAt: '' }) });
+    });
+
+    test('al publicarlo aparece con fecha y tiempo de lectura, sin el cuerpo en el listado', async () => {
+      const pub = await api(`/admin/posts/${id}/publish`, { method: 'PATCH', auth: true, body: json({ published: true }) });
+      assert.equal(pub.body.data.status, 'PUBLISHED');
+      assert.ok(pub.body.data.publishedAt);
+      const list = await api('/public/posts');
+      assert.equal(list.body.data.length, 1);
+      assert.equal(list.body.data[0].readingMinutes, 1);
+      assert.equal(list.body.data[0].content, undefined);
+      const one = await api('/public/posts/como-elegir-una-vpn');
+      assert.equal(one.body.data.content, content);
+    });
+
+    test('la página del artículo: Markdown seguro, índice, SEO y datos estructurados', async () => {
+      const { status, html } = await page('/blog/como-elegir-una-vpn');
+      assert.equal(status, 200);
+      assert.match(html, /<h1[^>]*>Cómo elegir una VPN<\/h1>/);
+      assert.match(html, /<h2[^>]*id="primer-paso"[^>]*>Primer paso<\/h2>/);
+      assert.match(html, /<strong[^>]*>negrita<\/strong>/);
+      assert.ok(!html.includes('href="javascript:'));
+      assert.ok(!html.includes('<script>window.__blog'));
+      assert.match(html, /"@type":"BlogPosting"/);
+      assert.match(html, /<link rel="canonical" href="[^"]*\/blog\/como-elegir-una-vpn"/);
+      assert.match(html, /hreflang="en" href="[^"]*\/en\/blog\/como-elegir-una-vpn"/i);
+    });
+
+    test('listado, filtro por etiqueta y RSS', async () => {
+      const list = await page('/blog');
+      assert.equal(list.status, 200);
+      assert.match(list.html, /href="\/blog\/como-elegir-una-vpn"/);
+      assert.match(list.html, /application\/rss\+xml/);
+      const tagged = await page('/blog?etiqueta=seguridad');
+      assert.match(tagged.html, /aria-current="page"[^>]*>Seguridad</);
+      assert.match(tagged.html, /como-elegir-una-vpn/);
+      const other = await page('/blog?etiqueta=otra');
+      assert.ok(!other.html.includes('href="/blog/como-elegir-una-vpn"'));
+
+      const rss = await page('/blog/rss.xml');
+      assert.equal(rss.status, 200);
+      assert.match(rss.type ?? '', /application\/rss\+xml/);
+      assert.match(rss.html, /<title>Cómo elegir una VPN<\/title>/);
+      assert.match(rss.html, /<category>Seguridad<\/category>/);
+    });
+
+    test('traducido al inglés en la API, la página, el RSS y el sitemap', async () => {
+      const saved = await api(`/admin/translations/posts/${id}`, {
+        method: 'PUT',
+        auth: true,
+        body: json({ locale: 'en', values: { title: 'How to choose a VPN', content: '## First step\n\nEnglish text.' } }),
+      });
+      assert.equal(saved.status, 200);
+      assert.ok(saved.body.fields.includes('content'));
+
+      const en = await api('/public/posts/como-elegir-una-vpn?lang=en');
+      assert.equal(en.body.data.title, 'How to choose a VPN');
+      assert.equal(en.body.data.excerpt, 'Resumen del artículo.'); // sin traducir: español
+
+      const detail = await page('/en/blog/como-elegir-una-vpn');
+      assert.equal(detail.status, 200);
+      assert.match(detail.html, /<html[^>]*lang="en"/);
+      assert.match(detail.html, /<h2[^>]*id="first-step"/);
+      assert.match(detail.html, /All articles/);
+
+      const rss = await page('/en/blog/rss.xml');
+      assert.match(rss.html, /<title>How to choose a VPN<\/title>/);
+      assert.match(rss.html, /<link>[^<]*\/en\/blog\/como-elegir-una-vpn<\/link>/);
+
+      const sitemap = await page('/sitemap.xml');
+      assert.match(sitemap.html, /<loc>[^<]*\/en\/blog\/como-elegir-una-vpn<\/loc>/);
+    });
+
+    test('el panel cuenta los artículos y al borrar se van sus traducciones', async () => {
+      const stats = await api('/admin/stats', { auth: true });
+      assert.equal(stats.body.counts.posts, 1);
+      assert.equal(stats.body.counts.publishedPosts, 1);
+      assert.equal((await api(`/admin/posts/${id}`, { method: 'DELETE', auth: true })).status, 200);
+      assert.equal((await api(`/admin/translations/posts/${id}?locale=en`, { auth: true })).status, 404);
+      assert.equal((await page('/blog/como-elegir-una-vpn')).status, 404);
+    });
+  });
+
   describe('páginas del sitio', () => {
     test('español: sin prefijo, lang="es" y enlace a la versión en inglés', async () => {
       const home = await page('/');

@@ -1,4 +1,4 @@
-import { Project, ProjectLink, ProjectSummary, SiteContent } from './types';
+import { Post, PostLink, PostSummary, Project, ProjectLink, ProjectSummary, SiteContent } from './types';
 import { fallbackContent } from './fallback';
 import { DEFAULT_LOCALE, Locale } from '@/i18n/config';
 
@@ -106,6 +106,41 @@ export async function getProject(slug: string, locale?: Locale): Promise<Project
     });
     if (!res.ok) return null;
     return (await res.json()) as ProjectPage;
+  } catch {
+    return null;
+  }
+}
+
+/** Artículos publicados del blog. Lista vacía si la API no responde. */
+export async function getPosts(locale?: Locale): Promise<PostSummary[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/public/posts${lang(locale)}`, {
+      cache: 'no-store',
+      headers: internalHeaders(),
+    });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json.data ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export interface PostPage {
+  data: Post;
+  prev: PostLink | null;
+  next: PostLink | null;
+}
+
+/** Artículo publicado por slug; null si no existe, es un borrador o está programado. */
+export async function getPost(slug: string, locale?: Locale): Promise<PostPage | null> {
+  try {
+    const res = await fetch(`${API_URL}/api/public/posts/${encodeURIComponent(slug)}${lang(locale)}`, {
+      cache: 'no-store',
+      headers: internalHeaders(),
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as PostPage;
   } catch {
     return null;
   }

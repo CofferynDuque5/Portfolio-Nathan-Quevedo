@@ -572,6 +572,11 @@ async function seedContent(prisma, log = console.log) {
       description: 'Casos de estudio de Nathan Quevedo: el reto de cada cliente, la solución y los resultados.',
     },
     {
+      page: 'blog',
+      title: 'Blog: guías y consejos de tecnología',
+      description: 'Guías prácticas sobre streaming, licencias de software, seguridad y soporte técnico.',
+    },
+    {
       page: 'sobre-mi',
       title: 'Sobre Nathan Quevedo',
       description: 'Quién es Nathan Quevedo y cómo trabaja: servicios digitales, streaming, licencias y soporte remoto.',

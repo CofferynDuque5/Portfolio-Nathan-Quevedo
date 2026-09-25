@@ -175,6 +175,35 @@ export interface ProjectLink {
   title: string;
 }
 
+/** Artículo del blog tal como aparece en el listado. */
+export interface PostSummary {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt?: string | null;
+  coverImage?: string | null;
+  tags?: string | null;
+  publishedAt?: string | null;
+  updatedAt: string;
+  /** Lo calcula la API en el sitio público; en el panel se calcula al vuelo. */
+  readingMinutes?: number;
+  category?: ProjectCategory | null;
+}
+
+/** Artículo completo. */
+export interface Post extends PostSummary {
+  content?: string | null;
+  status: ProjectStatus;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  categoryId?: number | null;
+}
+
+export interface PostLink {
+  slug: string;
+  title: string;
+}
+
 export interface SiteContent {
   heroSlides: HeroSlide[];
   categories: Category[];

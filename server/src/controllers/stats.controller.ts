@@ -27,6 +27,9 @@ export const getStats = asyncHandler(async (_req: AuthRequest, res: Response) =>
     projects,
     publishedProjects,
     recentProjects,
+    posts,
+    publishedPosts,
+    recentPosts,
   ] = await Promise.all([
     prisma.service.count(),
     prisma.platform.count(),
@@ -45,6 +48,9 @@ export const getStats = asyncHandler(async (_req: AuthRequest, res: Response) =>
     prisma.project.count(),
     prisma.project.count({ where: { status: 'PUBLISHED' } }),
     prisma.project.findMany({ take: 5, orderBy: { updatedAt: 'desc' } }),
+    prisma.post.count(),
+    prisma.post.count({ where: { status: 'PUBLISHED' } }),
+    prisma.post.findMany({ take: 5, orderBy: { updatedAt: 'desc' } }),
   ]);
 
   // Actividad reciente combinada entre modelos, ordenada por fecha de cambio.
@@ -53,12 +59,13 @@ export const getStats = asyncHandler(async (_req: AuthRequest, res: Response) =>
     ...recentLicenses.map((l) => ({ type: 'Licencia', name: l.name, at: l.updatedAt, resource: 'licenses' })),
     ...recentPlatforms.map((p) => ({ type: 'Plataforma', name: p.name, at: p.updatedAt, resource: 'platforms' })),
     ...recentProjects.map((p) => ({ type: 'Proyecto', name: p.title, at: p.updatedAt, resource: 'projects' })),
+    ...recentPosts.map((p) => ({ type: 'Artículo', name: p.title, at: p.updatedAt, resource: 'posts' })),
   ]
     .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
     .slice(0, 6);
 
   res.json({
-    counts: { projects, publishedProjects, services, platforms, licenses, faqs, gallery, logos, banners, media, messages, unreadMessages },
+    counts: { projects, publishedProjects, posts, publishedPosts, services, platforms, licenses, faqs, gallery, logos, banners, media, messages, unreadMessages },
     activity,
     recentMessages,
   });

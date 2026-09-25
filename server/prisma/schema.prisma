@@ -69,6 +69,7 @@ model Category {
 
   services    Service[]
   projects    Project[]
+  posts       Post[]
 
   @@index([active, order])
   @@map("categories")
@@ -141,6 +142,31 @@ model Project {
   @@index([status, order])
   @@index([featured])
   @@map("projects")
+}
+
+// ------------------------------------------------------------
+//  Blog: artículos con borrador / publicado
+// ------------------------------------------------------------
+model Post {
+  id             Int           @id @default(autoincrement())
+  title          String
+  slug           String        @unique
+  excerpt        String?       @db.Text
+  content        String?       @db.MediumText // Markdown sencillo
+  coverImage     String?
+  tags           String?       // separadas por comas
+  status         ProjectStatus @default(DRAFT)
+  publishedAt    DateTime?
+  seoTitle       String?
+  seoDescription String?       @db.Text
+  categoryId     Int?
+  category       Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([categoryId])
+  @@index([status, publishedAt])
+  @@map("posts")
 }
 
 // ------------------------------------------------------------

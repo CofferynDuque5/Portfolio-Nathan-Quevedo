@@ -51,6 +51,7 @@ export default async function Footer({
             <ul className="mt-4 space-y-2 text-sm text-slate-500 dark:text-slate-400">
               <li><a href={href("/servicios")} className="hover:text-brand-600">{t.services}</a></li>
               <li><a href={href("/proyectos")} className="hover:text-brand-600">{t.projects}</a></li>
+              <li><a href={href("/blog")} className="hover:text-brand-600">{t.blog}</a></li>
               <li><a href={href("/sobre-mi")} className="hover:text-brand-600">{t.about}</a></li>
               <li><a href={href("/servicios#licencias")} className="hover:text-brand-600">{t.licenses}</a></li>
               <li><a href={href("/sobre-mi#proceso")} className="hover:text-brand-600">{t.process}</a></li>

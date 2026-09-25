@@ -192,6 +192,13 @@ const seo = {
       "Case studies by Nathan Quevedo: each client's challenge, the solution and the results.",
     ],
   },
+  blog: {
+    title: ['Blog: guías y consejos de tecnología', 'Blog: tech guides and tips'],
+    description: [
+      'Guías prácticas sobre streaming, licencias de software, seguridad y soporte técnico.',
+      'Practical guides on streaming, software licenses, security and technical support.',
+    ],
+  },
   'sobre-mi': {
     title: ['Sobre Nathan Quevedo', 'About Nathan Quevedo'],
     description: [
