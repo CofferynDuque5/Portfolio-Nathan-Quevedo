@@ -16,7 +16,7 @@ export default async function Platforms({ platforms }: { platforms: Platform[] }
       <div className="card flex h-40 w-56 flex-col items-center justify-center gap-3 text-center sm:w-64">
         {p.logo ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={p.logo} alt={copy ? '' : p.name} loading="lazy" decoding="async" className="h-12 w-auto object-contain" />
+          <img src={p.logo} alt={copy ? '' : p.name} loading="lazy" decoding="async" className="h-12 w-auto max-w-[85%] object-contain" />
         ) : (
           <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-500/10 text-brand-500">
             <Play size={22} />

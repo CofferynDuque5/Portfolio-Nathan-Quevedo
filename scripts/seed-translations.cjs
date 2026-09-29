@@ -215,6 +215,16 @@ const seo = {
   },
 };
 
+/** Textos que el contenido base genera a partir del nombre. */
+const generated = {
+  platforms: (p) => ({ description: [`Suscripción premium a ${p.name}.`, `Premium ${p.name} subscription.`] }),
+  licenses: (l) => {
+    const fields = { description: [`Licencia original de ${l.name}.`, `Genuine ${l.name} license.`] };
+    if (l.type && licenseTypes[l.type]) fields.type = [l.type, licenseTypes[l.type]];
+    return fields;
+  },
+};
+
 /** Pares [recurso, registro, { campo: [es, en] }] a partir del contenido actual. */
 async function collect(prisma) {
   const out = [];
@@ -232,14 +242,8 @@ async function collect(prisma) {
   for (const s of await prisma.service.findMany({ where: { slug: { in: Object.keys(services) } } })) {
     add('services', s, services[s.slug]);
   }
-  for (const p of await prisma.platform.findMany()) {
-    add('platforms', p, { description: [`Suscripción premium a ${p.name}.`, `Premium ${p.name} subscription.`] });
-  }
-  for (const l of await prisma.license.findMany()) {
-    const fields = { description: [`Licencia original de ${l.name}.`, `Genuine ${l.name} license.`] };
-    if (l.type && licenseTypes[l.type]) fields.type = [l.type, licenseTypes[l.type]];
-    add('licenses', l, fields);
-  }
+  for (const p of await prisma.platform.findMany()) add('platforms', p, generated.platforms(p));
+  for (const l of await prisma.license.findMany()) add('licenses', l, generated.licenses(l));
   for (const [q, a] of faqs) {
     add('faqs', await prisma.faq.findFirst({ where: { question: q[0] } }), { question: q, answer: a });
   }
@@ -256,8 +260,21 @@ async function collect(prisma) {
 }
 
 async function seedTranslations(prisma, log = console.log) {
+  const created = await createTranslations(prisma, await collect(prisma));
+  log(`   ✓ ${created} traducciones al inglés del contenido base`);
+}
+
+/**
+ * Traduce plataformas o licencias recién creadas por una actualización del
+ * contenido base (pares [recurso, registro]).
+ */
+async function translateRecords(prisma, records) {
+  return createTranslations(prisma, records.map(([resource, record]) => [resource, record, generated[resource](record)]));
+}
+
+async function createTranslations(prisma, items) {
   let created = 0;
-  for (const [resource, record, fields] of await collect(prisma)) {
+  for (const [resource, record, fields] of items) {
     for (const [field, [es, en]] of Object.entries(fields)) {
       if (record[field] !== es || es === en) continue; // editado por el usuario o igual en ambos idiomas
       const where = { locale_resource_recordId_field: { locale: LOCALE, resource, recordId: record.id, field } };
@@ -268,7 +285,7 @@ async function seedTranslations(prisma, log = console.log) {
       created++;
     }
   }
-  log(`   ✓ ${created} traducciones al inglés del contenido base`);
+  return created;
 }
 
 /**
@@ -295,4 +312,4 @@ async function pruneTranslations(prisma) {
   }
 }
 
-module.exports = { seedTranslations, pruneTranslations };
+module.exports = { seedTranslations, pruneTranslations, translateRecords };

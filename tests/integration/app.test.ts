@@ -489,6 +489,20 @@ describe('app completa', { skip: TEST_DB_URL ? false : 'define TEST_DATABASE_URL
       assert.match(services.html, /Streaming, software y soporte, con garantía/);
     });
 
+    test('los logotipos reales se sirven en plataformas, licencias y la franja de marcas', async () => {
+      const platforms = (await api('/public/platforms')).body.data;
+      const netflix = platforms.find((p: { slug: string }) => p.slug === 'netflix');
+      assert.equal(netflix.logo, '/brands/netflix.webp');
+      assert.ok(platforms.some((p: { slug: string }) => p.slug === 'vix'));
+      const perplexity = (await api('/public/licenses?lang=en')).body.data.find((l: { slug: string }) => l.slug === 'perplexity');
+      assert.equal(perplexity.type, 'Artificial intelligence');
+      const logos = (await api('/public/logos')).body.data;
+      assert.ok(logos.length > 0 && logos.every((l: { image: string }) => l.image.endsWith('.webp')));
+      const img = await fetch(`${app.base}${netflix.logo}`);
+      assert.equal(img.status, 200);
+      assert.match(img.headers.get('content-type') ?? '', /image\/webp/);
+    });
+
     test('la portada es corta, en primera persona y sin enlace al panel', async () => {
       const home = await page('/');
       const licenses = (await api('/public/licenses')).body.data.length;

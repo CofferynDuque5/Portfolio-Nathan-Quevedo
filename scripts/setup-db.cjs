@@ -23,13 +23,16 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
-const { seedTranslations, pruneTranslations } = require('./seed-translations.cjs');
+const { seedTranslations, pruneTranslations, translateRecords } = require('./seed-translations.cjs');
 const { applyCopyUpdates } = require('./copy-updates.cjs');
+const { PLATFORMS, LICENSES, LOGOS, platformData, licenseData, applyBrandUpdates } = require('./brands.cjs');
 
 /** Marca en `_app_migrations` de la traducción inicial al inglés (se hace una vez). */
 const EN_SEED_MARK = 'seed:translations-en-v1';
 /** Marca de la actualización de textos base a primera persona (una vez). */
 const FIRST_PERSON_MARK = 'seed:first-person-v1';
+/** Marca del cambio a los logotipos reales (una vez). */
+const BRANDS_MARK = 'seed:brand-logos-v1';
 
 /** Parsea la DATABASE_URL en sus partes. */
 function parseDbUrl(dbUrl) {
@@ -434,55 +437,14 @@ async function seedContent(prisma, log = console.log) {
 
   // ---------------- Plataformas de streaming ----------------
   await prisma.platform.deleteMany();
-  const platforms = [
-    { name: 'Netflix', key: 'netflix' },
-    { name: 'Disney+', key: 'disney-plus' },
-    { name: 'HBO Max', key: 'hbo-max' },
-    { name: 'Prime Video', key: 'prime-video' },
-    { name: 'Spotify', key: 'spotify' },
-    { name: 'YouTube Premium', key: 'youtube' },
-    { name: 'Paramount+', key: 'paramount-plus' },
-    { name: 'Crunchyroll', key: 'crunchyroll' },
-  ];
-  await prisma.platform.createMany({
-    data: platforms.map((p, i) => ({
-      name: p.name,
-      slug: p.key,
-      description: `Suscripción premium a ${p.name}.`,
-      logo: `/brands/${p.key}.svg`,
-      order: i,
-      active: true,
-    })),
-  });
+  const platforms = PLATFORMS;
+  await prisma.platform.createMany({ data: platforms.map((p, i) => platformData(p, i)) });
   log(`   ✓ ${platforms.length} plataformas`);
 
   // ---------------- Licencias ----------------
   await prisma.license.deleteMany();
-  const licenses = [
-    { name: 'Windows 11 Pro', type: 'Sistema Operativo', key: 'windows-11' },
-    { name: 'Microsoft Office 2021', type: 'Ofimática', key: 'office-2021' },
-    { name: 'Microsoft 365', type: 'Suscripción', key: 'microsoft-365' },
-    { name: 'Adobe Creative Cloud', type: 'Diseño', key: 'adobe-cc' },
-    { name: 'Canva Pro', type: 'Diseño', key: 'canva' },
-    { name: 'CapCut Pro', type: 'Edición de video', key: 'capcut' },
-    { name: 'ChatGPT Plus', type: 'Inteligencia Artificial', key: 'chatgpt' },
-    { name: 'Google One', type: 'Almacenamiento', key: 'google-one' },
-    { name: 'OneDrive', type: 'Almacenamiento', key: 'onedrive' },
-    { name: 'Dropbox', type: 'Almacenamiento', key: 'dropbox' },
-    { name: 'VPN Premium', type: 'Seguridad', key: 'vpn' },
-    { name: 'Antivirus Premium', type: 'Seguridad', key: 'antivirus' },
-  ];
-  await prisma.license.createMany({
-    data: licenses.map((l, i) => ({
-      name: l.name,
-      slug: l.key,
-      type: l.type,
-      description: `Licencia original de ${l.name}.`,
-      image: `/brands/${l.key}.svg`,
-      order: i,
-      active: true,
-    })),
-  });
+  const licenses = LICENSES;
+  await prisma.license.createMany({ data: licenses.map((l, i) => licenseData(l, i)) });
   log(`   ✓ ${licenses.length} licencias`);
 
   // ---------------- FAQ ----------------
@@ -499,14 +461,7 @@ async function seedContent(prisma, log = console.log) {
 
   // ---------------- Logos (marcas / partners) ----------------
   await prisma.logo.deleteMany();
-  const logos = [
-    { name: 'Microsoft', image: '/brands/windows-11.svg' },
-    { name: 'Adobe', image: '/brands/adobe-cc.svg' },
-    { name: 'Netflix', image: '/brands/netflix.svg' },
-    { name: 'Canva', image: '/brands/canva.svg' },
-    { name: 'Spotify', image: '/brands/spotify.svg' },
-    { name: 'Dropbox', image: '/brands/dropbox.svg' },
-  ];
+  const logos = LOGOS;
   await prisma.logo.createMany({
     data: logos.map((l, i) => ({ name: l.name, image: l.image, order: i, active: true })),
   });
@@ -624,6 +579,18 @@ async function copyUpdatesOnce(prisma, log = console.log) {
   await markDone(prisma, FIRST_PERSON_MARK);
 }
 
+/**
+ * Logotipos reales, plataformas y licencias nuevas en instalaciones que ya
+ * existían, una sola vez (ver brands.cjs). Lo que se añade se traduce al
+ * inglés como el resto del contenido base.
+ */
+async function brandUpdatesOnce(prisma, log = console.log) {
+  const rows = await prisma.$queryRawUnsafe('SELECT `name` FROM `_app_migrations` WHERE `name` = ?', BRANDS_MARK);
+  if (rows.length) return;
+  await applyBrandUpdates(prisma, { translateNew: (created) => translateRecords(prisma, created) }, log);
+  await markDone(prisma, BRANDS_MARK);
+}
+
 /** ¿La base de datos necesita preparación (no hay tablas o no hay admin)? */
 async function needsSetup(prisma) {
   try {
@@ -658,6 +625,7 @@ async function autoBootstrap(log = console.log) {
       action = 'created';
     }
     await copyUpdatesOnce(prisma, log);
+    await brandUpdatesOnce(prisma, log);
     await seedTranslationsOnce(prisma, log);
     return { ok: true, action };
   } catch (e) {
@@ -686,6 +654,7 @@ async function runCli() {
     await seedTranslations(prisma);
     await markDone(prisma, EN_SEED_MARK);
     await markDone(prisma, FIRST_PERSON_MARK);
+    await markDone(prisma, BRANDS_MARK);
     console.log('✅ Base de datos lista.');
   } finally {
     await prisma.$disconnect();

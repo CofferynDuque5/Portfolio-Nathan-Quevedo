@@ -159,6 +159,8 @@ Password: Admin1234!
 
 Dashboard · **Métricas** · **Proyectos** · **Blog** · Hero · **Testimonios** · Servicios · Categorías · Plataformas · Licencias · FAQ · Galería · Banners · Logos · Redes sociales · Información de contacto · SEO · Configuración general · Usuarios · Multimedia · Mensajes.
 
+**Logotipos:** el contenido base usa los logotipos reales que hay en `web/public/brands/*.webp` (plataformas, licencias y la franja de marcas); las marcas sin logotipo real muestran una baldosa provisional con letras (`*.svg`). Para cambiar uno, sube la imagen en **Multimedia** y pega su dirección en **Plataformas**, **Licencias** o **Logos**. Usa PNG o WebP con fondo transparente; si el logo es blanco, ponle un fondo de color para que se vea en el modo claro.
+
 Los mensajes del formulario pueden llegarte también por correo (opcional, con una cuenta SMTP de tu dominio): ver `DEPLOY-CPANEL.md`.
 
 Cada módulo de contenido incluye: **búsqueda, ordenamiento, paginación, crear, editar, eliminar, activar/desactivar, vista previa de imágenes y confirmación antes de borrar.**
