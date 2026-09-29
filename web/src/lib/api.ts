@@ -1,5 +1,11 @@
-import { SiteContent } from './types';
+import { Post, PostLink, PostSummary, Project, ProjectLink, ProjectSummary, SiteContent } from './types';
 import { fallbackContent } from './fallback';
+import { DEFAULT_LOCALE, Locale } from '@/i18n/config';
+
+/** `?lang=xx` para pedir el contenido traducido (el español no lo necesita). */
+function lang(locale?: Locale, sep = '?') {
+  return locale && locale !== DEFAULT_LOCALE ? `${sep}lang=${locale}` : '';
+}
 
 /**
  * URL base de la API.
@@ -15,17 +21,27 @@ export const API_URL =
     ? process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || LOCAL_API
     : process.env.NEXT_PUBLIC_API_URL || '';
 
+/**
+ * En el servidor, las peticiones a la API propia llevan la clave interna para
+ * no gastar el límite de peticiones de los visitantes (ver server/src/app.ts).
+ */
+function internalHeaders(): Record<string, string> | undefined {
+  const key = typeof window === 'undefined' ? process.env.INTERNAL_API_KEY : undefined;
+  return key ? { 'x-internal-key': key } : undefined;
+}
+
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
 /**
  * Obtiene todo el contenido del sitio desde la API (Server Component).
  * Si la API falla, devuelve contenido de respaldo para no romper el render.
  */
-export async function getSiteContent(): Promise<SiteContent> {
+export async function getSiteContent(locale?: Locale): Promise<SiteContent> {
   try {
-    const res = await fetch(`${API_URL}/api/public/content`, {
+    const res = await fetch(`${API_URL}/api/public/content${lang(locale)}`, {
       // Siempre datos frescos: los cambios del panel se ven al instante.
       cache: 'no-store',
+      headers: internalHeaders(),
     });
     if (!res.ok) throw new Error(`API respondió ${res.status}`);
     const data = (await res.json()) as SiteContent;
@@ -46,12 +62,85 @@ export interface SeoData {
 }
 
 /** Obtiene los metadatos SEO de una página concreta. */
-export async function getSeo(page: string): Promise<SeoData | null> {
+export async function getSeo(page: string, locale?: Locale): Promise<SeoData | null> {
   try {
-    const res = await fetch(`${API_URL}/api/public/seo/${page}`, { cache: 'no-store' });
+    const res = await fetch(`${API_URL}/api/public/seo/${page}${lang(locale)}`, {
+      cache: 'no-store',
+      headers: internalHeaders(),
+    });
     if (!res.ok) return null;
     const json = await res.json();
     return json.data ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Proyectos publicados (portfolio). Lista vacía si la API no responde. */
+export async function getProjects(locale?: Locale): Promise<ProjectSummary[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/public/projects${lang(locale)}`, {
+      cache: 'no-store',
+      headers: internalHeaders(),
+    });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json.data ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export interface ProjectPage {
+  data: Project;
+  prev: ProjectLink | null;
+  next: ProjectLink | null;
+}
+
+/** Caso de estudio publicado por slug; null si no existe o es un borrador. */
+export async function getProject(slug: string, locale?: Locale): Promise<ProjectPage | null> {
+  try {
+    const res = await fetch(`${API_URL}/api/public/projects/${encodeURIComponent(slug)}${lang(locale)}`, {
+      cache: 'no-store',
+      headers: internalHeaders(),
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as ProjectPage;
+  } catch {
+    return null;
+  }
+}
+
+/** Artículos publicados del blog. Lista vacía si la API no responde. */
+export async function getPosts(locale?: Locale): Promise<PostSummary[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/public/posts${lang(locale)}`, {
+      cache: 'no-store',
+      headers: internalHeaders(),
+    });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json.data ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export interface PostPage {
+  data: Post;
+  prev: PostLink | null;
+  next: PostLink | null;
+}
+
+/** Artículo publicado por slug; null si no existe, es un borrador o está programado. */
+export async function getPost(slug: string, locale?: Locale): Promise<PostPage | null> {
+  try {
+    const res = await fetch(`${API_URL}/api/public/posts/${encodeURIComponent(slug)}${lang(locale)}`, {
+      cache: 'no-store',
+      headers: internalHeaders(),
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as PostPage;
   } catch {
     return null;
   }

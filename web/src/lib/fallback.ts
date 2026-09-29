@@ -21,9 +21,11 @@ export const fallbackContent: SiteContent = {
     },
   ],
   categories: [],
+  projects: [],
+  testimonials: [],
   services: [
     { id: 1, title: 'Plataformas de Streaming Premium', slug: 'streaming', icon: 'Play', shortDesc: 'Netflix, Disney+, HBO y más.', image: '/services/streaming-premium.svg', featured: true, order: 0, active: true },
-    { id: 2, title: 'Instalación y Configuración Remota', slug: 'instalacion', icon: 'MonitorSmartphone', shortDesc: 'Configuramos todo por ti, de forma remota.', image: '/services/instalacion-remota.svg', featured: true, order: 1, active: true },
+    { id: 2, title: 'Instalación y Configuración Remota', slug: 'instalacion', icon: 'MonitorSmartphone', shortDesc: 'Configuro todo por ti, de forma remota.', image: '/services/instalacion-remota.svg', featured: true, order: 1, active: true },
     { id: 3, title: 'Licencias de Software Original', slug: 'licencias', icon: 'KeyRound', shortDesc: 'Claves auténticas y verificadas.', image: '/services/licencias-software.svg', featured: true, order: 2, active: true },
     { id: 4, title: 'Microsoft Windows y Office', slug: 'microsoft', icon: 'Monitor', shortDesc: 'Windows 10/11 y Office 365 originales.', image: '/services/windows.svg', featured: false, order: 3, active: true },
     { id: 5, title: 'Seguridad y Protección Digital', slug: 'seguridad', icon: 'ShieldCheck', shortDesc: 'Antivirus y VPN premium.', image: '/services/seguridad-digital.svg', featured: false, order: 4, active: true },
@@ -32,7 +34,7 @@ export const fallbackContent: SiteContent = {
   platforms: [],
   licenses: [],
   faqs: [
-    { id: 1, question: '¿Las licencias son originales?', answer: 'Sí, todas nuestras licencias son 100% originales y verificadas.', order: 0, active: true },
+    { id: 1, question: '¿Las licencias son originales?', answer: 'Sí, todas las licencias que ofrezco son 100% originales y verificadas.', order: 0, active: true },
     { id: 2, question: '¿Cómo se realiza la instalación?', answer: 'De forma remota, rápida y segura, sin que tengas que desplazarte.', order: 1, active: true },
   ],
   gallery: [],
@@ -41,7 +43,8 @@ export const fallbackContent: SiteContent = {
   socialLinks: [],
   contactInfo: [
     { id: 1, label: 'WhatsApp', value: '+58 4225200631', icon: 'Phone', type: 'whatsapp', order: 0, active: true },
-    { id: 2, label: 'Horario', value: 'Lun a Sáb, 9:00 - 20:00', icon: 'Clock', type: 'hours', order: 1, active: true },
+    { id: 3, label: 'Correo', value: 'quevedomoralesnathan05@gmail.com', icon: 'Mail', type: 'email', order: 1, active: true },
+    { id: 2, label: 'Horario', value: 'Lun a Sáb, 9:00 - 20:00', icon: 'Clock', type: 'hours', order: 2, active: true },
   ],
   settings: {
     siteName: 'Nathan Quevedo',

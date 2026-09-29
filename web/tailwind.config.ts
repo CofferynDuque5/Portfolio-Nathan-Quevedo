@@ -38,6 +38,12 @@ const config: Config = {
           '0%': { opacity: '0', transform: 'translateY(16px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
+        // Solo movimiento, sin opacidad: el título se pinta desde el primer
+        // instante (no retrasa el "Largest Contentful Paint").
+        rise: {
+          '0%': { transform: 'translateY(14px)' },
+          '100%': { transform: 'translateY(0)' },
+        },
         marquee: {
           '0%': { transform: 'translateX(0)' },
           '100%': { transform: 'translateX(-50%)' },
@@ -45,6 +51,9 @@ const config: Config = {
       },
       animation: {
         'fade-up': 'fade-up 0.6s ease-out forwards',
+        // Con retardo: oculto hasta que empieza (fill-mode both).
+        'fade-in-up': 'fade-up 0.6s ease-out both',
+        rise: 'rise 0.6s ease-out both',
         marquee: 'marquee 30s linear infinite',
       },
     },

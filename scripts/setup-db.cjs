@@ -2,24 +2,39 @@
  * ============================================================
  *  Preparación de la base de datos
  * ============================================================
- *  - Crea las tablas (si no existen) desde la migración inicial.
+ *  - Crea las tablas y aplica las migraciones pendientes (registro en
+ *    la tabla `_app_migrations`).
  *  - Siembra el contenido inicial (admin, servicios, plataformas,
- *    licencias, FAQ, redes, contacto, SEO, etc.).
+ *    licencias, FAQ, redes, contacto, SEO, etc.) y su traducción al inglés.
  *
  *  Se usa de dos formas:
- *   1) Automático: app.js llama a autoBootstrap() al arrancar. Si la BD
- *      está vacía, la prepara sola (no toca nada si ya tiene datos).
+ *   1) Automático: app.js llama a autoBootstrap() al arrancar. Aplica las
+ *      migraciones pendientes y, si la BD está vacía, siembra el contenido
+ *      (no toca los datos existentes).
  *   2) Manual: `node scripts/setup-db.cjs`  (o cPanel > Run JS script > db:setup)
  *      Recarga el contenido base.
  * ============================================================
  */
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
+const { seedTranslations, pruneTranslations, translateRecords } = require('./seed-translations.cjs');
+const { applyCopyUpdates, addContactEmail, CONTACT_EMAIL } = require('./copy-updates.cjs');
+const { PLATFORMS, LICENSES, LOGOS, platformData, licenseData, applyBrandUpdates } = require('./brands.cjs');
+
+/** Marca en `_app_migrations` de la traducción inicial al inglés (se hace una vez). */
+const EN_SEED_MARK = 'seed:translations-en-v1';
+/** Marca de la actualización de textos base a primera persona (una vez). */
+const FIRST_PERSON_MARK = 'seed:first-person-v1';
+/** Marca del cambio a los logotipos reales (una vez). */
+const BRANDS_MARK = 'seed:brand-logos-v1';
+/** Marca del correo de contacto (una vez). */
+const EMAIL_MARK = 'seed:contact-email-v1';
 
 /** Parsea la DATABASE_URL en sus partes. */
 function parseDbUrl(dbUrl) {
@@ -141,18 +156,103 @@ async function ensureDatabaseExists(log = console.log) {
 const admin = {
   name: process.env.ADMIN_NAME || 'Nathan Quevedo',
   email: process.env.ADMIN_EMAIL || 'admin@nathanquevedo.com',
-  password: process.env.ADMIN_PASSWORD || 'Admin1234!',
+  password: process.env.ADMIN_PASSWORD || '',
 };
 
-/** Crea las tablas ejecutando el SQL de las migraciones si aún no existen. */
-async function ensureSchema(prisma, log = console.log) {
-  try {
-    await prisma.$queryRawUnsafe('SELECT 1 FROM `users` LIMIT 1');
-    log('   ✓ Tablas ya existen (se omite creación).');
+const IS_PROD = process.env.NODE_ENV === 'production';
+/** Contraseñas de ejemplo o publicadas (en claro o su SHA-256): nunca en producción. */
+const UNSAFE_PASSWORDS = new Set(['Admin1234!', 'CambiaEstaClave123', 'escribe-aqui-una-contraseña-propia']);
+const UNSAFE_PASSWORD_HASHES = new Set([
+  '61925e2f86389e852a4c2fc7daadb4ff96ec72a0af64aaf5cb9c831fd67e6523', // la que traía .env.cpanel
+]);
+const ADMIN_PASSWORD_FILE = path.join(__dirname, '..', 'ADMIN-PASSWORD.txt');
+
+function isUnsafePassword(pw) {
+  if (!pw || pw.length < 10 || UNSAFE_PASSWORDS.has(pw)) return true;
+  return UNSAFE_PASSWORD_HASHES.has(crypto.createHash('sha256').update(pw).digest('hex'));
+}
+
+/**
+ * Crea el administrador o actualiza sus datos.
+ * - Con una ADMIN_PASSWORD segura, esa es la contraseña (como antes).
+ * - En producción, si falta o es una de ejemplo/publicada: al crearlo se
+ *   genera una aleatoria y se guarda en ADMIN-PASSWORD.txt; si ya existe,
+ *   su contraseña no se toca.
+ * - En desarrollo se mantiene Admin1234! por comodidad.
+ */
+async function upsertAdmin(prisma, log) {
+  const configured = admin.password;
+  const usable = IS_PROD ? !isUnsafePassword(configured) : true;
+  const password = usable ? configured || 'Admin1234!' : null;
+  const existing = await prisma.user.findUnique({ where: { email: admin.email } });
+
+  if (existing) {
+    const data = { name: admin.name, active: true };
+    if (password) data.passwordHash = await bcrypt.hash(password, 10);
+    await prisma.user.update({ where: { id: existing.id }, data });
+    if (!password) log('   • ADMIN_PASSWORD vacía o insegura: la contraseña actual del admin no se cambia.');
+    log(`   ✓ Admin: ${admin.email}`);
     return;
-  } catch {
-    log('   • Creando tablas...');
   }
+
+  let initial = password;
+  if (!initial) {
+    initial = crypto.randomBytes(12).toString('base64url');
+    try {
+      fs.writeFileSync(
+        ADMIN_PASSWORD_FILE,
+        `Usuario: ${admin.email}\nContraseña: ${initial}\n\nCámbiala en el panel (/admin) y borra este archivo.\n`,
+        { mode: 0o600 }
+      );
+      log(`   ⚠ ADMIN_PASSWORD vacía o insegura: contraseña aleatoria guardada en ${ADMIN_PASSWORD_FILE}`);
+    } catch {
+      log(`   ⚠ ADMIN_PASSWORD vacía o insegura. Contraseña aleatoria del admin: ${initial}`);
+    }
+  }
+  await prisma.user.create({
+    data: { name: admin.name, email: admin.email, passwordHash: await bcrypt.hash(initial, 10), role: 'ADMIN' },
+  });
+  log(`   ✓ Admin: ${admin.email}`);
+}
+
+/** Divide un archivo de migración en sentencias SQL ejecutables. */
+function readMigrationStatements(file) {
+  return fs
+    .readFileSync(file, 'utf8')
+    .split(';')
+    .map((s) =>
+      s
+        .split('\n')
+        .filter((line) => !line.trim().startsWith('--'))
+        .join('\n')
+        .trim()
+    )
+    .filter((s) => s.length > 0);
+}
+
+async function tableExists(prisma, table) {
+  try {
+    await prisma.$queryRawUnsafe('SELECT 1 FROM `' + table + '` LIMIT 1');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Aplica las migraciones pendientes de prisma/migrations en orden.
+ * Lleva un registro propio en `_app_migrations`, de modo que al actualizar
+ * la app (p. ej. al añadir el módulo de proyectos) las tablas nuevas se crean
+ * solas al reiniciar, sin tocar los datos existentes.
+ */
+async function ensureSchema(prisma, log = console.log) {
+  await prisma.$executeRawUnsafe(
+    'CREATE TABLE IF NOT EXISTS `_app_migrations` (' +
+      '`name` VARCHAR(191) NOT NULL, ' +
+      '`appliedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3), ' +
+      'PRIMARY KEY (`name`)' +
+      ') DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci'
+  );
 
   const migrationsDir = path.join(__dirname, '..', 'server', 'prisma', 'migrations');
   const dirs = fs
@@ -160,36 +260,36 @@ async function ensureSchema(prisma, log = console.log) {
     .filter((d) => fs.existsSync(path.join(migrationsDir, d, 'migration.sql')))
     .sort();
 
-  for (const dir of dirs) {
-    const sql = fs.readFileSync(path.join(migrationsDir, dir, 'migration.sql'), 'utf8');
-    const statements = sql
-      .split(';')
-      .map((s) =>
-        s
-          .split('\n')
-          .filter((line) => !line.trim().startsWith('--'))
-          .join('\n')
-          .trim()
-      )
-      .filter((s) => s.length > 0);
+  const rows = await prisma.$queryRawUnsafe('SELECT `name` FROM `_app_migrations`');
+  const applied = new Set(rows.map((r) => r.name));
 
-    for (const stmt of statements) {
+  // Instalaciones anteriores a este registro: si ya existen las tablas base,
+  // la migración inicial se aplicó en su momento; se marca sin re-ejecutarla.
+  if (applied.size === 0 && dirs.length && (await tableExists(prisma, 'users'))) {
+    await prisma.$executeRawUnsafe('INSERT INTO `_app_migrations` (`name`) VALUES (?)', dirs[0]);
+    applied.add(dirs[0]);
+  }
+
+  const pending = dirs.filter((d) => !applied.has(d));
+  if (!pending.length) {
+    log('   ✓ Tablas al día (sin migraciones pendientes).');
+    return;
+  }
+
+  for (const dir of pending) {
+    log('   • Aplicando migración ' + dir + '...');
+    for (const stmt of readMigrationStatements(path.join(migrationsDir, dir, 'migration.sql'))) {
       await prisma.$executeRawUnsafe(stmt);
     }
+    await prisma.$executeRawUnsafe('INSERT INTO `_app_migrations` (`name`) VALUES (?)', dir);
   }
-  log('   ✓ Tablas creadas.');
+  log('   ✓ ' + pending.length + ' migración(es) aplicada(s).');
 }
 
 /** Inserta / actualiza todo el contenido inicial. */
 async function seedContent(prisma, log = console.log) {
   // ---------------- Usuario administrador ----------------
-  const passwordHash = await bcrypt.hash(admin.password, 10);
-  await prisma.user.upsert({
-    where: { email: admin.email },
-    update: { name: admin.name, passwordHash, active: true },
-    create: { name: admin.name, email: admin.email, passwordHash, role: 'ADMIN' },
-  });
-  log(`   ✓ Admin: ${admin.email}`);
+  await upsertAdmin(prisma, log);
 
   // ---------------- Configuración general ----------------
   const settings = [
@@ -207,6 +307,11 @@ async function seedContent(prisma, log = console.log) {
     { key: 'primaryColor', value: '#6366f1', group: 'theme', label: 'Color primario', type: 'color' },
     { key: 'whatsapp', value: '+58 4225200631', group: 'contact', label: 'WhatsApp', type: 'text' },
     { key: 'processTitle', value: 'Proceso de trabajo', group: 'process', label: 'Título proceso', type: 'text' },
+    // Cifras de la sección "Sobre mí" (vacías = ocultas).
+    { key: 'statClients', value: '+2000', group: 'about', label: 'Cifra: clientes satisfechos', type: 'text' },
+    { key: 'statOriginal', value: '100%', group: 'about', label: 'Cifra: software original', type: 'text' },
+    { key: 'statSupport', value: '24/7', group: 'about', label: 'Cifra: soporte disponible', type: 'text' },
+    { key: 'statProducts', value: '+50', group: 'about', label: 'Cifra: productos y licencias', type: 'text' },
   ];
   for (const s of settings) {
     await prisma.setting.upsert({
@@ -234,7 +339,7 @@ async function seedContent(prisma, log = console.log) {
       {
         title: 'Instalación remota y soporte técnico',
         highlight: 'sin complicaciones',
-        subtitle: 'Configuramos tus licencias y aplicaciones de forma remota, rápida y segura.',
+        subtitle: 'Configuro tus licencias y aplicaciones de forma remota, rápida y segura.',
         ctaText: 'Ver servicios',
         ctaLink: '#servicios',
         order: 1,
@@ -245,7 +350,8 @@ async function seedContent(prisma, log = console.log) {
   log('   ✓ Hero');
 
   // ---------------- Categorías ----------------
-  await prisma.category.deleteMany();
+  // Upsert por slug (no deleteMany): así los proyectos reales conservan su categoría
+  // aunque se vuelva a ejecutar la carga del contenido base.
   const categoryData = [
     { name: 'Streaming', slug: 'streaming', icon: 'Play', description: 'Plataformas de entretenimiento premium', order: 0 },
     { name: 'Licencias', slug: 'licencias', icon: 'KeyRound', description: 'Software original con licencia', order: 1 },
@@ -253,7 +359,9 @@ async function seedContent(prisma, log = console.log) {
     { name: 'Seguridad', slug: 'seguridad', icon: 'ShieldCheck', description: 'Protección digital y privacidad', order: 3 },
     { name: 'Soporte', slug: 'soporte', icon: 'Headset', description: 'Instalación remota y soporte técnico', order: 4 },
   ];
-  for (const c of categoryData) await prisma.category.create({ data: c });
+  for (const c of categoryData) {
+    await prisma.category.upsert({ where: { slug: c.slug }, update: c, create: c });
+  }
   const categories = await prisma.category.findMany();
   const catId = (slug) => (categories.find((c) => c.slug === slug) || {}).id ?? null;
   log('   ✓ Categorías');
@@ -262,7 +370,7 @@ async function seedContent(prisma, log = console.log) {
   await prisma.service.deleteMany();
   const services = [
     { title: 'Plataformas de Streaming Premium', slug: 'streaming-premium', icon: 'Play', shortDesc: 'Netflix, Disney+, HBO, Prime Video y más.', description: 'Acceso a las mejores plataformas de streaming con garantía y soporte continuo.', category: 'streaming', featured: true },
-    { title: 'Instalación y Configuración Remota', slug: 'instalacion-remota', icon: 'MonitorSmartphone', shortDesc: 'Configuramos todo por ti, de forma remota.', description: 'Instalación y puesta a punto de tus licencias y aplicaciones sin que salgas de casa.', category: 'soporte', featured: true },
+    { title: 'Instalación y Configuración Remota', slug: 'instalacion-remota', icon: 'MonitorSmartphone', shortDesc: 'Configuro todo por ti, de forma remota.', description: 'Instalación y puesta a punto de tus licencias y aplicaciones sin que salgas de casa.', category: 'soporte', featured: true },
     { title: 'Licencias de Software Original', slug: 'licencias-software', icon: 'KeyRound', shortDesc: 'Claves auténticas y verificadas.', description: 'Licencias 100% originales para todo tipo de software profesional.', category: 'licencias', featured: true },
     { title: 'Licencias Microsoft Windows', slug: 'windows', icon: 'Monitor', shortDesc: 'Windows 10 y 11 Pro/Home.', description: 'Activa tu Windows con licencias originales de por vida.', category: 'licencias' },
     { title: 'Microsoft Office y Microsoft 365', slug: 'office-365', icon: 'FileText', shortDesc: 'Office 2021 y Microsoft 365.', description: 'Word, Excel, PowerPoint y más, con licencia original.', category: 'licencias' },
@@ -290,66 +398,64 @@ async function seedContent(prisma, log = console.log) {
   });
   log(`   ✓ ${services.length} servicios`);
 
+  // ---------------- Proyectos (casos de estudio) ----------------
+  // Nunca se borran: son contenido real del portfolio. Solo si no hay ninguno
+  // se crean dos BORRADORES de ejemplo, claramente marcados, para mostrar la
+  // estructura en el panel. No se publican ni aparecen en el sitio.
+  if ((await prisma.project.count()) === 0) {
+    const sample = 'Contenido de ejemplo: reemplázalo por la información real del proyecto antes de publicarlo.';
+    await prisma.project.createMany({
+      data: [
+        {
+          title: '[Ejemplo] Puesta en marcha de un servicio de streaming',
+          slug: 'ejemplo-servicio-streaming',
+          client: 'Cliente de ejemplo',
+          summary: sample,
+          challenge: 'Describe aquí el problema o la necesidad del cliente. ' + sample,
+          solution: 'Explica qué hiciste, con qué herramientas y cómo lo organizaste. ' + sample,
+          results: 'Resume los resultados reales y medibles. ' + sample,
+          tags: 'Streaming, Ejemplo',
+          categoryId: catId('streaming'),
+          status: 'DRAFT',
+          order: 0,
+        },
+        {
+          title: '[Ejemplo] Instalación y soporte remoto para una oficina',
+          slug: 'ejemplo-soporte-remoto',
+          client: 'Cliente de ejemplo',
+          summary: sample,
+          challenge: 'Describe aquí el problema o la necesidad del cliente. ' + sample,
+          solution: 'Explica qué hiciste, con qué herramientas y cómo lo organizaste. ' + sample,
+          results: 'Resume los resultados reales y medibles. ' + sample,
+          tags: 'Soporte, Ejemplo',
+          categoryId: catId('soporte'),
+          status: 'DRAFT',
+          order: 1,
+        },
+      ],
+    });
+    log('   ✓ 2 proyectos de ejemplo (borradores)');
+  }
+
   // ---------------- Plataformas de streaming ----------------
   await prisma.platform.deleteMany();
-  const platforms = [
-    { name: 'Netflix', key: 'netflix' },
-    { name: 'Disney+', key: 'disney-plus' },
-    { name: 'HBO Max', key: 'hbo-max' },
-    { name: 'Prime Video', key: 'prime-video' },
-    { name: 'Spotify', key: 'spotify' },
-    { name: 'YouTube Premium', key: 'youtube' },
-    { name: 'Paramount+', key: 'paramount-plus' },
-    { name: 'Crunchyroll', key: 'crunchyroll' },
-  ];
-  await prisma.platform.createMany({
-    data: platforms.map((p, i) => ({
-      name: p.name,
-      slug: p.key,
-      description: `Suscripción premium a ${p.name}.`,
-      logo: `/brands/${p.key}.svg`,
-      order: i,
-      active: true,
-    })),
-  });
+  const platforms = PLATFORMS;
+  await prisma.platform.createMany({ data: platforms.map((p, i) => platformData(p, i)) });
   log(`   ✓ ${platforms.length} plataformas`);
 
   // ---------------- Licencias ----------------
   await prisma.license.deleteMany();
-  const licenses = [
-    { name: 'Windows 11 Pro', type: 'Sistema Operativo', key: 'windows-11' },
-    { name: 'Microsoft Office 2021', type: 'Ofimática', key: 'office-2021' },
-    { name: 'Microsoft 365', type: 'Suscripción', key: 'microsoft-365' },
-    { name: 'Adobe Creative Cloud', type: 'Diseño', key: 'adobe-cc' },
-    { name: 'Canva Pro', type: 'Diseño', key: 'canva' },
-    { name: 'CapCut Pro', type: 'Edición de video', key: 'capcut' },
-    { name: 'ChatGPT Plus', type: 'Inteligencia Artificial', key: 'chatgpt' },
-    { name: 'Google One', type: 'Almacenamiento', key: 'google-one' },
-    { name: 'OneDrive', type: 'Almacenamiento', key: 'onedrive' },
-    { name: 'Dropbox', type: 'Almacenamiento', key: 'dropbox' },
-    { name: 'VPN Premium', type: 'Seguridad', key: 'vpn' },
-    { name: 'Antivirus Premium', type: 'Seguridad', key: 'antivirus' },
-  ];
-  await prisma.license.createMany({
-    data: licenses.map((l, i) => ({
-      name: l.name,
-      slug: l.key,
-      type: l.type,
-      description: `Licencia original de ${l.name}.`,
-      image: `/brands/${l.key}.svg`,
-      order: i,
-      active: true,
-    })),
-  });
+  const licenses = LICENSES;
+  await prisma.license.createMany({ data: licenses.map((l, i) => licenseData(l, i)) });
   log(`   ✓ ${licenses.length} licencias`);
 
   // ---------------- FAQ ----------------
   await prisma.faq.deleteMany();
   const faqs = [
-    { question: '¿Las licencias son originales?', answer: 'Sí, todas nuestras licencias son 100% originales y verificadas.' },
+    { question: '¿Las licencias son originales?', answer: 'Sí, todas las licencias que ofrezco son 100% originales y verificadas.' },
     { question: '¿Cómo se realiza la instalación?', answer: 'La instalación se realiza de forma remota, de manera rápida y segura, sin que tengas que desplazarte.' },
-    { question: '¿Ofrecen soporte después de la compra?', answer: 'Por supuesto. Brindamos soporte técnico continuo tras cada servicio.' },
-    { question: '¿Qué métodos de pago aceptan?', answer: 'Aceptamos múltiples métodos de pago. Escríbenos y te asesoramos.' },
+    { question: '¿Ofreces soporte después de la compra?', answer: 'Por supuesto. Brindo soporte técnico continuo tras cada servicio.' },
+    { question: '¿Qué métodos de pago aceptas?', answer: 'Acepto múltiples métodos de pago. Escríbeme y te asesoro.' },
     { question: '¿Cuánto tarda la activación?', answer: 'La mayoría de servicios se activan el mismo día de la compra.' },
   ];
   await prisma.faq.createMany({ data: faqs.map((f, i) => ({ ...f, order: i, active: true })) });
@@ -357,14 +463,7 @@ async function seedContent(prisma, log = console.log) {
 
   // ---------------- Logos (marcas / partners) ----------------
   await prisma.logo.deleteMany();
-  const logos = [
-    { name: 'Microsoft', image: '/brands/windows-11.svg' },
-    { name: 'Adobe', image: '/brands/adobe-cc.svg' },
-    { name: 'Netflix', image: '/brands/netflix.svg' },
-    { name: 'Canva', image: '/brands/canva.svg' },
-    { name: 'Spotify', image: '/brands/spotify.svg' },
-    { name: 'Dropbox', image: '/brands/dropbox.svg' },
-  ];
+  const logos = LOGOS;
   await prisma.logo.createMany({
     data: logos.map((l, i) => ({ name: l.name, image: l.image, order: i, active: true })),
   });
@@ -387,7 +486,8 @@ async function seedContent(prisma, log = console.log) {
   await prisma.contactInfo.createMany({
     data: [
       { label: 'WhatsApp', value: '+58 4225200631', icon: 'Phone', type: 'whatsapp', order: 0, active: true },
-      { label: 'Horario', value: 'Lun a Sáb, 9:00 - 20:00', icon: 'Clock', type: 'hours', order: 1, active: true },
+      { ...CONTACT_EMAIL, order: 1, active: true },
+      { label: 'Horario', value: 'Lun a Sáb, 9:00 - 20:00', icon: 'Clock', type: 'hours', order: 2, active: true },
     ],
   });
   log('   ✓ Información de contacto');
@@ -397,7 +497,7 @@ async function seedContent(prisma, log = console.log) {
   await prisma.banner.create({
     data: {
       title: '¿Necesitas una licencia hoy mismo?',
-      subtitle: 'Escríbenos y actívala en minutos con instalación remota incluida.',
+      subtitle: 'Escríbeme y actívala en minutos con instalación remota incluida.',
       link: '#contacto',
       position: 'home',
       order: 0,
@@ -420,7 +520,86 @@ async function seedContent(prisma, log = console.log) {
         'licencias, software original, windows, office, adobe, streaming, netflix, vpn, antivirus, instalación remota, soporte técnico, Nathan Quevedo',
     },
   });
+  const pageSeo = [
+    {
+      page: 'servicios',
+      title: 'Servicios: streaming, licencias y soporte',
+      description:
+        'Plataformas de streaming premium, licencias de software original, nube, seguridad y soporte técnico remoto con garantía.',
+    },
+    {
+      page: 'proyectos',
+      title: 'Proyectos y casos de estudio',
+      description: 'Casos de estudio de Nathan Quevedo: el reto de cada cliente, la solución y los resultados.',
+    },
+    {
+      page: 'blog',
+      title: 'Blog: guías y consejos de tecnología',
+      description: 'Guías prácticas sobre streaming, licencias de software, seguridad y soporte técnico.',
+    },
+    {
+      page: 'sobre-mi',
+      title: 'Sobre Nathan Quevedo',
+      description: 'Quién es Nathan Quevedo y cómo trabaja: servicios digitales, streaming, licencias y soporte remoto.',
+    },
+    {
+      page: 'contacto',
+      title: 'Contacto y cotizaciones',
+      description: 'Escríbeme por WhatsApp o con el formulario y te preparo una cotización a medida.',
+    },
+  ];
+  for (const p of pageSeo) {
+    await prisma.seo.upsert({ where: { page: p.page }, update: {}, create: p });
+  }
   log('   ✓ SEO');
+}
+
+async function markDone(prisma, name) {
+  await prisma.$executeRawUnsafe('INSERT IGNORE INTO `_app_migrations` (`name`) VALUES (?)', name);
+}
+
+/**
+ * Traducción al inglés del contenido base, una sola vez por instalación
+ * (instalaciones nuevas y las que se actualizan). Solo traduce los textos que
+ * siguen siendo los originales; lo que ya editaste queda en español hasta que
+ * lo traduzcas en el panel.
+ */
+async function seedTranslationsOnce(prisma, log = console.log) {
+  const rows = await prisma.$queryRawUnsafe('SELECT `name` FROM `_app_migrations` WHERE `name` = ?', EN_SEED_MARK);
+  if (rows.length) return;
+  await seedTranslations(prisma, log);
+  await markDone(prisma, EN_SEED_MARK);
+}
+
+/**
+ * Pasa a primera persona los textos base que sigan siendo los originales, una
+ * sola vez por instalación (ver copy-updates.cjs).
+ */
+async function copyUpdatesOnce(prisma, log = console.log) {
+  const rows = await prisma.$queryRawUnsafe('SELECT `name` FROM `_app_migrations` WHERE `name` = ?', FIRST_PERSON_MARK);
+  if (rows.length) return;
+  await applyCopyUpdates(prisma, log);
+  await markDone(prisma, FIRST_PERSON_MARK);
+}
+
+/**
+ * Logotipos reales, plataformas y licencias nuevas en instalaciones que ya
+ * existían, una sola vez (ver brands.cjs). Lo que se añade se traduce al
+ * inglés como el resto del contenido base.
+ */
+async function brandUpdatesOnce(prisma, log = console.log) {
+  const rows = await prisma.$queryRawUnsafe('SELECT `name` FROM `_app_migrations` WHERE `name` = ?', BRANDS_MARK);
+  if (rows.length) return;
+  await applyBrandUpdates(prisma, { translateNew: (created) => translateRecords(prisma, created) }, log);
+  await markDone(prisma, BRANDS_MARK);
+}
+
+/** Correo de contacto en instalaciones que ya existían, una sola vez. */
+async function contactEmailOnce(prisma, log = console.log) {
+  const rows = await prisma.$queryRawUnsafe('SELECT `name` FROM `_app_migrations` WHERE `name` = ?', EMAIL_MARK);
+  if (rows.length) return;
+  await addContactEmail(prisma, log);
+  await markDone(prisma, EMAIL_MARK);
 }
 
 /** ¿La base de datos necesita preparación (no hay tablas o no hay admin)? */
@@ -446,14 +625,21 @@ async function autoBootstrap(log = console.log) {
 
   const prisma = new PrismaClient();
   try {
-    if (!(await needsSetup(prisma))) {
-      return { ok: true, action: 'skip' };
-    }
-    log('🗄️  Base de datos vacía: preparándola automáticamente...');
+    // Siempre aplica migraciones pendientes (instalaciones existentes que se
+    // actualizan). No toca datos.
     await ensureSchema(prisma, log);
-    await seedContent(prisma, log);
-    log('✅ Base de datos lista.');
-    return { ok: true, action: 'created' };
+    let action = 'skip';
+    if (await needsSetup(prisma)) {
+      log('🗄️  Base de datos vacía: preparándola automáticamente...');
+      await seedContent(prisma, log);
+      log('✅ Base de datos lista.');
+      action = 'created';
+    }
+    await copyUpdatesOnce(prisma, log);
+    await brandUpdatesOnce(prisma, log);
+    await contactEmailOnce(prisma, log);
+    await seedTranslationsOnce(prisma, log);
+    return { ok: true, action };
   } catch (e) {
     return { ok: false, error: e };
   } finally {
@@ -476,6 +662,12 @@ async function runCli() {
     await ensureSchema(prisma);
     console.log('🌱 Sembrando contenido...');
     await seedContent(prisma);
+    await pruneTranslations(prisma);
+    await seedTranslations(prisma);
+    await markDone(prisma, EN_SEED_MARK);
+    await markDone(prisma, FIRST_PERSON_MARK);
+    await markDone(prisma, BRANDS_MARK);
+    await markDone(prisma, EMAIL_MARK);
     console.log('✅ Base de datos lista.');
   } finally {
     await prisma.$disconnect();

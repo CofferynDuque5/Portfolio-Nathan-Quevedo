@@ -6,6 +6,7 @@ import { api } from '@/lib/admin/client';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
 import { useToast } from '@/components/admin/Toast';
 import { Skeleton } from '@/components/admin/Skeleton';
+import MailNotice from '@/components/admin/MailNotice';
 
 interface Message {
   id: number;
@@ -51,6 +52,8 @@ export default function MessagesPage() {
         <h1 className="flex items-center gap-2 text-2xl font-bold"><Inbox size={24} className="text-brand-500" /> Mensajes de contacto</h1>
         <p className="mt-1 text-sm text-slate-500">{rows.filter((r) => !r.read).length} sin leer · {rows.length} en total</p>
       </div>
+
+      <MailNotice />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-2">

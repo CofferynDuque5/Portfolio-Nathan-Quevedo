@@ -1,9 +1,11 @@
 import { ArrowRight } from 'lucide-react';
 import Reveal from '@/components/Reveal';
 import { Banner } from '@/lib/types';
+import { getI18n } from '@/i18n';
 
-export default function BannerCTA({ banner }: { banner?: Banner }) {
+export default async function BannerCTA({ banner }: { banner?: Banner }) {
   if (!banner) return null;
+  const { t, href } = await getI18n();
 
   return (
     <section className="py-10">
@@ -17,10 +19,10 @@ export default function BannerCTA({ banner }: { banner?: Banner }) {
                 <p className="mx-auto mt-3 max-w-2xl text-white/90">{banner.subtitle}</p>
               )}
               <a
-                href={banner.link || '#contacto'}
+                href={href(banner.link || '#contacto')}
                 className="btn mt-7 bg-white text-brand-700 hover:bg-white/90"
               >
-                Contactar ahora <ArrowRight size={16} />
+                {t.common.contactNow} <ArrowRight size={16} />
               </a>
             </div>
           </div>

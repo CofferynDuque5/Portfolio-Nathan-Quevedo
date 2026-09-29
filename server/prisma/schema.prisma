@@ -68,6 +68,8 @@ model Category {
   updatedAt   DateTime  @updatedAt
 
   services    Service[]
+  projects    Project[]
+  posts       Post[]
 
   @@index([active, order])
   @@map("categories")
@@ -99,6 +101,72 @@ model Service {
   @@index([active, order])
   @@index([featured])
   @@map("services")
+}
+
+// ------------------------------------------------------------
+//  Proyectos / casos de estudio (portfolio)
+//  Flujo editorial: se crean como borrador y se publican cuando
+//  están listos. Solo los PUBLISHED son visibles en el sitio.
+// ------------------------------------------------------------
+enum ProjectStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model Project {
+  id             Int           @id @default(autoincrement())
+  title          String
+  slug           String        @unique
+  client         String?
+  year           String?
+  summary        String?       @db.Text
+  challenge      String?       @db.Text
+  solution       String?       @db.Text
+  results        String?       @db.Text
+  coverImage     String?
+  gallery        String?       @db.Text // una URL de imagen por línea
+  tags           String?       // separadas por comas
+  url            String?
+  status         ProjectStatus @default(DRAFT)
+  publishedAt    DateTime?
+  featured       Boolean       @default(false)
+  order          Int           @default(0)
+  seoTitle       String?
+  seoDescription String?       @db.Text
+  categoryId     Int?
+  category       Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([categoryId])
+  @@index([status, order])
+  @@index([featured])
+  @@map("projects")
+}
+
+// ------------------------------------------------------------
+//  Blog: artículos con borrador / publicado
+// ------------------------------------------------------------
+model Post {
+  id             Int           @id @default(autoincrement())
+  title          String
+  slug           String        @unique
+  excerpt        String?       @db.Text
+  content        String?       @db.MediumText // Markdown sencillo
+  coverImage     String?
+  tags           String?       // separadas por comas
+  status         ProjectStatus @default(DRAFT)
+  publishedAt    DateTime?
+  seoTitle       String?
+  seoDescription String?       @db.Text
+  categoryId     Int?
+  category       Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([categoryId])
+  @@index([status, publishedAt])
+  @@map("posts")
 }
 
 // ------------------------------------------------------------
@@ -157,6 +225,25 @@ model Faq {
 
   @@index([active, order])
   @@map("faqs")
+}
+
+// ------------------------------------------------------------
+//  Testimonios de clientes (solo reales y con su permiso)
+// ------------------------------------------------------------
+model Testimonial {
+  id        Int      @id @default(autoincrement())
+  name      String
+  role      String? // ej: "Cliente de streaming" o "Gerente, Empresa X"
+  quote     String   @db.Text
+  rating    Int? // 1 a 5; vacío = sin estrellas
+  avatar    String?
+  order     Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active, order])
+  @@map("testimonials")
 }
 
 // ------------------------------------------------------------
@@ -318,4 +405,58 @@ model ContactMessage {
   @@index([read])
   @@index([createdAt])
   @@map("contact_messages")
+}
+
+// ------------------------------------------------------------
+//  Métricas propias (solo con consentimiento del visitante)
+//  Sin IP ni cookies de terceros: identificadores aleatorios
+//  generados en el navegador, ruta sin parámetros y dominio de
+//  procedencia. Se purgan a los 13 meses.
+// ------------------------------------------------------------
+model AnalyticsEvent {
+  id        Int      @id @default(autoincrement())
+  type      String   @db.VarChar(32) // pageview | whatsapp_click | contact_submit
+  path      String
+  source    String?  @db.VarChar(100) // dominio de procedencia o utm_source; null = directo
+  device    String   @db.VarChar(16) // mobile | tablet | desktop
+  browser   String?  @db.VarChar(32)
+  visitorId String   @db.VarChar(64)
+  sessionId String   @db.VarChar(64)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([type, createdAt])
+  @@map("analytics_events")
+}
+
+// ------------------------------------------------------------
+//  Traducciones del contenido del panel
+//  El español vive en cada tabla; aquí se guardan los demás
+//  idiomas campo a campo. Sin traducción, el sitio muestra el
+//  texto en español.
+// ------------------------------------------------------------
+model ContentTranslation {
+  id        Int      @id @default(autoincrement())
+  locale    String   @db.VarChar(8) // en
+  resource  String   @db.VarChar(40) // services, faqs, settings...
+  recordId  Int
+  field     String   @db.VarChar(60)
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+
+  @@unique([locale, resource, recordId, field])
+  @@index([resource, recordId])
+  @@map("content_translations")
+}
+
+// ------------------------------------------------------------
+//  Registro de migraciones aplicadas por scripts/setup-db.cjs
+//  (auto-arranque en cPanel). Declarado aquí para que
+//  `prisma db push` no lo considere una tabla ajena.
+// ------------------------------------------------------------
+model AppMigration {
+  name      String   @id
+  appliedAt DateTime @default(now())
+
+  @@map("_app_migrations")
 }

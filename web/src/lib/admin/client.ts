@@ -13,12 +13,42 @@ export function clearToken() {
   localStorage.removeItem(TOKEN_KEY);
 }
 
+export interface AnalyticsRow {
+  label: string | null;
+  value: number;
+}
+
+export interface AnalyticsSummary {
+  days: number;
+  totals: {
+    pageviews: number;
+    visitors: number;
+    sessions: number;
+    whatsappClicks: number;
+    contactSubmits: number;
+    conversionRate: number;
+  };
+  series: { date: string; pageviews: number; visitors: number }[];
+  pages: AnalyticsRow[];
+  sources: AnalyticsRow[];
+  devices: AnalyticsRow[];
+  browsers: AnalyticsRow[];
+}
+
+/** Campos traducibles de un registro y sus valores guardados. */
+export interface TranslationData {
+  fields: string[];
+  values: Record<string, string>;
+}
+
 interface ListParams {
   page?: number;
   perPage?: number;
   search?: string;
   sortBy?: string;
   sortDir?: 'asc' | 'desc';
+  /** Filtros exactos admitidos por el recurso (ej: status=DRAFT). */
+  [filter: string]: string | number | undefined;
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -57,6 +87,12 @@ export const api = {
       activity: { type: string; name: string; at: string; resource: string }[];
       recentMessages: { id: number; name: string; subject?: string | null; message: string; read: boolean; createdAt: string }[];
     }>('/admin/stats'),
+  analytics: (days: number) => request<AnalyticsSummary>(`/admin/analytics?days=${days}`),
+  notifications: {
+    status: () =>
+      request<{ enabled: true; to: string; host: string; port: number } | { enabled: false }>('/admin/notifications'),
+    test: () => request<{ ok: true; to: string }>('/admin/notifications/test', { method: 'POST' }),
+  },
   changePassword: (currentPassword: string, newPassword: string) =>
     request<{ success: boolean }>('/auth/change-password', {
       method: 'POST',
@@ -78,8 +114,24 @@ export const api = {
     request<{ data: T }>(`/admin/${resource}/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   toggle: (resource: string, id: number) =>
     request(`/admin/${resource}/${id}/toggle`, { method: 'PATCH' }),
+  publish: <T = any>(resource: string, id: number, published: boolean) =>
+    request<{ data: T }>(`/admin/${resource}/${id}/publish`, {
+      method: 'PATCH',
+      body: JSON.stringify({ published }),
+    }),
   remove: (resource: string, id: number) =>
     request<{ success: boolean }>(`/admin/${resource}/${id}`, { method: 'DELETE' }),
+
+  // --- Traducciones del contenido ---
+  translations: {
+    get: (resource: string, id: number, locale: string) =>
+      request<TranslationData>(`/admin/translations/${resource}/${id}?locale=${locale}`),
+    save: (resource: string, id: number, locale: string, values: Record<string, string>) =>
+      request<TranslationData>(`/admin/translations/${resource}/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ locale, values }),
+      }),
+  },
 
   // --- Media ---
   upload: async (files: FileList | File[], folder = 'general') => {

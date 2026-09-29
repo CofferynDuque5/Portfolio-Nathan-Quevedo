@@ -1,10 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { ImagePlus, X } from 'lucide-react';
+import { ImagePlus, ScanEye, X } from 'lucide-react';
 import { FieldDef, ResourceDef } from '@/lib/admin/resources';
+import { api } from '@/lib/admin/client';
 import MediaPicker from './MediaPicker';
+
+/** Adapta los valores de la API a los inputs (fechas ISO -> YYYY-MM-DD, null -> "" en listas). */
+function toFormValues(def: ResourceDef, initial?: Record<string, any>) {
+  const out: Record<string, any> = { ...(initial ?? {}) };
+  for (const f of def.fields) {
+    if (f.type === 'date') out[f.name] = out[f.name] ? String(out[f.name]).slice(0, 10) : '';
+    if (f.type === 'relation' || f.type === 'select') out[f.name] = out[f.name] == null ? '' : String(out[f.name]);
+  }
+  return out;
+}
 
 export default function ResourceForm({
   def,
@@ -15,23 +26,24 @@ export default function ResourceForm({
 }: {
   def: ResourceDef;
   initial?: Record<string, any>;
-  onSubmit: (values: Record<string, any>) => void;
+  /** `preview` indica que, tras guardar, se debe abrir la vista previa. */
+  onSubmit: (values: Record<string, any>, preview?: boolean) => void;
   onCancel: () => void;
   saving?: boolean;
 }) {
   const { register, handleSubmit, setValue, watch, formState } = useForm({
-    defaultValues: initial ?? {},
+    defaultValues: toFormValues(def, initial),
   });
   const [pickerField, setPickerField] = useState<string | null>(null);
 
-  const submit = (values: Record<string, any>) => {
+  const submit = (values: Record<string, any>, preview = false) => {
     // No enviar la contraseña vacía (para no sobreescribirla al editar).
     if (def.key === 'users' && !values.password) delete values.password;
-    onSubmit(values);
+    onSubmit(values, preview);
   };
 
   return (
-    <form onSubmit={handleSubmit(submit)} className="space-y-5">
+    <form onSubmit={handleSubmit((v) => submit(v))} className="space-y-5">
       <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
         {def.fields.map((field) => (
           <FieldControl
@@ -45,10 +57,20 @@ export default function ResourceForm({
         ))}
       </div>
 
-      <div className="flex justify-end gap-3 border-t border-slate-200 pt-5 dark:border-white/10">
+      <div className="flex flex-wrap justify-end gap-3 border-t border-slate-200 pt-5 dark:border-white/10">
         <button type="button" onClick={onCancel} className="btn-ghost">
           Cancelar
         </button>
+        {def.previewPath && (
+          <button
+            type="button"
+            disabled={saving || formState.isSubmitting}
+            onClick={handleSubmit((v) => submit(v, true))}
+            className="btn-ghost"
+          >
+            <ScanEye size={16} /> Guardar y previsualizar
+          </button>
+        )}
         <button type="submit" disabled={saving || formState.isSubmitting} className="btn-primary">
           {saving ? 'Guardando…' : 'Guardar'}
         </button>
@@ -103,9 +125,14 @@ function FieldControl({
       {field.type === 'textarea' ? (
         <textarea
           className="field min-h-[90px] resize-y"
+          rows={field.rows}
           placeholder={field.placeholder}
           {...register(field.name, { required: field.required })}
         />
+      ) : field.type === 'relation' && field.relation ? (
+        <RelationSelect field={field} register={register} watch={watch} setValue={setValue} />
+      ) : field.type === 'date' ? (
+        <input type="date" className="field" {...register(field.name, { required: field.required })} />
       ) : field.type === 'select' ? (
         <select className="field" {...register(field.name)}>
           {field.options?.map((o) => (
@@ -151,5 +178,52 @@ function FieldControl({
 
       {field.help && <p className="mt-1 text-xs text-slate-400">{field.help}</p>}
     </div>
+  );
+}
+
+/** Select cuyas opciones vienen de otro recurso (ej: categorías). */
+function RelationSelect({
+  field,
+  register,
+  watch,
+  setValue,
+}: {
+  field: FieldDef;
+  register: any;
+  watch: any;
+  setValue: any;
+}) {
+  const [options, setOptions] = useState<{ value: string; label: string }[] | null>(null);
+  const { resource, labelKey } = field.relation!;
+
+  useEffect(() => {
+    let alive = true;
+    api
+      .list(resource, { perPage: 100, sortBy: labelKey, sortDir: 'asc' })
+      .then((res) => {
+        if (alive) setOptions(res.data.map((r: any) => ({ value: String(r.id), label: String(r[labelKey]) })));
+      })
+      .catch(() => alive && setOptions([]));
+    return () => {
+      alive = false;
+    };
+  }, [resource, labelKey]);
+
+  // Al llegar las opciones, reasigna el valor para que el select lo muestre.
+  const current = watch(field.name);
+  useEffect(() => {
+    if (options) setValue(field.name, current ?? '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [options]);
+
+  return (
+    <select className="field" disabled={!options} {...register(field.name)}>
+      <option value="">{options ? 'Sin categoría' : 'Cargando…'}</option>
+      {options?.map((o) => (
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
+      ))}
+    </select>
   );
 }
