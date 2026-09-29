@@ -307,6 +307,22 @@ npm test                      # tipos + unitarias + integración
 4. (Recomendado) Usa un gestor de procesos como **PM2** y un proxy inverso (Nginx)
    para servir el frontend (`:3000`) y la API (`:4000`) bajo tu dominio.
 
+### Dos apps Node.js (API y sitio por separado)
+
+Para instalar la API y el sitio como dos apps distintas del hosting (por
+ejemplo `api.midominio.com` y `midominio.com`):
+
+```bash
+SITE_URL=https://midominio.com API_PUBLIC_URL=https://api.midominio.com \
+  node scripts/pack-split.cjs
+```
+
+Deja en `dist-zips/` dos zips ya compilados, `portfolio-api.zip` y
+`portfolio-web.zip`, cada uno con su `app.js`, su `.env.cpanel` (con la misma
+`INTERNAL_API_KEY`) y su guía `DEPLOY.md` (fuentes en `deploy/api` y
+`deploy/web`). El sitio lleva las dos direcciones fijadas al compilar: si
+cambia alguna, vuelve a generar los zips.
+
 ---
 
 ## 🔒 Seguridad
