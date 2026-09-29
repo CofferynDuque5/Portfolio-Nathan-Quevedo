@@ -489,6 +489,17 @@ describe('app completa', { skip: TEST_DB_URL ? false : 'define TEST_DATABASE_URL
       assert.match(services.html, /Streaming, software y soporte, con garantía/);
     });
 
+    test('la portada es corta, en primera persona y sin enlace al panel', async () => {
+      const home = await page('/');
+      const licenses = (await api('/public/licenses')).body.data.length;
+      assert.ok(licenses > 6, 'el contenido base tiene más de 6 licencias');
+      assert.ok(home.html.includes(`Ver las ${licenses} licencias`));
+      const services = await page('/servicios');
+      assert.ok(services.html.includes('Configuro todo por ti, de forma remota.'));
+      assert.ok(!home.html.includes('href="/admin"'), 'el pie no enlaza al panel');
+      assert.ok(!home.html.includes('Hecho con Next.js'));
+    });
+
     test('inglés: /en con rutas traducidas y lang="en"', async () => {
       const home = await page('/en');
       assert.equal(home.status, 200);

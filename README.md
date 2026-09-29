@@ -9,7 +9,7 @@ Construido con una arquitectura escalable y **sin depender de servicios externos
 ## ✨ Características
 
 - **Frontend público** moderno, minimalista y responsive (modo claro/oscuro, glassmorphism, microanimaciones).
-- **Panel administrativo** propio en `/admin` con login seguro (JWT + bcrypt) y **16 módulos** editables.
+- **Panel administrativo** propio en `/admin` con login seguro (JWT + bcrypt) y **16 módulos** editables. El sitio público no enlaza al panel: entra escribiendo `/admin` en la dirección.
 - **Gestor multimedia** con drag & drop, subida múltiple, optimización automática a WebP y organización por carpetas.
 - **CRUD completo** en cada módulo: tabla con búsqueda, ordenamiento, paginación, crear, editar, eliminar, activar/desactivar y confirmaciones.
 - **SEO** dinámico: meta tags, Open Graph, Twitter Cards, `sitemap.xml`, `robots.txt`, Schema.org (JSON-LD) y URLs amigables.

@@ -33,8 +33,8 @@ const heroSlides = [
     title: ['Instalación remota y soporte técnico', 'Remote installation and technical support'],
     highlight: ['sin complicaciones', 'without the hassle'],
     subtitle: [
-      'Configuramos tus licencias y aplicaciones de forma remota, rápida y segura.',
-      'We set up your licenses and apps remotely, quickly and securely.',
+      'Configuro tus licencias y aplicaciones de forma remota, rápida y segura.',
+      'I set up your licenses and apps remotely, quickly and securely.',
     ],
     ctaText: ['Ver servicios', 'View services'],
   },
@@ -58,7 +58,7 @@ const services = {
   },
   'instalacion-remota': {
     title: ['Instalación y Configuración Remota', 'Remote Installation and Setup'],
-    shortDesc: ['Configuramos todo por ti, de forma remota.', 'We set everything up for you, remotely.'],
+    shortDesc: ['Configuro todo por ti, de forma remota.', 'I set everything up for you, remotely.'],
     description: ['Instalación y puesta a punto de tus licencias y aplicaciones sin que salgas de casa.', 'Installation and tuning of your licenses and apps without leaving home.'],
     ctaText: cta,
   },
@@ -126,7 +126,7 @@ const licenseTypes = {
 const faqs = [
   [
     ['¿Las licencias son originales?', 'Are the licenses genuine?'],
-    ['Sí, todas nuestras licencias son 100% originales y verificadas.', 'Yes, all our licenses are 100% genuine and verified.'],
+    ['Sí, todas las licencias que ofrezco son 100% originales y verificadas.', 'Yes, every license I offer is 100% genuine and verified.'],
   ],
   [
     ['¿Cómo se realiza la instalación?', 'How is the installation done?'],
@@ -136,12 +136,12 @@ const faqs = [
     ],
   ],
   [
-    ['¿Ofrecen soporte después de la compra?', 'Do you offer support after purchase?'],
-    ['Por supuesto. Brindamos soporte técnico continuo tras cada servicio.', 'Of course. We provide ongoing technical support after every service.'],
+    ['¿Ofreces soporte después de la compra?', 'Do you offer support after purchase?'],
+    ['Por supuesto. Brindo soporte técnico continuo tras cada servicio.', 'Of course. I provide ongoing technical support after every service.'],
   ],
   [
-    ['¿Qué métodos de pago aceptan?', 'What payment methods do you accept?'],
-    ['Aceptamos múltiples métodos de pago. Escríbenos y te asesoramos.', 'We accept multiple payment methods. Message us and we will advise you.'],
+    ['¿Qué métodos de pago aceptas?', 'What payment methods do you accept?'],
+    ['Acepto múltiples métodos de pago. Escríbeme y te asesoro.', 'I accept multiple payment methods. Message me and I will advise you.'],
   ],
   [
     ['¿Cuánto tarda la activación?', 'How long does activation take?'],
@@ -157,8 +157,8 @@ const banners = [
   {
     title: ['¿Necesitas una licencia hoy mismo?', 'Need a license today?'],
     subtitle: [
-      'Escríbenos y actívala en minutos con instalación remota incluida.',
-      'Message us and get it activated in minutes, remote installation included.',
+      'Escríbeme y actívala en minutos con instalación remota incluida.',
+      'Message me and get it activated in minutes, remote installation included.',
     ],
   },
 ];

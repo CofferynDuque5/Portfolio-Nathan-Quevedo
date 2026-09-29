@@ -24,9 +24,12 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const { seedTranslations, pruneTranslations } = require('./seed-translations.cjs');
+const { applyCopyUpdates } = require('./copy-updates.cjs');
 
 /** Marca en `_app_migrations` de la traducción inicial al inglés (se hace una vez). */
 const EN_SEED_MARK = 'seed:translations-en-v1';
+/** Marca de la actualización de textos base a primera persona (una vez). */
+const FIRST_PERSON_MARK = 'seed:first-person-v1';
 
 /** Parsea la DATABASE_URL en sus partes. */
 function parseDbUrl(dbUrl) {
@@ -331,7 +334,7 @@ async function seedContent(prisma, log = console.log) {
       {
         title: 'Instalación remota y soporte técnico',
         highlight: 'sin complicaciones',
-        subtitle: 'Configuramos tus licencias y aplicaciones de forma remota, rápida y segura.',
+        subtitle: 'Configuro tus licencias y aplicaciones de forma remota, rápida y segura.',
         ctaText: 'Ver servicios',
         ctaLink: '#servicios',
         order: 1,
@@ -362,7 +365,7 @@ async function seedContent(prisma, log = console.log) {
   await prisma.service.deleteMany();
   const services = [
     { title: 'Plataformas de Streaming Premium', slug: 'streaming-premium', icon: 'Play', shortDesc: 'Netflix, Disney+, HBO, Prime Video y más.', description: 'Acceso a las mejores plataformas de streaming con garantía y soporte continuo.', category: 'streaming', featured: true },
-    { title: 'Instalación y Configuración Remota', slug: 'instalacion-remota', icon: 'MonitorSmartphone', shortDesc: 'Configuramos todo por ti, de forma remota.', description: 'Instalación y puesta a punto de tus licencias y aplicaciones sin que salgas de casa.', category: 'soporte', featured: true },
+    { title: 'Instalación y Configuración Remota', slug: 'instalacion-remota', icon: 'MonitorSmartphone', shortDesc: 'Configuro todo por ti, de forma remota.', description: 'Instalación y puesta a punto de tus licencias y aplicaciones sin que salgas de casa.', category: 'soporte', featured: true },
     { title: 'Licencias de Software Original', slug: 'licencias-software', icon: 'KeyRound', shortDesc: 'Claves auténticas y verificadas.', description: 'Licencias 100% originales para todo tipo de software profesional.', category: 'licencias', featured: true },
     { title: 'Licencias Microsoft Windows', slug: 'windows', icon: 'Monitor', shortDesc: 'Windows 10 y 11 Pro/Home.', description: 'Activa tu Windows con licencias originales de por vida.', category: 'licencias' },
     { title: 'Microsoft Office y Microsoft 365', slug: 'office-365', icon: 'FileText', shortDesc: 'Office 2021 y Microsoft 365.', description: 'Word, Excel, PowerPoint y más, con licencia original.', category: 'licencias' },
@@ -485,10 +488,10 @@ async function seedContent(prisma, log = console.log) {
   // ---------------- FAQ ----------------
   await prisma.faq.deleteMany();
   const faqs = [
-    { question: '¿Las licencias son originales?', answer: 'Sí, todas nuestras licencias son 100% originales y verificadas.' },
+    { question: '¿Las licencias son originales?', answer: 'Sí, todas las licencias que ofrezco son 100% originales y verificadas.' },
     { question: '¿Cómo se realiza la instalación?', answer: 'La instalación se realiza de forma remota, de manera rápida y segura, sin que tengas que desplazarte.' },
-    { question: '¿Ofrecen soporte después de la compra?', answer: 'Por supuesto. Brindamos soporte técnico continuo tras cada servicio.' },
-    { question: '¿Qué métodos de pago aceptan?', answer: 'Aceptamos múltiples métodos de pago. Escríbenos y te asesoramos.' },
+    { question: '¿Ofreces soporte después de la compra?', answer: 'Por supuesto. Brindo soporte técnico continuo tras cada servicio.' },
+    { question: '¿Qué métodos de pago aceptas?', answer: 'Acepto múltiples métodos de pago. Escríbeme y te asesoro.' },
     { question: '¿Cuánto tarda la activación?', answer: 'La mayoría de servicios se activan el mismo día de la compra.' },
   ];
   await prisma.faq.createMany({ data: faqs.map((f, i) => ({ ...f, order: i, active: true })) });
@@ -536,7 +539,7 @@ async function seedContent(prisma, log = console.log) {
   await prisma.banner.create({
     data: {
       title: '¿Necesitas una licencia hoy mismo?',
-      subtitle: 'Escríbenos y actívala en minutos con instalación remota incluida.',
+      subtitle: 'Escríbeme y actívala en minutos con instalación remota incluida.',
       link: '#contacto',
       position: 'home',
       order: 0,
@@ -610,6 +613,17 @@ async function seedTranslationsOnce(prisma, log = console.log) {
   await markDone(prisma, EN_SEED_MARK);
 }
 
+/**
+ * Pasa a primera persona los textos base que sigan siendo los originales, una
+ * sola vez por instalación (ver copy-updates.cjs).
+ */
+async function copyUpdatesOnce(prisma, log = console.log) {
+  const rows = await prisma.$queryRawUnsafe('SELECT `name` FROM `_app_migrations` WHERE `name` = ?', FIRST_PERSON_MARK);
+  if (rows.length) return;
+  await applyCopyUpdates(prisma, log);
+  await markDone(prisma, FIRST_PERSON_MARK);
+}
+
 /** ¿La base de datos necesita preparación (no hay tablas o no hay admin)? */
 async function needsSetup(prisma) {
   try {
@@ -643,6 +657,7 @@ async function autoBootstrap(log = console.log) {
       log('✅ Base de datos lista.');
       action = 'created';
     }
+    await copyUpdatesOnce(prisma, log);
     await seedTranslationsOnce(prisma, log);
     return { ok: true, action };
   } catch (e) {
@@ -670,6 +685,7 @@ async function runCli() {
     await pruneTranslations(prisma);
     await seedTranslations(prisma);
     await markDone(prisma, EN_SEED_MARK);
+    await markDone(prisma, FIRST_PERSON_MARK);
     console.log('✅ Base de datos lista.');
   } finally {
     await prisma.$disconnect();

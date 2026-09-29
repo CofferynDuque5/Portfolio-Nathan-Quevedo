@@ -1,12 +1,26 @@
-import { KeyRound, Check } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowRight, KeyRound, Check } from 'lucide-react';
 import Reveal from '@/components/Reveal';
 import { License } from '@/lib/types';
 import { waLink } from '@/lib/utils';
-import { getT } from '@/i18n';
+import { getI18n } from '@/i18n';
 
-export default async function Licenses({ licenses, whatsapp }: { licenses: License[]; whatsapp?: string }) {
+/**
+ * Licencias originales. En la home se pasa `limit` para mostrar solo las
+ * primeras (orden del panel) con un enlace a la lista completa en /servicios.
+ */
+export default async function Licenses({
+  licenses,
+  whatsapp,
+  limit,
+}: {
+  licenses: License[];
+  whatsapp?: string;
+  limit?: number;
+}) {
   if (!licenses.length) return null;
-  const t = await getT();
+  const { t, href } = await getI18n();
+  const shown = limit ? licenses.slice(0, limit) : licenses;
 
   return (
     <section id="licencias" className="bg-slate-50 py-20 dark:bg-white/[0.02] sm:py-28">
@@ -20,7 +34,7 @@ export default async function Licenses({ licenses, whatsapp }: { licenses: Licen
         </div>
 
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {licenses.map((l, i) => (
+          {shown.map((l, i) => (
             <Reveal key={l.id} delay={(i % 3) * 0.06}>
               <div className="card flex h-full flex-col">
                 <div className="flex items-start justify-between gap-3">
@@ -64,6 +78,14 @@ export default async function Licenses({ licenses, whatsapp }: { licenses: Licen
             </Reveal>
           ))}
         </div>
+
+        {shown.length < licenses.length && (
+          <div className="mt-10 text-center">
+            <Link href={href('/servicios#licencias')} className="btn-ghost">
+              {t.licenses.seeAll(licenses.length)} <ArrowRight size={16} />
+            </Link>
+          </div>
+        )}
       </div>
     </section>
   );

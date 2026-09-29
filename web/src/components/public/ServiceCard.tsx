@@ -35,11 +35,6 @@ export default function ServiceCard({ s, i, whatsapp }: { s: Service; i: number;
           </div>
         )}
 
-        {/* Badge de icono */}
-        <span className="absolute left-4 top-4 grid h-11 w-11 place-items-center rounded-2xl bg-white/90 text-brand-600 shadow-soft backdrop-blur dark:bg-slate-900/80 dark:text-brand-300">
-          <Icon name={s.icon} size={20} />
-        </span>
-
         {s.featured && (
           <span className="absolute right-4 top-4 rounded-full bg-brand-600 px-3 py-1 text-xs font-semibold text-white shadow-glow">
             {t.common.featured}

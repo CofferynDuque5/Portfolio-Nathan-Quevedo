@@ -80,7 +80,7 @@ export default async function HomePage() {
           ratingLabel={t.testimonials.rating}
         />
         <Platforms platforms={content.platforms} />
-        <Licenses licenses={content.licenses} whatsapp={s.whatsapp} />
+        <Licenses licenses={content.licenses} whatsapp={s.whatsapp} limit={6} />
         <Process title={s.processTitle || t.process.defaultTitle} />
         <BannerCTA banner={content.banners[0]} />
         <Faq faqs={content.faqs} />
