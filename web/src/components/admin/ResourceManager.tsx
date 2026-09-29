@@ -94,7 +94,7 @@ export default function ResourceManager({ def }: { def: ResourceDef }) {
       const res = editing
         ? await api.update(def.key, editing.id, values)
         : await api.create(def.key, values);
-      toast.success(editing ? 'Cambios guardados correctamente.' : `${def.singular} creado correctamente.`);
+      toast.success(editing ? 'Cambios guardados correctamente.' : `${def.singular} ${def.feminine ? 'creada' : 'creado'} correctamente.`);
       if (preview && def.previewPath) {
         router.push(`${def.previewPath}/${res.data.id}`);
         return;
@@ -161,7 +161,7 @@ export default function ResourceManager({ def }: { def: ResourceDef }) {
           <p className="mt-1 text-sm text-slate-500">{meta.total} registro(s)</p>
         </div>
         <button onClick={() => { setCreating(true); setEditing(null); }} className="btn-primary">
-          <Plus size={16} /> Nuevo {def.singular.toLowerCase()}
+          <Plus size={16} /> {def.feminine ? 'Nueva' : 'Nuevo'} {def.singular.toLowerCase()}
         </button>
       </div>
 
@@ -338,7 +338,7 @@ export default function ResourceManager({ def }: { def: ResourceDef }) {
           <div className="my-8 w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900">
             <div className="mb-5 flex items-center justify-between">
               <h2 className="text-xl font-semibold">
-                {editing ? `Editar ${def.singular.toLowerCase()}` : `Nuevo ${def.singular.toLowerCase()}`}
+                {editing ? `Editar ${def.singular.toLowerCase()}` : `${def.feminine ? 'Nueva' : 'Nuevo'} ${def.singular.toLowerCase()}`}
               </h2>
               <button
                 onClick={() => { setEditing(null); setCreating(false); }}
@@ -417,7 +417,7 @@ function Cell({ col, row }: { col: ColumnDef; row: any }) {
   if (col.type === 'image') {
     return value ? (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={value} alt="" className="h-10 w-10 rounded-lg object-cover" />
+      <img src={value} alt="" className="h-10 w-16 rounded-lg object-contain object-left" />
     ) : (
       <span className="text-slate-300">—</span>
     );

@@ -44,7 +44,12 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
       <div className="lg:pl-64">
         {/* Topbar */}
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200 bg-white/80 px-4 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80">
-          <button onClick={() => setMobileOpen((v) => !v)} className="grid h-10 w-10 place-items-center rounded-lg lg:hidden">
+          <button
+            onClick={() => setMobileOpen((v) => !v)}
+            aria-label={mobileOpen ? 'Cerrar menú' : 'Abrir menú'}
+            aria-expanded={mobileOpen}
+            className="grid h-10 w-10 place-items-center rounded-lg lg:hidden"
+          >
             {mobileOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
           <div className="flex-1" />

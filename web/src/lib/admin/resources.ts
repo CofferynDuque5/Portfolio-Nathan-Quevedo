@@ -46,6 +46,8 @@ export interface ResourceDef {
   key: string; // nombre del recurso en la API
   label: string; // nombre visible
   singular: string;
+  /** El nombre es femenino ("Nueva plataforma", "creada"). */
+  feminine?: boolean;
   icon: string; // icono lucide
   group: string; // agrupación en el sidebar
   columns: ColumnDef[];
@@ -212,6 +214,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
     translatable: true,
     label: 'Categorías',
     singular: 'Categoría',
+    feminine: true,
     icon: 'FolderTree',
     group: 'Contenido',
     hasActive: true,
@@ -266,6 +269,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
     translatable: true,
     label: 'Plataformas',
     singular: 'Plataforma',
+    feminine: true,
     icon: 'MonitorPlay',
     group: 'Catálogo',
     hasActive: true,
@@ -292,6 +296,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
     translatable: true,
     label: 'Licencias',
     singular: 'Licencia',
+    feminine: true,
     icon: 'KeyRound',
     group: 'Catálogo',
     hasActive: true,
@@ -319,6 +324,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
     translatable: true,
     label: 'FAQ',
     singular: 'Pregunta',
+    feminine: true,
     icon: 'HelpCircle',
     group: 'Contenido',
     hasActive: true,
@@ -455,6 +461,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
     key: 'socialLinks',
     label: 'Redes sociales',
     singular: 'Red social',
+    feminine: true,
     icon: 'Share2',
     group: 'Configuración',
     hasActive: true,
@@ -513,6 +520,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
     translatable: true,
     label: 'SEO',
     singular: 'Página SEO',
+    feminine: true,
     icon: 'Search',
     group: 'Configuración',
     searchable: true,
