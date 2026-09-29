@@ -125,7 +125,7 @@ SMTP_HOST="mail.nathanquevedo.nvcorx.com"
 SMTP_PORT=465
 SMTP_USER="web@nathanquevedo.nvcorx.com"
 SMTP_PASS="la-contraseña-de-esa-cuenta"
-NOTIFY_EMAIL="tu-correo-personal@gmail.com"
+NOTIFY_EMAIL="quevedomoralesnathan05@gmail.com"
 ```
 
    `NOTIFY_EMAIL` es donde quieres recibir los avisos (si la dejas vacía,

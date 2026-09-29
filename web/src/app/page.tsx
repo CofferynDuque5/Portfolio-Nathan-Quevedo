@@ -31,7 +31,7 @@ export default async function HomePage() {
     description: s.tagline,
     url: `${SITE_URL}${href('/') === '/' ? '' : href('/')}`,
     inLanguage: locale,
-    email: s.email || undefined,
+    email: s.email || content.contactInfo.find((c) => c.type === 'email')?.value || undefined,
     telephone: s.whatsapp || undefined,
     sameAs: content.socialLinks.map((l) => l.url),
     makesOffer: content.services.map((svc) => ({

@@ -503,6 +503,16 @@ describe('app completa', { skip: TEST_DB_URL ? false : 'define TEST_DATABASE_URL
       assert.match(img.headers.get('content-type') ?? '', /image\/webp/);
     });
 
+    test('el correo de contacto se ve en Contacto, con enlace y en los datos estructurados', async () => {
+      const info = (await api('/public/content')).body.contactInfo;
+      assert.deepEqual(info.map((c: { type: string }) => c.type), ['whatsapp', 'email', 'hours']);
+      const contact = await page('/contacto');
+      assert.ok(contact.html.includes('href="mailto:quevedomoralesnathan05@gmail.com"'));
+      assert.ok(contact.html.includes('"email":"quevedomoralesnathan05@gmail.com"'));
+      const en = (await api('/public/content?lang=en')).body.contactInfo;
+      assert.equal(en.find((c: { type: string }) => c.type === 'email').label, 'Email');
+    });
+
     test('la portada es corta, en primera persona y sin enlace al panel', async () => {
       const home = await page('/');
       const licenses = (await api('/public/licenses')).body.data.length;

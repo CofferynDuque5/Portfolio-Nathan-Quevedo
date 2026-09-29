@@ -44,6 +44,25 @@ const FIRST_PERSON = [
   ],
 ];
 
+/** Correo de contacto que dio Nathan (2026-09-29). */
+const CONTACT_EMAIL = { label: 'Correo', value: 'quevedomoralesnathan05@gmail.com', icon: 'Mail', type: 'email' };
+
+/**
+ * Añade el correo a la información de contacto, detrás de WhatsApp, si no hay
+ * ya un correo. Su etiqueta en inglés es "Email".
+ */
+async function addContactEmail(prisma, log = console.log) {
+  if (await prisma.contactInfo.findFirst({ where: { type: 'email' } })) return;
+  const whatsapp = await prisma.contactInfo.findFirst({ where: { type: 'whatsapp' } });
+  const order = (whatsapp?.order ?? -1) + 1;
+  await prisma.contactInfo.updateMany({ where: { order: { gte: order } }, data: { order: { increment: 1 } } });
+  const created = await prisma.contactInfo.create({ data: { ...CONTACT_EMAIL, order, active: true } });
+  await prisma.contentTranslation.create({
+    data: { locale: 'en', resource: 'contactInfo', recordId: created.id, field: 'label', value: 'Email' },
+  });
+  log(`   ✓ Correo de contacto añadido (${CONTACT_EMAIL.value})`);
+}
+
 async function applyCopyUpdates(prisma, log = console.log) {
   let changed = 0;
   for (const [model, resource, field, [esOld, esNew], en] of FIRST_PERSON) {
@@ -62,4 +81,4 @@ async function applyCopyUpdates(prisma, log = console.log) {
   if (changed) log(`   ✓ ${changed} textos del contenido base pasados a primera persona`);
 }
 
-module.exports = { applyCopyUpdates, FIRST_PERSON };
+module.exports = { applyCopyUpdates, addContactEmail, CONTACT_EMAIL, FIRST_PERSON };

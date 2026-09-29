@@ -25,6 +25,7 @@ export default async function ContactPage() {
       '@type': 'ProfessionalService',
       name: s.siteName || 'Nathan Quevedo',
       telephone: s.whatsapp || undefined,
+      email: content.contactInfo.find((c) => c.type === 'email')?.value,
       sameAs: content.socialLinks.map((l) => l.url),
     },
   };

@@ -24,7 +24,7 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const { seedTranslations, pruneTranslations, translateRecords } = require('./seed-translations.cjs');
-const { applyCopyUpdates } = require('./copy-updates.cjs');
+const { applyCopyUpdates, addContactEmail, CONTACT_EMAIL } = require('./copy-updates.cjs');
 const { PLATFORMS, LICENSES, LOGOS, platformData, licenseData, applyBrandUpdates } = require('./brands.cjs');
 
 /** Marca en `_app_migrations` de la traducción inicial al inglés (se hace una vez). */
@@ -33,6 +33,8 @@ const EN_SEED_MARK = 'seed:translations-en-v1';
 const FIRST_PERSON_MARK = 'seed:first-person-v1';
 /** Marca del cambio a los logotipos reales (una vez). */
 const BRANDS_MARK = 'seed:brand-logos-v1';
+/** Marca del correo de contacto (una vez). */
+const EMAIL_MARK = 'seed:contact-email-v1';
 
 /** Parsea la DATABASE_URL en sus partes. */
 function parseDbUrl(dbUrl) {
@@ -484,7 +486,8 @@ async function seedContent(prisma, log = console.log) {
   await prisma.contactInfo.createMany({
     data: [
       { label: 'WhatsApp', value: '+58 4225200631', icon: 'Phone', type: 'whatsapp', order: 0, active: true },
-      { label: 'Horario', value: 'Lun a Sáb, 9:00 - 20:00', icon: 'Clock', type: 'hours', order: 1, active: true },
+      { ...CONTACT_EMAIL, order: 1, active: true },
+      { label: 'Horario', value: 'Lun a Sáb, 9:00 - 20:00', icon: 'Clock', type: 'hours', order: 2, active: true },
     ],
   });
   log('   ✓ Información de contacto');
@@ -591,6 +594,14 @@ async function brandUpdatesOnce(prisma, log = console.log) {
   await markDone(prisma, BRANDS_MARK);
 }
 
+/** Correo de contacto en instalaciones que ya existían, una sola vez. */
+async function contactEmailOnce(prisma, log = console.log) {
+  const rows = await prisma.$queryRawUnsafe('SELECT `name` FROM `_app_migrations` WHERE `name` = ?', EMAIL_MARK);
+  if (rows.length) return;
+  await addContactEmail(prisma, log);
+  await markDone(prisma, EMAIL_MARK);
+}
+
 /** ¿La base de datos necesita preparación (no hay tablas o no hay admin)? */
 async function needsSetup(prisma) {
   try {
@@ -626,6 +637,7 @@ async function autoBootstrap(log = console.log) {
     }
     await copyUpdatesOnce(prisma, log);
     await brandUpdatesOnce(prisma, log);
+    await contactEmailOnce(prisma, log);
     await seedTranslationsOnce(prisma, log);
     return { ok: true, action };
   } catch (e) {
@@ -655,6 +667,7 @@ async function runCli() {
     await markDone(prisma, EN_SEED_MARK);
     await markDone(prisma, FIRST_PERSON_MARK);
     await markDone(prisma, BRANDS_MARK);
+    await markDone(prisma, EMAIL_MARK);
     console.log('✅ Base de datos lista.');
   } finally {
     await prisma.$disconnect();

@@ -87,7 +87,13 @@ export default function Contact({
                   </span>
                   <div>
                     <div className="text-sm text-slate-500">{c.label}</div>
-                    <div className="font-medium">{c.value}</div>
+                    {c.type === 'email' ? (
+                      <a href={`mailto:${c.value}`} className="break-all font-medium hover:text-brand-600 dark:hover:text-brand-300">
+                        {c.value}
+                      </a>
+                    ) : (
+                      <div className="font-medium">{c.value}</div>
+                    )}
                   </div>
                 </div>
               );

@@ -150,6 +150,7 @@ const faqs = [
 ];
 
 const contactInfo = {
+  email: { label: ['Correo', 'Email'] },
   hours: { label: ['Horario', 'Hours'], value: ['Lun a Sáb, 9:00 - 20:00', 'Mon to Sat, 9:00 - 20:00'] },
 };
 
